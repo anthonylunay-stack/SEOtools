@@ -1,0 +1,398 @@
+{
+  "name": "SLN Sanity check",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "weeks",
+              "triggerAtDay": [
+                1
+              ],
+              "triggerAtHour": 19
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        368,
+        -144
+      ],
+      "id": "dfb784bd-5a4c-439c-a0cb-8e6be736965f",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "Tu es un analyste SEO et immobilier spécialisé dans l'analyse de données de demande en ligne pour le marché immobilier français (neuf, résidentiel).\n\nTu reçois des données issues d'un fichier Excel de suivi de performance digitale. Chaque feuille correspond à un angle d'analyse différent.\n\nVoici comment interpréter chaque feuille :\n\n- demand_global : volume mensuel de recherches toutes catégories confondues (colonnes : month, year, volume). Identifie les tendances annuelles et saisonnières.\n- demand_transaction : volume par type de transaction (new builds, resale, invest, new houses) au fil du temps. Compare les segments et détecte les hausses/baisses.\n- demand_asset : volume par type de bien (apartment block, studio, duplex, vefa, etc.). Identifie les typologies en croissance ou en déclin.\n- demand_region : volume de recherches par région française. Mets en avant les régions les plus actives et celles en progression.\n- demand_departement : volume par département. Identifie les Top 5 départements par volume et ceux avec la plus forte croissance récente.\n- demand_explorer : mots-clés avec leur croissance MoM (month-over-month) et YoY (year-over-year). Concentre-toi sur les keywords à fort potentiel (trend_type = \"growing\" + YoY élevé).\n- ranking_global_war : classement SEO des concurrents (score WAR = visibilité organique). Identifie le leader et les écarts entre concurrents.\n- audience : répartition des clics SEO par type de requête (brand vs nonbrand). Évalue la dépendance à la marque.\n\nPour chaque feuille reçue, fournis :\n1. Un résumé factuel en 3-5 points clés avec les chiffres importants\n2. La tendance principale (hausse / baisse / stable)\n3. Une recommandation actionnable courte\n\nFeuille analysée : \"{{ $json.sheetName }}\"\nDonnées : {{ JSON.stringify($json.rows) }}\n\n\nTab \"demand_global\"\n\nThis first document you have to analyse is the market trend. In the tab \"demand_global\"\nI need you to analyse the volume for the current month to the month M-1.\nex: if we are in october, i need your analysis to compare october to september\nFormat: Give me the evolution in pourcentage and in number. \n\nAlso I need you compare for the current Month the evolution from the Year -1 \nexemple: For october 2025 compare the evolution with october 2024. \n Format: Give me the evolution in pourcentage and in number. \n\nSumarise me the evolution for 1 year. The trend is increasing, decreasing month after month, compare the figures to the previous year. The trend is higher or not compare to the previous year?\n\n2. Tab \"demand_transaction\"\nIn this tab you have 3 column which are \"date (Année Mois)\", \"segment.transaction\", \"volume\"\ndate (Année Mois)\tis the date Année Mois\nsegment.transaction is the segment \nvolume is the search volume\n\nI need you to analyse the volume for the current month to the month M-1 segment per segmente and tell me which segment is dropping month after month or opposite which segment is increasing month after month. \nex: if we are in october, i need your analysis to compare october to september\nFormat: Give me the evolution in pourcentage and in number. \n\nAlso I need you compare for the current Month the evolution from the Year -1 \nexemple: For october 2025 compare the evolution with october 2024. \n Format: Give me the evolution in pourcentage and in number. \n\nSumarise the informations and give a feedback about segment (which one is increasing, which one is decreasing.\n\n\n3. Tab \"ranking_global_war\"\nIn this tab you have 3 column: date, url_hostname, rank_organic_war.\n\nI need you to analyse the position of Seloger neuf compared to competitors.\n\n4. Tab \"demand_asset\"\nAnalyse the evolution of the demand month after month. Is it increasing, decreasing or stable. Give % evolution per month compare to previous month. do the analysis global and by asset\n\n5/ demand_departement\nAnalyse the volume per departement for the last 3 months. Is it increasing decreasing or stable. \nWhat is the top 10 departement volume and what is the evolution on the last 3 months.\n\n5. Tab \"audience\"\nCompare nonbrand vs brand vs anonymous\n\n\n🎯 What I expect from you\nWe need you to analysing the data from the spreadsheet.\nFor each answer avoid the detail and give me only the result\nUse english only.\nWe want you analyse each tab one by one following the detail bellow.\ncreate bullet point for each part.",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        1440,
+        32
+      ],
+      "id": "e3f318b8-baae-4240-9315-3f409b19455c",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-4",
+          "mode": "list",
+          "cachedResultName": "gpt-4"
+        },
+        "responsesApiEnabled": false,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        1440,
+        272
+      ],
+      "id": "849775eb-6f1c-425b-89f6-d34c144736d7",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "apnKNfuPRPt3265G",
+          "name": "OpenAI account 6"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "\n\nSeloger Neuf ",
+        "height": 80,
+        "width": 150
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -96,
+        -336
+      ],
+      "id": "69295834-d198-4ed8-82e5-283d692ed630",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "driveId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "My Drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "root",
+          "cachedResultName": "/ (Root folder)"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        1824,
+        -160
+      ],
+      "id": "2553db93-5f97-42ec-88c1-6efc408c7f59",
+      "name": "Upload file",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "hUSKS8kbE7qdyiJz",
+          "name": "Mon Google Drive"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "7214d040-f11c-409d-bf5b-4fc05b33d3bc",
+              "name": "output",
+              "value": "={{ $json.output }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1424,
+        -160
+      ],
+      "id": "01897872-82ff-4941-b18e-5a9459e82e79",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "operation": "toText",
+        "sourceProperty": "output",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.1,
+      "position": [
+        1616,
+        -160
+      ],
+      "id": "a7e0d68b-f3a9-4a63-bc1c-d41aca364f2f",
+      "name": "Convert to File"
+    },
+    {
+      "parameters": {
+        "operation": "download",
+        "fileId": {
+          "__rl": true,
+          "value": "1BlQRDytw-GXK9BHhMEqaxUXIGoImqfqY_kFjWNINcI4",
+          "mode": "list",
+          "cachedResultName": "[AVIVAIPROJ] SLN Data",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1BlQRDytw-GXK9BHhMEqaxUXIGoImqfqY_kFjWNINcI4/edit?usp=drivesdk"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        608,
+        -144
+      ],
+      "id": "175ebc8e-f91f-42d4-a186-bde20f3320b6",
+      "name": "Download file",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "hUSKS8kbE7qdyiJz",
+          "name": "Mon Google Drive"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "UPDATE document in Google Drive\n",
+        "height": 80,
+        "width": 288
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        224,
+        128
+      ],
+      "typeVersion": 1,
+      "id": "295530e9-bea6-4aef-8620-7c94c53a44be",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "operation": "xlsx",
+        "options": {
+          "sheetName": ""
+        }
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1.1,
+      "position": [
+        816,
+        -144
+      ],
+      "id": "baccdaa9-37de-46b4-a00d-6277fa8c3f87",
+      "name": "Extract from File"
+    },
+    {
+      "parameters": {
+        "jsCode": "const sheets = {};\n\nfor (const item of $input.all()) {\n  const name = item.json.sheetName ?? 'Sheet1';\n  if (!sheets[name]) sheets[name] = [];\n  sheets[name].push(item.json);\n}\n\nreturn Object.entries(sheets).map(([name, rows]) => ({\n  json: {\n    sheetName: name,\n    rows: rows\n  }\n}));\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1024,
+        -144
+      ],
+      "id": "d8d1ea68-fef7-4305-84a8-79eb9bb533a2",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "fileId": {
+          "__rl": true,
+          "value": "={{ $json.id }}",
+          "mode": "id"
+        },
+        "newUpdatedFileName": "=Sanity check {{ $json.createdTime }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        1984,
+        -160
+      ],
+      "id": "2b1d563b-43a8-40b3-a173-abae585e241d",
+      "name": "Update file",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "hUSKS8kbE7qdyiJz",
+          "name": "Mon Google Drive"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {
+          "reset": false
+        }
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        1216,
+        -144
+      ],
+      "id": "17b85551-05ae-4ada-8213-e242ae6f32cf",
+      "name": "Loop Over Items",
+      "alwaysOutputData": false
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Download file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Convert to File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Convert to File": {
+      "main": [
+        [
+          {
+            "node": "Upload file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download file": {
+      "main": [
+        [
+          {
+            "node": "Extract from File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract from File": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upload file": {
+      "main": [
+        [
+          {
+            "node": "Update file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "d68a2cfd-64a4-429f-93fc-fa95b5e0f7a7",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "0d2cc35bf4173ba6547bf653679ba4873189b39fa696743a086f77f7a38c2420"
+  },
+  "id": "gzuSnaI4w6QnR3AN",
+  "tags": []
+}
