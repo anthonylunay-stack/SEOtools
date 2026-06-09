@@ -1,0 +1,340 @@
+{
+  "name": "SLN Sanity check",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "NEW",
+        "height": 80,
+        "width": 150
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        128,
+        -128
+      ],
+      "id": "8c4a2444-2d3d-4bca-9522-849fc7b43b24",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "weeks",
+              "triggerAtDay": [
+                1
+              ],
+              "triggerAtHour": 19
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        224,
+        -80
+      ],
+      "id": "4cc5b22c-e7a9-4587-a67d-47d2c528b9b8",
+      "name": "Schedule Trigger1"
+    },
+    {
+      "parameters": {
+        "operation": "download",
+        "fileId": {
+          "__rl": true,
+          "value": "1BlQRDytw-GXK9BHhMEqaxUXIGoImqfqY_kFjWNINcI4",
+          "mode": "list",
+          "cachedResultName": "[AVIVAIPROJ] SLN Data",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1BlQRDytw-GXK9BHhMEqaxUXIGoImqfqY_kFjWNINcI4/edit?usp=drivesdk"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        432,
+        -80
+      ],
+      "id": "7ea39806-67b2-4a4e-8a25-13281a56ca01",
+      "name": "Download file1",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "hUSKS8kbE7qdyiJz",
+          "name": "Mon Google Drive"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "xlsx",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1.1,
+      "position": [
+        640,
+        -80
+      ],
+      "id": "a389a2d1-c94f-4448-84be-d9900ad160b8",
+      "name": "Extract from File1"
+    },
+    {
+      "parameters": {
+        "jsCode": "const sheets = {};\n\nfor (const item of $input.all()) {\n  const name = item.json.sheetName ?? 'Sheet1';\n  if (!sheets[name]) sheets[name] = [];\n  sheets[name].push(item.json);\n}\n\nreturn Object.entries(sheets).map(([name, rows]) => ({\n  json: {\n    sheetName: name,\n    rows: rows\n  }\n}));\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        848,
+        -80
+      ],
+      "id": "bd687e0e-3499-421a-8224-63b95cecc1a4",
+      "name": "Code in JavaScript1"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "Tu es un analyste SEO et immobilier spécialisé dans l'analyse de données de demande en ligne pour le marché immobilier français (neuf, résidentiel).\n\nTu reçois des données issues d'un fichier Excel de suivi de performance digitale. Chaque feuille correspond à un angle d'analyse différent.\n\nVoici comment interpréter chaque feuille :\n\n- demand_global : volume mensuel de recherches toutes catégories confondues (colonnes : month, year, volume). Identifie les tendances annuelles et saisonnières.\n- demand_transaction : volume par type de transaction (new builds, resale, invest, new houses) au fil du temps. Compare les segments et détecte les hausses/baisses.\n- demand_asset : volume par type de bien (apartment block, studio, duplex, vefa, etc.). Identifie les typologies en croissance ou en déclin.\n- demand_region : volume de recherches par région française. Mets en avant les régions les plus actives et celles en progression.\n- demand_departement : volume par département. Identifie les Top 5 départements par volume et ceux avec la plus forte croissance récente.\n- demand_explorer : mots-clés avec leur croissance MoM (month-over-month) et YoY (year-over-year). Concentre-toi sur les keywords à fort potentiel (trend_type = \"growing\" + YoY élevé).\n- ranking_global_war : classement SEO des concurrents (score WAR = visibilité organique). Identifie le leader et les écarts entre concurrents.\n- audience : répartition des clics SEO par type de requête (brand vs nonbrand). Évalue la dépendance à la marque.\n\nPour chaque feuille reçue, fournis :\n1. Un résumé factuel en 3-5 points clés avec les chiffres importants\n2. La tendance principale (hausse / baisse / stable)\n3. Une recommandation actionnable courte\n\nFeuille analysée : \"{{ $json.sheetName }}\"\nDonnées : {{ JSON.stringify($json.rows) }}\n\n\nTab \"demand_global\"\n\nThis first document you have to analyse is the market trend. In the tab \"demand_global\"\nI need you to analyse the volume for the current month to the month M-1.\nex: if we are in october, i need your analysis to compare october to september\nFormat: Give me the evolution in pourcentage and in number. \n\nAlso I need you compare for the current Month the evolution from the Year -1 \nexemple: For october 2025 compare the evolution with october 2024. \n Format: Give me the evolution in pourcentage and in number. \n\nSumarise me the evolution for 1 year. The trend is increasing, decreasing month after month, compare the figures to the previous year. The trend is higher or not compare to the previous year?\n\n2. Tab \"demand_transaction\"\nIn this tab you have 3 column which are \"date (Année Mois)\", \"segment.transaction\", \"volume\"\ndate (Année Mois)\tis the date Année Mois\nsegment.transaction is the segment \nvolume is the search volume\n\nI need you to analyse the volume for the current month to the month M-1 segment per segmente and tell me which segment is dropping month after month or opposite which segment is increasing month after month. \nex: if we are in october, i need your analysis to compare october to september\nFormat: Give me the evolution in pourcentage and in number. \n\nAlso I need you compare for the current Month the evolution from the Year -1 \nexemple: For october 2025 compare the evolution with october 2024. \n Format: Give me the evolution in pourcentage and in number. \n\nSumarise the informations and give a feedback about segment (which one is increasing, which one is decreasing.\n\n\n3. Tab \"ranking_global_war\"\nIn this tab you have 3 column: date, url_hostname, rank_organic_war.\n\nI need you to analyse the position of Seloger neuf compared to competitors.\n\n4. Tab \"demand_asset\"\nAnalyse the evolution of the demand month after month. Is it increasing, decreasing or stable. Give % evolution per month compare to previous month. do the analysis global and by asset\n\n5/ demand_departement\nAnalyse the volume per departement for the last 3 months. Is it increasing decreasing or stable. \nWhat is the top 10 departement volume and what is the evolution on the last 3 months.\n\n5. Tab \"audience\"\nCompare nonbrand vs brand vs anonymous\n\n\n🎯 What I expect from you\nWe need you to analysing the data from the spreadsheet.\nFor each answer avoid the detail and give me only the result\nUse english only.\nWe want you analyse each tab one by one following the detail bellow.\ncreate bullet point for each part.",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        1056,
+        -80
+      ],
+      "id": "6ec5d301-820a-48d2-b117-be1dc01ae560",
+      "name": "AI Agent1"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-4",
+          "mode": "list",
+          "cachedResultName": "gpt-4"
+        },
+        "responsesApiEnabled": false,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        1056,
+        160
+      ],
+      "id": "d3a4d900-14fb-4495-90d4-cdd0128316ff",
+      "name": "OpenAI Chat Model1",
+      "credentials": {
+        "openAiApi": {
+          "id": "apnKNfuPRPt3265G",
+          "name": "OpenAI account 6"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const allOutputs = $input.all()\n  .map(item => item.json.output || '')\n  .filter(o => o.length > 0)\n  .join('\\n\\n---\\n\\n');\n\nreturn [{ json: { output: allOutputs } }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1264,
+        -80
+      ],
+      "id": "c1a2b3d4-e5f6-7890-abcd-ef1234567890",
+      "name": "Aggregate Outputs"
+    },
+    {
+      "parameters": {
+        "operation": "toText",
+        "sourceProperty": "output",
+        "options": {
+          "fileName": "Sanity_check.doc",
+          "mimeType": "application/msword"
+        }
+      },
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.1,
+      "position": [
+        1472,
+        -80
+      ],
+      "id": "4efa576a-4e44-42a3-bb54-9000d46a5c29",
+      "name": "Convert to File1"
+    },
+    {
+      "parameters": {
+        "driveId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "My Drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "root",
+          "cachedResultName": "/ (Root folder)"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        1680,
+        -80
+      ],
+      "id": "3b01b056-b619-4bb0-9a5f-649820d90105",
+      "name": "Upload file1",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "hUSKS8kbE7qdyiJz",
+          "name": "Mon Google Drive"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "fileId": {
+          "__rl": true,
+          "value": "={{ $json.id }}",
+          "mode": "id"
+        },
+        "newUpdatedFileName": "=Sanity check {{ $json.createdTime }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        1888,
+        -80
+      ],
+      "id": "a7349699-3383-48a2-bc03-07faff6baf44",
+      "name": "Update file1",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "hUSKS8kbE7qdyiJz",
+          "name": "Mon Google Drive"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger1": {
+      "main": [
+        [
+          {
+            "node": "Download file1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download file1": {
+      "main": [
+        [
+          {
+            "node": "Extract from File1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract from File1": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript1": {
+      "main": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent1": {
+      "main": [
+        [
+          {
+            "node": "Aggregate Outputs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate Outputs": {
+      "main": [
+        [
+          {
+            "node": "Convert to File1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Convert to File1": {
+      "main": [
+        [
+          {
+            "node": "Upload file1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upload file1": {
+      "main": [
+        [
+          {
+            "node": "Update file1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "2a636885-575f-4abd-801b-96f707368d3a",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "0d2cc35bf4173ba6547bf653679ba4873189b39fa696743a086f77f7a38c2420"
+  },
+  "id": "gzuSnaI4w6QnR3AN",
+  "tags": []
+}
