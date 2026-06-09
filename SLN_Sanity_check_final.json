@@ -3,28 +3,11 @@
   "nodes": [
     {
       "parameters": {
-        "content": "NEW",
-        "height": 80,
-        "width": 150
-      },
-      "type": "n8n-nodes-base.stickyNote",
-      "typeVersion": 1,
-      "position": [
-        128,
-        -128
-      ],
-      "id": "8c4a2444-2d3d-4bca-9522-849fc7b43b24",
-      "name": "Sticky Note2"
-    },
-    {
-      "parameters": {
         "rule": {
           "interval": [
             {
               "field": "weeks",
-              "triggerAtDay": [
-                1
-              ],
+              "triggerAtDay": [1],
               "triggerAtHour": 19
             }
           ]
@@ -32,10 +15,7 @@
       },
       "type": "n8n-nodes-base.scheduleTrigger",
       "typeVersion": 1.3,
-      "position": [
-        224,
-        -80
-      ],
+      "position": [224, -80],
       "id": "4cc5b22c-e7a9-4587-a67d-47d2c528b9b8",
       "name": "Schedule Trigger1"
     },
@@ -53,10 +33,7 @@
       },
       "type": "n8n-nodes-base.googleDrive",
       "typeVersion": 3,
-      "position": [
-        432,
-        -80
-      ],
+      "position": [432, -80],
       "id": "7ea39806-67b2-4a4e-8a25-13281a56ca01",
       "name": "Download file1",
       "credentials": {
@@ -68,30 +45,46 @@
     },
     {
       "parameters": {
+        "jsCode": "// Create one item per sheet name, each carrying the binary file\nconst binary = $input.first().binary;\n\nconst sheetNames = [\n  'demand_global',\n  'demand_transaction',\n  'demand_asset',\n  'demand_region',\n  'demand_departement',\n  'demand_explorer',\n  'ranking_global_war',\n  'audience'\n];\n\nreturn sheetNames.map(name => ({\n  json: { sheetName: name },\n  binary: binary\n}));\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [640, -80],
+      "id": "aa001122-3344-5566-7788-99aabbccddee",
+      "name": "Create Sheet Items"
+    },
+    {
+      "parameters": {
         "operation": "xlsx",
-        "options": {}
+        "options": {
+          "sheetName": "={{ $json.sheetName }}"
+        }
       },
       "type": "n8n-nodes-base.extractFromFile",
       "typeVersion": 1.1,
-      "position": [
-        640,
-        -80
-      ],
+      "position": [848, -80],
       "id": "a389a2d1-c94f-4448-84be-d9900ad160b8",
       "name": "Extract from File1"
     },
     {
       "parameters": {
-        "jsCode": "const sheets = {};\n\nfor (const item of $input.all()) {\n  const name = item.json.sheetName ?? 'Sheet1';\n  if (!sheets[name]) sheets[name] = [];\n  // Remove sheetName from row data to avoid polluting the data sent to the AI\n  const { sheetName, ...rowData } = item.json;\n  sheets[name].push(rowData);\n}\n\n// Limit to last 100 rows per sheet to avoid token overflow\nreturn Object.entries(sheets).map(([name, rows]) => ({\n  json: {\n    sheetName: name,\n    rowCount: rows.length,\n    rows: rows.slice(-100)\n  }\n}));\n"
+        "jsCode": "// Group rows by sheetName — each batch of rows belongs to one sheet\n// extractFromFile adds sheetName to each row when a specific sheet is requested\nconst sheets = {};\n\nfor (const item of $input.all()) {\n  const name = item.json.sheetName ?? 'Unknown';\n  if (!sheets[name]) sheets[name] = [];\n  // Remove sheetName from row data to keep it clean\n  const { sheetName: _ignored, ...rowData } = item.json;\n  sheets[name].push(rowData);\n}\n\n// Limit to last 100 rows per sheet to avoid GPT-4 token overflow\nreturn Object.entries(sheets).map(([name, rows]) => ({\n  json: {\n    sheetName: name,\n    rowCount: rows.length,\n    rows: rows.slice(-100)\n  }\n}));\n"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [
-        848,
-        -80
-      ],
+      "position": [1056, -80],
       "id": "bd687e0e-3499-421a-8224-63b95cecc1a4",
       "name": "Code in JavaScript1"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Build a complete prompt with real data embedded as a string\n// This avoids relying on n8n template expressions for data injection\nconst item = $input.first();\nconst sheetName = item.json.sheetName;\nconst rows = item.json.rows;\nconst rowCount = item.json.rowCount;\nconst dataStr = JSON.stringify(rows);\n\nconst instructions = {\n  demand_global: `Analyse the sheet \"demand_global\" (${rowCount} rows total, last ${rows.length} rows provided).\\n- Compare current month volume vs M-1: give % and absolute number.\\n- Compare current month vs same month previous year: give % and absolute number.\\n- Summarise the 1-year trend: globally increasing or decreasing vs previous year?\\nUse bullet points. English only. Use REAL numbers from the data only.`,\n\n  demand_transaction: `Analyse the sheet \"demand_transaction\" (columns: date, segment.transaction, volume). ${rowCount} rows total.\\n- Per segment, compare current month vs M-1: % and absolute.\\n- Per segment, compare current month vs same month previous year: % and absolute.\\n- Which segments are increasing vs decreasing?\\nUse bullet points. English only. Use REAL numbers from the data only.`,\n\n  ranking_global_war: `Analyse the sheet \"ranking_global_war\" (columns: date, url_hostname, rank_organic_war). ${rowCount} rows total.\\n- What is Seloger Neuf current rank vs competitors?\\n- Has the rank improved or declined over the last months?\\nUse bullet points. English only. Use REAL numbers from the data only.`,\n\n  demand_asset: `Analyse the sheet \"demand_asset\". ${rowCount} rows total.\\n- Global demand trend month over month: give % evolution per month.\\n- Per asset type: increasing, stable or decreasing?\\nUse bullet points. English only. Use REAL numbers from the data only.`,\n\n  demand_departement: `Analyse the sheet \"demand_departement\". ${rowCount} rows total.\\n- Top 10 departments by volume for the last 3 months.\\n- For each: increasing, stable or decreasing over the last 3 months?\\nUse bullet points. English only. Use REAL numbers from the data only.`,\n\n  demand_explorer: `Analyse the sheet \"demand_explorer\" (columns include MoM and YoY growth). ${rowCount} rows total.\\n- Which keywords have the highest YoY growth?\\n- Which are trend_type = growing?\\nUse bullet points. English only. Use REAL numbers from the data only.`,\n\n  demand_region: `Analyse the sheet \"demand_region\". ${rowCount} rows total.\\n- Top regions by search volume.\\n- Which regions are growing the fastest?\\nUse bullet points. English only. Use REAL numbers from the data only.`,\n\n  audience: `Analyse the sheet \"audience\". ${rowCount} rows total.\\n- Compare nonbrand vs brand vs anonymous click share (%).\\n- Has the split changed recently?\\nUse bullet points. English only. Use REAL numbers from the data only.`\n};\n\nconst instruction = instructions[sheetName] || `Analyse the sheet \"${sheetName}\" (${rowCount} rows). Provide key facts with real numbers from the data. Bullet points, English only.`;\n\nconst prompt = `You are a SEO and real estate analyst specialised in the French new residential market.\\n\\nYou receive REAL data from a digital performance spreadsheet. Use ONLY the numbers present in the data below — do NOT use placeholders like XX% or YY units.\\n\\nSheet: \"${sheetName}\"\\nTotal rows: ${rowCount}\\nData (last ${rows.length} rows):\\n${dataStr}\\n\\n${instruction}`;\n\nreturn [{ json: { sheetName, prompt } }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1264, -80],
+      "id": "f1e2d3c4-b5a6-7890-cdef-ab1234567890",
+      "name": "Build Prompt"
     },
     {
       "parameters": {
@@ -101,25 +94,9 @@
       },
       "type": "@n8n/n8n-nodes-langchain.agent",
       "typeVersion": 3.1,
-      "position": [
-        1264,
-        -80
-      ],
+      "position": [1472, -80],
       "id": "6ec5d301-820a-48d2-b117-be1dc01ae560",
       "name": "AI Agent1"
-    },
-    {
-      "parameters": {
-        "jsCode": "const item = $input.first();\nconst sheetName = item.json.sheetName;\nconst rows = item.json.rows;\nconst dataStr = JSON.stringify(rows);\n\nconst instructions = {\n  demand_global: `Analyse the tab \"demand_global\".\\n- Compare current month volume vs M-1 (% and absolute number).\\n- Compare current month vs same month previous year (% and absolute number).\\n- Summarise the 1-year trend: is it globally increasing or decreasing vs previous year?\\nUse bullet points. English only. Real numbers only, no placeholders.`,\n  demand_transaction: `Analyse the tab \"demand_transaction\" (columns: date, segment.transaction, volume).\\n- Compare each segment current month vs M-1 (% and absolute).\\n- Compare each segment current month vs same month previous year (% and absolute).\\n- Which segments are increasing vs decreasing?\\nUse bullet points. English only. Real numbers only, no placeholders.`,\n  ranking_global_war: `Analyse the tab \"ranking_global_war\" (columns: date, url_hostname, rank_organic_war).\\n- What is Seloger Neuf current rank vs competitors?\\n- Has the rank improved or declined recently?\\nUse bullet points. English only. Real numbers only, no placeholders.`,\n  demand_asset: `Analyse the tab \"demand_asset\".\\n- Global demand trend month over month (% evolution).\\n- Per asset type: is demand increasing, stable or decreasing?\\nUse bullet points. English only. Real numbers only, no placeholders.`,\n  demand_departement: `Analyse the tab \"demand_departement\".\\n- Top 10 departments by volume for the last 3 months.\\n- For each: is volume increasing, stable or decreasing over the last 3 months?\\nUse bullet points. English only. Real numbers only, no placeholders.`,\n  audience: `Analyse the tab \"audience\".\\n- Compare nonbrand vs brand vs anonymous click share.\\n- Has the split changed recently?\\nUse bullet points. English only. Real numbers only, no placeholders.`\n};\n\nconst instruction = instructions[sheetName] || `Analyse the tab \"${sheetName}\". Provide key facts with real numbers. Use bullet points. English only.`;\n\nconst prompt = `You are a SEO and real estate analyst specialised in the French new residential market.\\n\\nYou receive real data from a digital performance tracking spreadsheet.\\n\\nSheet name: \"${sheetName}\"\\nNumber of rows: ${rows.length}\\nData:\\n${dataStr}\\n\\n${instruction}`;\n\nreturn [{ json: { ...item.json, prompt } }];\n"
-      },
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        1056,
-        -80
-      ],
-      "id": "f1e2d3c4-b5a6-7890-cdef-ab1234567890",
-      "name": "Build Prompt"
     },
     {
       "parameters": {
@@ -134,10 +111,7 @@
       },
       "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
       "typeVersion": 1.3,
-      "position": [
-        1056,
-        160
-      ],
+      "position": [1472, 160],
       "id": "d3a4d900-14fb-4495-90d4-cdd0128316ff",
       "name": "OpenAI Chat Model1",
       "credentials": {
@@ -149,14 +123,11 @@
     },
     {
       "parameters": {
-        "jsCode": "const allOutputs = $input.all()\n  .map(item => item.json.output || '')\n  .filter(o => o.length > 0)\n  .join('\\n\\n---\\n\\n');\n\nreturn [{ json: { output: allOutputs } }];\n"
+        "jsCode": "// Concatenate all AI outputs into one document\nconst allOutputs = $input.all()\n  .map(item => item.json.output || '')\n  .filter(o => o.length > 0)\n  .join('\\n\\n---\\n\\n');\n\nreturn [{ json: { output: allOutputs } }];\n"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [
-        1472,
-        -80
-      ],
+      "position": [1680, -80],
       "id": "c1a2b3d4-e5f6-7890-abcd-ef1234567890",
       "name": "Aggregate Outputs"
     },
@@ -171,10 +142,7 @@
       },
       "type": "n8n-nodes-base.convertToFile",
       "typeVersion": 1.1,
-      "position": [
-        1680,
-        -80
-      ],
+      "position": [1888, -80],
       "id": "4efa576a-4e44-42a3-bb54-9000d46a5c29",
       "name": "Convert to File1"
     },
@@ -195,10 +163,7 @@
       },
       "type": "n8n-nodes-base.googleDrive",
       "typeVersion": 3,
-      "position": [
-        1680,
-        -80
-      ],
+      "position": [2096, -80],
       "id": "3b01b056-b619-4bb0-9a5f-649820d90105",
       "name": "Upload file1",
       "credentials": {
@@ -206,11 +171,7 @@
           "id": "hUSKS8kbE7qdyiJz",
           "name": "Mon Google Drive"
         }
-      },
-      "position": [
-        1888,
-        -80
-      ]
+      }
     },
     {
       "parameters": {
@@ -225,16 +186,9 @@
       },
       "type": "n8n-nodes-base.googleDrive",
       "typeVersion": 3,
-      "position": [
-        1888,
-        -80
-      ],
+      "position": [2304, -80],
       "id": "a7349699-3383-48a2-bc03-07faff6baf44",
       "name": "Update file1",
-      "position": [
-        2096,
-        -80
-      ],
       "credentials": {
         "googleDriveOAuth2Api": {
           "id": "hUSKS8kbE7qdyiJz",
@@ -246,115 +200,37 @@
   "pinData": {},
   "connections": {
     "Schedule Trigger1": {
-      "main": [
-        [
-          {
-            "node": "Download file1",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
+      "main": [[{ "node": "Download file1", "type": "main", "index": 0 }]]
     },
     "Download file1": {
-      "main": [
-        [
-          {
-            "node": "Extract from File1",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
+      "main": [[{ "node": "Create Sheet Items", "type": "main", "index": 0 }]]
+    },
+    "Create Sheet Items": {
+      "main": [[{ "node": "Extract from File1", "type": "main", "index": 0 }]]
     },
     "Extract from File1": {
-      "main": [
-        [
-          {
-            "node": "Code in JavaScript1",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
+      "main": [[{ "node": "Code in JavaScript1", "type": "main", "index": 0 }]]
     },
     "Code in JavaScript1": {
-      "main": [
-        [
-          {
-            "node": "Build Prompt",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
+      "main": [[{ "node": "Build Prompt", "type": "main", "index": 0 }]]
     },
     "Build Prompt": {
-      "main": [
-        [
-          {
-            "node": "AI Agent1",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
+      "main": [[{ "node": "AI Agent1", "type": "main", "index": 0 }]]
     },
     "AI Agent1": {
-      "main": [
-        [
-          {
-            "node": "Aggregate Outputs",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
+      "main": [[{ "node": "Aggregate Outputs", "type": "main", "index": 0 }]]
     },
     "OpenAI Chat Model1": {
-      "ai_languageModel": [
-        [
-          {
-            "node": "AI Agent1",
-            "type": "ai_languageModel",
-            "index": 0
-          }
-        ]
-      ]
+      "ai_languageModel": [[{ "node": "AI Agent1", "type": "ai_languageModel", "index": 0 }]]
     },
     "Aggregate Outputs": {
-      "main": [
-        [
-          {
-            "node": "Convert to File1",
-
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
+      "main": [[{ "node": "Convert to File1", "type": "main", "index": 0 }]]
     },
     "Convert to File1": {
-      "main": [
-        [
-          {
-            "node": "Upload file1",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
+      "main": [[{ "node": "Upload file1", "type": "main", "index": 0 }]]
     },
     "Upload file1": {
-      "main": [
-        [
-          {
-            "node": "Update file1",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
+      "main": [[{ "node": "Update file1", "type": "main", "index": 0 }]]
     }
   },
   "active": false,
