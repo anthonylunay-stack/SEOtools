@@ -82,7 +82,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const sheets = {};\n\nfor (const item of $input.all()) {\n  const name = item.json.sheetName ?? 'Sheet1';\n  if (!sheets[name]) sheets[name] = [];\n  sheets[name].push(item.json);\n}\n\nreturn Object.entries(sheets).map(([name, rows]) => ({\n  json: {\n    sheetName: name,\n    rows: rows\n  }\n}));\n"
+        "jsCode": "const sheets = {};\n\nfor (const item of $input.all()) {\n  const name = item.json.sheetName ?? 'Sheet1';\n  if (!sheets[name]) sheets[name] = [];\n  // Remove sheetName from row data to avoid polluting the data sent to the AI\n  const { sheetName, ...rowData } = item.json;\n  sheets[name].push(rowData);\n}\n\n// Limit to last 100 rows per sheet to avoid token overflow\nreturn Object.entries(sheets).map(([name, rows]) => ({\n  json: {\n    sheetName: name,\n    rowCount: rows.length,\n    rows: rows.slice(-100)\n  }\n}));\n"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -96,17 +96,30 @@
     {
       "parameters": {
         "promptType": "define",
-        "text": "Tu es un analyste SEO et immobilier spécialisé dans l'analyse de données de demande en ligne pour le marché immobilier français (neuf, résidentiel).\n\nTu reçois des données issues d'un fichier Excel de suivi de performance digitale. Chaque feuille correspond à un angle d'analyse différent.\n\nVoici comment interpréter chaque feuille :\n\n- demand_global : volume mensuel de recherches toutes catégories confondues (colonnes : month, year, volume). Identifie les tendances annuelles et saisonnières.\n- demand_transaction : volume par type de transaction (new builds, resale, invest, new houses) au fil du temps. Compare les segments et détecte les hausses/baisses.\n- demand_asset : volume par type de bien (apartment block, studio, duplex, vefa, etc.). Identifie les typologies en croissance ou en déclin.\n- demand_region : volume de recherches par région française. Mets en avant les régions les plus actives et celles en progression.\n- demand_departement : volume par département. Identifie les Top 5 départements par volume et ceux avec la plus forte croissance récente.\n- demand_explorer : mots-clés avec leur croissance MoM (month-over-month) et YoY (year-over-year). Concentre-toi sur les keywords à fort potentiel (trend_type = \"growing\" + YoY élevé).\n- ranking_global_war : classement SEO des concurrents (score WAR = visibilité organique). Identifie le leader et les écarts entre concurrents.\n- audience : répartition des clics SEO par type de requête (brand vs nonbrand). Évalue la dépendance à la marque.\n\nPour chaque feuille reçue, fournis :\n1. Un résumé factuel en 3-5 points clés avec les chiffres importants\n2. La tendance principale (hausse / baisse / stable)\n3. Une recommandation actionnable courte\n\nFeuille analysée : \"{{ $json.sheetName }}\"\nDonnées : {{ JSON.stringify($json.rows) }}\n\n\nTab \"demand_global\"\n\nThis first document you have to analyse is the market trend. In the tab \"demand_global\"\nI need you to analyse the volume for the current month to the month M-1.\nex: if we are in october, i need your analysis to compare october to september\nFormat: Give me the evolution in pourcentage and in number. \n\nAlso I need you compare for the current Month the evolution from the Year -1 \nexemple: For october 2025 compare the evolution with october 2024. \n Format: Give me the evolution in pourcentage and in number. \n\nSumarise me the evolution for 1 year. The trend is increasing, decreasing month after month, compare the figures to the previous year. The trend is higher or not compare to the previous year?\n\n2. Tab \"demand_transaction\"\nIn this tab you have 3 column which are \"date (Année Mois)\", \"segment.transaction\", \"volume\"\ndate (Année Mois)\tis the date Année Mois\nsegment.transaction is the segment \nvolume is the search volume\n\nI need you to analyse the volume for the current month to the month M-1 segment per segmente and tell me which segment is dropping month after month or opposite which segment is increasing month after month. \nex: if we are in october, i need your analysis to compare october to september\nFormat: Give me the evolution in pourcentage and in number. \n\nAlso I need you compare for the current Month the evolution from the Year -1 \nexemple: For october 2025 compare the evolution with october 2024. \n Format: Give me the evolution in pourcentage and in number. \n\nSumarise the informations and give a feedback about segment (which one is increasing, which one is decreasing.\n\n\n3. Tab \"ranking_global_war\"\nIn this tab you have 3 column: date, url_hostname, rank_organic_war.\n\nI need you to analyse the position of Seloger neuf compared to competitors.\n\n4. Tab \"demand_asset\"\nAnalyse the evolution of the demand month after month. Is it increasing, decreasing or stable. Give % evolution per month compare to previous month. do the analysis global and by asset\n\n5/ demand_departement\nAnalyse the volume per departement for the last 3 months. Is it increasing decreasing or stable. \nWhat is the top 10 departement volume and what is the evolution on the last 3 months.\n\n5. Tab \"audience\"\nCompare nonbrand vs brand vs anonymous\n\n\n🎯 What I expect from you\nWe need you to analysing the data from the spreadsheet.\nFor each answer avoid the detail and give me only the result\nUse english only.\nWe want you analyse each tab one by one following the detail bellow.\ncreate bullet point for each part.",
+        "text": "={{ $json.prompt }}",
         "options": {}
       },
       "type": "@n8n/n8n-nodes-langchain.agent",
       "typeVersion": 3.1,
       "position": [
-        1056,
+        1264,
         -80
       ],
       "id": "6ec5d301-820a-48d2-b117-be1dc01ae560",
       "name": "AI Agent1"
+    },
+    {
+      "parameters": {
+        "jsCode": "const item = $input.first();\nconst sheetName = item.json.sheetName;\nconst rows = item.json.rows;\nconst dataStr = JSON.stringify(rows);\n\nconst instructions = {\n  demand_global: `Analyse the tab \"demand_global\".\\n- Compare current month volume vs M-1 (% and absolute number).\\n- Compare current month vs same month previous year (% and absolute number).\\n- Summarise the 1-year trend: is it globally increasing or decreasing vs previous year?\\nUse bullet points. English only. Real numbers only, no placeholders.`,\n  demand_transaction: `Analyse the tab \"demand_transaction\" (columns: date, segment.transaction, volume).\\n- Compare each segment current month vs M-1 (% and absolute).\\n- Compare each segment current month vs same month previous year (% and absolute).\\n- Which segments are increasing vs decreasing?\\nUse bullet points. English only. Real numbers only, no placeholders.`,\n  ranking_global_war: `Analyse the tab \"ranking_global_war\" (columns: date, url_hostname, rank_organic_war).\\n- What is Seloger Neuf current rank vs competitors?\\n- Has the rank improved or declined recently?\\nUse bullet points. English only. Real numbers only, no placeholders.`,\n  demand_asset: `Analyse the tab \"demand_asset\".\\n- Global demand trend month over month (% evolution).\\n- Per asset type: is demand increasing, stable or decreasing?\\nUse bullet points. English only. Real numbers only, no placeholders.`,\n  demand_departement: `Analyse the tab \"demand_departement\".\\n- Top 10 departments by volume for the last 3 months.\\n- For each: is volume increasing, stable or decreasing over the last 3 months?\\nUse bullet points. English only. Real numbers only, no placeholders.`,\n  audience: `Analyse the tab \"audience\".\\n- Compare nonbrand vs brand vs anonymous click share.\\n- Has the split changed recently?\\nUse bullet points. English only. Real numbers only, no placeholders.`\n};\n\nconst instruction = instructions[sheetName] || `Analyse the tab \"${sheetName}\". Provide key facts with real numbers. Use bullet points. English only.`;\n\nconst prompt = `You are a SEO and real estate analyst specialised in the French new residential market.\\n\\nYou receive real data from a digital performance tracking spreadsheet.\\n\\nSheet name: \"${sheetName}\"\\nNumber of rows: ${rows.length}\\nData:\\n${dataStr}\\n\\n${instruction}`;\n\nreturn [{ json: { ...item.json, prompt } }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1056,
+        -80
+      ],
+      "id": "f1e2d3c4-b5a6-7890-cdef-ab1234567890",
+      "name": "Build Prompt"
     },
     {
       "parameters": {
@@ -141,7 +154,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1264,
+        1472,
         -80
       ],
       "id": "c1a2b3d4-e5f6-7890-abcd-ef1234567890",
@@ -159,7 +172,7 @@
       "type": "n8n-nodes-base.convertToFile",
       "typeVersion": 1.1,
       "position": [
-        1472,
+        1680,
         -80
       ],
       "id": "4efa576a-4e44-42a3-bb54-9000d46a5c29",
@@ -193,7 +206,11 @@
           "id": "hUSKS8kbE7qdyiJz",
           "name": "Mon Google Drive"
         }
-      }
+      },
+      "position": [
+        1888,
+        -80
+      ]
     },
     {
       "parameters": {
@@ -214,6 +231,10 @@
       ],
       "id": "a7349699-3383-48a2-bc03-07faff6baf44",
       "name": "Update file1",
+      "position": [
+        2096,
+        -80
+      ],
       "credentials": {
         "googleDriveOAuth2Api": {
           "id": "hUSKS8kbE7qdyiJz",
@@ -261,6 +282,17 @@
       "main": [
         [
           {
+            "node": "Build Prompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Prompt": {
+      "main": [
+        [
+          {
             "node": "AI Agent1",
             "type": "main",
             "index": 0
@@ -295,6 +327,7 @@
         [
           {
             "node": "Convert to File1",
+
             "type": "main",
             "index": 0
           }
