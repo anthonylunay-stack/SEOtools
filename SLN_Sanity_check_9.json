@@ -155,6 +155,8 @@
           "cachedResultName": "demand_global",
           "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1BlQRDytw-GXK9BHhMEqaxUXIGoImqfqY_kFjWNINcI4/edit#gid=1545992731"
         },
+        "returnAll": false,
+        "limit": 36,
         "options": {}
       },
       "type": "n8n-nodes-base.googleSheetsTool",
@@ -185,6 +187,8 @@
           "cachedResultName": "demand_transaction",
           "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1BlQRDytw-GXK9BHhMEqaxUXIGoImqfqY_kFjWNINcI4/edit#gid=996643932"
         },
+        "returnAll": false,
+        "limit": 150,
         "options": {}
       },
       "type": "n8n-nodes-base.googleSheetsTool",
@@ -215,6 +219,8 @@
           "cachedResultName": "demand_asset",
           "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1BlQRDytw-GXK9BHhMEqaxUXIGoImqfqY_kFjWNINcI4/edit#gid=219092738"
         },
+        "returnAll": false,
+        "limit": 200,
         "options": {}
       },
       "type": "n8n-nodes-base.googleSheetsTool",
@@ -245,6 +251,8 @@
           "cachedResultName": "demand_region",
           "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1BlQRDytw-GXK9BHhMEqaxUXIGoImqfqY_kFjWNINcI4/edit#gid=389961799"
         },
+        "returnAll": false,
+        "limit": 200,
         "options": {}
       },
       "type": "n8n-nodes-base.googleSheetsTool",
@@ -275,6 +283,8 @@
           "cachedResultName": "demand_departement",
           "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1BlQRDytw-GXK9BHhMEqaxUXIGoImqfqY_kFjWNINcI4/edit#gid=1057870854"
         },
+        "returnAll": false,
+        "limit": 300,
         "options": {}
       },
       "type": "n8n-nodes-base.googleSheetsTool",
@@ -305,6 +315,8 @@
           "cachedResultName": "demand_explorer",
           "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1BlQRDytw-GXK9BHhMEqaxUXIGoImqfqY_kFjWNINcI4/edit#gid=1581805178"
         },
+        "returnAll": false,
+        "limit": 100,
         "options": {}
       },
       "type": "n8n-nodes-base.googleSheetsTool",
@@ -335,6 +347,8 @@
           "cachedResultName": "ranking_global_war",
           "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1BlQRDytw-GXK9BHhMEqaxUXIGoImqfqY_kFjWNINcI4/edit#gid=232829744"
         },
+        "returnAll": false,
+        "limit": 150,
         "options": {}
       },
       "type": "n8n-nodes-base.googleSheetsTool",
@@ -365,6 +379,8 @@
           "cachedResultName": "audience",
           "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1BlQRDytw-GXK9BHhMEqaxUXIGoImqfqY_kFjWNINcI4/edit#gid=1576889957"
         },
+        "returnAll": false,
+        "limit": 100,
         "options": {}
       },
       "type": "n8n-nodes-base.googleSheetsTool",
