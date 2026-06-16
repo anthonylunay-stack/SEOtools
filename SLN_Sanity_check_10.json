@@ -1,0 +1,412 @@
+{
+  "name": "SLN Sanity check",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 8 * * 1"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [300, 400],
+      "id": "8d6fe230-0893-4860-9603-a3c815400ce5",
+      "name": "Schedule Trigger1"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1BlQRDytw-GXK9BHhMEqaxUXIGoImqfqY_kFjWNINcI4",
+          "mode": "list",
+          "cachedResultName": "[AVIVAIPROJ] SLN Data",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1BlQRDytw-GXK9BHhMEqaxUXIGoImqfqY_kFjWNINcI4/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1545992731,
+          "mode": "list",
+          "cachedResultName": "demand_global",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1BlQRDytw-GXK9BHhMEqaxUXIGoImqfqY_kFjWNINcI4/edit#gid=1545992731"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [600, 200],
+      "id": "c13f9bbc-2a85-4efc-af18-88e695334e85",
+      "name": "GSheets_demand_global",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "sKJo0cSICgmr4UFl",
+          "name": "Google Sheets account 11"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1BlQRDytw-GXK9BHhMEqaxUXIGoImqfqY_kFjWNINcI4",
+          "mode": "list",
+          "cachedResultName": "[AVIVAIPROJ] SLN Data",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1BlQRDytw-GXK9BHhMEqaxUXIGoImqfqY_kFjWNINcI4/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 996643932,
+          "mode": "list",
+          "cachedResultName": "demand_transaction",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1BlQRDytw-GXK9BHhMEqaxUXIGoImqfqY_kFjWNINcI4/edit#gid=996643932"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [600, 400],
+      "id": "87412a9c-33dd-4f07-9a9c-7c972acffc35",
+      "name": "GSheets_demand_transaction",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "sKJo0cSICgmr4UFl",
+          "name": "Google Sheets account 11"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1BlQRDytw-GXK9BHhMEqaxUXIGoImqfqY_kFjWNINcI4",
+          "mode": "list",
+          "cachedResultName": "[AVIVAIPROJ] SLN Data",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1BlQRDytw-GXK9BHhMEqaxUXIGoImqfqY_kFjWNINcI4/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 219092738,
+          "mode": "list",
+          "cachedResultName": "demand_asset",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1BlQRDytw-GXK9BHhMEqaxUXIGoImqfqY_kFjWNINcI4/edit#gid=219092738"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [600, 600],
+      "id": "0ed7be2d-afad-4697-8bed-628400855aec",
+      "name": "GSheets_demand_asset",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "sKJo0cSICgmr4UFl",
+          "name": "Google Sheets account 11"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1BlQRDytw-GXK9BHhMEqaxUXIGoImqfqY_kFjWNINcI4",
+          "mode": "list",
+          "cachedResultName": "[AVIVAIPROJ] SLN Data",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1BlQRDytw-GXK9BHhMEqaxUXIGoImqfqY_kFjWNINcI4/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1057870854,
+          "mode": "list",
+          "cachedResultName": "demand_departement",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1BlQRDytw-GXK9BHhMEqaxUXIGoImqfqY_kFjWNINcI4/edit#gid=1057870854"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [600, 800],
+      "id": "9a19e8e5-668e-456e-9bf7-8185ee4d65d1",
+      "name": "GSheets_demand_departement",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "sKJo0cSICgmr4UFl",
+          "name": "Google Sheets account 11"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1BlQRDytw-GXK9BHhMEqaxUXIGoImqfqY_kFjWNINcI4",
+          "mode": "list",
+          "cachedResultName": "[AVIVAIPROJ] SLN Data",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1BlQRDytw-GXK9BHhMEqaxUXIGoImqfqY_kFjWNINcI4/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 232829744,
+          "mode": "list",
+          "cachedResultName": "ranking_global_war",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1BlQRDytw-GXK9BHhMEqaxUXIGoImqfqY_kFjWNINcI4/edit#gid=232829744"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [600, 1000],
+      "id": "ac393d6b-93a1-4472-bf18-860a64c62f8b",
+      "name": "GSheets_ranking_global_war",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "sKJo0cSICgmr4UFl",
+          "name": "Google Sheets account 11"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1BlQRDytw-GXK9BHhMEqaxUXIGoImqfqY_kFjWNINcI4",
+          "mode": "list",
+          "cachedResultName": "[AVIVAIPROJ] SLN Data",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1BlQRDytw-GXK9BHhMEqaxUXIGoImqfqY_kFjWNINcI4/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1576889957,
+          "mode": "list",
+          "cachedResultName": "audience",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1BlQRDytw-GXK9BHhMEqaxUXIGoImqfqY_kFjWNINcI4/edit#gid=1576889957"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [600, 1200],
+      "id": "80a7bb7b-2255-4884-aff1-f25a7b139de1",
+      "name": "GSheets_audience",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "sKJo0cSICgmr4UFl",
+          "name": "Google Sheets account 11"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "append"
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [1000, 700],
+      "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567809",
+      "name": "Merge All Sheets"
+    },
+    {
+      "parameters": {
+        "language": "javaScript",
+        "jsCode": "// ─── helpers ───────────────────────────────────────────────\nfunction pct(a, b) {\n  if (!b || b === 0) return 'n/a';\n  return ((a - b) / b * 100).toFixed(1) + '%';\n}\nfunction diff(a, b) {\n  if (a == null || b == null) return 'n/a';\n  const d = a - b;\n  return (d >= 0 ? '+' : '') + d.toLocaleString();\n}\nfunction parseDate(d) {\n  // handles \"2024-01\", \"2024-01-01\", \"01/2024\", \"Jan 2024\", numeric year+month\n  if (!d) return null;\n  const s = String(d).trim();\n  const m1 = s.match(/^(\\d{4})[\\-\\/](\\d{1,2})/);\n  if (m1) return { year: +m1[1], month: +m1[2] };\n  const m2 = s.match(/^(\\d{1,2})[\\-\\/](\\d{4})/);\n  if (m2) return { year: +m2[2], month: +m2[1] };\n  return null;\n}\nfunction dateKey(year, month) { return year * 100 + month; }\n\n// ─── collect items ──────────────────────────────────────────\nconst all = $input.all().map(i => i.json);\n\n// detect sheet by fields present\nconst bySheet = { demand_global: [], demand_transaction: [], demand_asset: [],\n  demand_departement: [], ranking_global_war: [], audience: [] };\n\nfor (const row of all) {\n  const keys = Object.keys(row).map(k => k.toLowerCase());\n  if (keys.includes('rank_organic_war') || keys.includes('url_hostname')) {\n    bySheet.ranking_global_war.push(row);\n  } else if (keys.some(k => k.includes('segment.transaction') || k === 'segment')) {\n    bySheet.demand_transaction.push(row);\n  } else if (keys.some(k => k.includes('segment.asset') || k.includes('asset'))) {\n    bySheet.demand_asset.push(row);\n  } else if (keys.some(k => k.includes('departement') || k.includes('département'))) {\n    bySheet.demand_departement.push(row);\n  } else if (keys.some(k => k.includes('brand') || k.includes('nonbrand') || k.includes('anonymous') || k === 'type')) {\n    bySheet.audience.push(row);\n  } else if (keys.includes('volume') && (keys.includes('month') || keys.includes('year') || keys.some(k => k.includes('date')))) {\n    bySheet.demand_global.push(row);\n  }\n}\n\nlet report = '';\n\n// ─── 1. demand_global ───────────────────────────────────────\n{\n  const rows = bySheet.demand_global;\n  // sort by date\n  rows.sort((a, b) => {\n    const ka = a.year ? dateKey(+a.year, +a.month) : (parseDate(a.date || a['date (Année Mois)'])?.year * 100 + parseDate(a.date || a['date (Année Mois)'])?.month || 0);\n    const kb = b.year ? dateKey(+b.year, +b.month) : (parseDate(b.date || b['date (Année Mois)'])?.year * 100 + parseDate(b.date || b['date (Année Mois)'])?.month || 0);\n    return ka - kb;\n  });\n  const n = rows.length;\n  if (n >= 2) {\n    const cur = rows[n-1]; const prev = rows[n-2];\n    const yoy = rows.find(r => {\n      const k1 = cur.year ? dateKey(+cur.year - 1, +cur.month) : null;\n      if (!k1) return false;\n      return r.year ? dateKey(+r.year, +r.month) === k1 : false;\n    });\n    report += `## 1. demand_global\\n`;\n    report += `- Current month: ${cur.volume?.toLocaleString() || cur.volume}\\n`;\n    report += `- vs M-1: ${diff(+cur.volume, +prev.volume)} (${pct(+cur.volume, +prev.volume)})\\n`;\n    if (yoy) report += `- vs same month last year: ${diff(+cur.volume, +yoy.volume)} (${pct(+cur.volume, +yoy.volume)})\\n`;\n    // 12-month trend\n    const last12 = rows.slice(-13);\n    let ups = 0, downs = 0;\n    for (let i = 1; i < last12.length; i++) {\n      if (+last12[i].volume > +last12[i-1].volume) ups++; else downs++;\n    }\n    report += `- 12-month trend: ${ups} months up, ${downs} months down → ${ups > downs ? 'INCREASING' : 'DECREASING'}\\n`;\n  } else {\n    report += `## 1. demand_global\\n- Not enough data (${n} rows)\\n`;\n  }\n  report += '\\n';\n}\n\n// ─── 2. demand_transaction ──────────────────────────────────\n{\n  const rows = bySheet.demand_transaction;\n  const segKey = Object.keys(rows[0] || {}).find(k => k.toLowerCase().includes('segment')) || 'segment.transaction';\n  const dateK = Object.keys(rows[0] || {}).find(k => k.toLowerCase().includes('date')) || 'date';\n  // group by segment\n  const segments = {};\n  for (const r of rows) {\n    const seg = r[segKey] || 'unknown';\n    if (!segments[seg]) segments[seg] = [];\n    segments[seg].push(r);\n  }\n  report += `## 2. demand_transaction\\n`;\n  for (const [seg, srows] of Object.entries(segments)) {\n    srows.sort((a, b) => String(a[dateK]).localeCompare(String(b[dateK])));\n    const n = srows.length;\n    if (n >= 2) {\n      const cur = +srows[n-1].volume; const prev = +srows[n-2].volume;\n      report += `- ${seg}: ${cur.toLocaleString()} | vs M-1: ${diff(cur, prev)} (${pct(cur, prev)})\\n`;\n    }\n  }\n  report += '\\n';\n}\n\n// ─── 3. demand_asset ────────────────────────────────────────\n{\n  const rows = bySheet.demand_asset;\n  const segKey = Object.keys(rows[0] || {}).find(k => k.toLowerCase().includes('asset') || k.toLowerCase().includes('segment')) || 'segment.asset';\n  const dateK = Object.keys(rows[0] || {}).find(k => k.toLowerCase().includes('date')) || 'date';\n  const assets = {};\n  for (const r of rows) {\n    const seg = r[segKey] || 'unknown';\n    if (!assets[seg]) assets[seg] = [];\n    assets[seg].push(r);\n  }\n  report += `## 4. demand_asset\\n`;\n  for (const [seg, srows] of Object.entries(assets)) {\n    srows.sort((a, b) => String(a[dateK]).localeCompare(String(b[dateK])));\n    const n = srows.length;\n    if (n >= 2) {\n      const cur = +srows[n-1].volume; const prev = +srows[n-2].volume;\n      report += `- ${seg}: ${cur.toLocaleString()} | vs M-1: ${diff(cur, prev)} (${pct(cur, prev)})\\n`;\n    }\n  }\n  report += '\\n';\n}\n\n// ─── 4. demand_departement ──────────────────────────────────\n{\n  const rows = bySheet.demand_departement;\n  const deptKey = Object.keys(rows[0] || {}).find(k => k.toLowerCase().includes('dept') || k.toLowerCase().includes('departement') || k.toLowerCase().includes('département')) || 'departement';\n  const dateK = Object.keys(rows[0] || {}).find(k => k.toLowerCase().includes('date')) || 'date';\n  // get last available date\n  const dates = [...new Set(rows.map(r => String(r[dateK])))].sort();\n  const lastDate = dates[dates.length - 1];\n  const prevDate = dates[dates.length - 2];\n  const prev2Date = dates[dates.length - 3];\n  // volumes for last month per dept\n  const lastRows = rows.filter(r => String(r[dateK]) === lastDate);\n  lastRows.sort((a, b) => +b.volume - +a.volume);\n  const top10 = lastRows.slice(0, 10);\n  report += `## 5. demand_departement (top 10, ${lastDate})\\n`;\n  for (const r of top10) {\n    const dept = r[deptKey];\n    const v = +r.volume;\n    const p = rows.find(x => String(x[dateK]) === prevDate && x[deptKey] === dept);\n    const p2 = rows.find(x => String(x[dateK]) === prev2Date && x[deptKey] === dept);\n    const t = p ? pct(v, +p.volume) : 'n/a';\n    const t2 = p2 ? pct(+p?.volume, +p2.volume) : 'n/a';\n    report += `- ${dept}: ${v.toLocaleString()} | M-1: ${t} | M-2: ${t2}\\n`;\n  }\n  report += '\\n';\n}\n\n// ─── 5. ranking_global_war ──────────────────────────────────\n{\n  const rows = bySheet.ranking_global_war;\n  const dateK = Object.keys(rows[0] || {}).find(k => k.toLowerCase().includes('date')) || 'date';\n  const hostK = Object.keys(rows[0] || {}).find(k => k.toLowerCase().includes('host') || k.toLowerCase().includes('url')) || 'url_hostname';\n  const rankK = Object.keys(rows[0] || {}).find(k => k.toLowerCase().includes('war') || k.toLowerCase().includes('rank')) || 'rank_organic_war';\n  const dates = [...new Set(rows.map(r => String(r[dateK])))].sort();\n  const lastDate = dates[dates.length - 1];\n  const prevDate = dates[dates.length - 2];\n  const lastRows = rows.filter(r => String(r[dateK]) === lastDate);\n  lastRows.sort((a, b) => +b[rankK] - +a[rankK]);\n  report += `## 3. ranking_global_war (${lastDate})\\n`;\n  for (const r of lastRows.slice(0, 10)) {\n    const host = r[hostK];\n    const score = +r[rankK];\n    const prev = rows.find(x => String(x[dateK]) === prevDate && x[hostK] === host);\n    const prevScore = prev ? +prev[rankK] : null;\n    const evol = prevScore ? ` | vs prev: ${diff(score, prevScore)} (${pct(score, prevScore)})` : '';\n    const isSeloger = host && host.toLowerCase().includes('seloger') ? ' ← SeLoger Neuf' : '';\n    report += `- ${host}: WAR ${score.toLocaleString()}${evol}${isSeloger}\\n`;\n  }\n  report += '\\n';\n}\n\n// ─── 6. audience ────────────────────────────────────────────\n{\n  const rows = bySheet.audience;\n  const dateK = Object.keys(rows[0] || {}).find(k => k.toLowerCase().includes('date')) || 'date';\n  const typeK = Object.keys(rows[0] || {}).find(k => k.toLowerCase() === 'type' || k.toLowerCase().includes('brand')) || 'type';\n  const dates = [...new Set(rows.map(r => String(r[dateK])))].sort();\n  const lastDate = dates[dates.length - 1];\n  const prevDate = dates[dates.length - 2];\n  const cur = rows.filter(r => String(r[dateK]) === lastDate);\n  const prev = rows.filter(r => String(r[dateK]) === prevDate);\n  const totalCur = cur.reduce((s, r) => s + (+r.clicks || +r.volume || 0), 0);\n  const totalPrev = prev.reduce((s, r) => s + (+r.clicks || +r.volume || 0), 0);\n  report += `## 6. audience (${lastDate})\\n`;\n  for (const r of cur) {\n    const type = r[typeK] || 'unknown';\n    const v = +r.clicks || +r.volume || 0;\n    const share = totalCur ? (v / totalCur * 100).toFixed(1) + '%' : 'n/a';\n    const p = prev.find(x => (x[typeK] || 'unknown') === type);\n    const evol = p ? pct(v, +p.clicks || +p.volume || 0) : 'n/a';\n    report += `- ${type}: ${v.toLocaleString()} (${share}) | vs prev: ${evol}\\n`;\n  }\n  report += '\\n';\n}\n\nreturn [{ json: { report } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1300, 700],
+      "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567810",
+      "name": "Pre-process Data"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are an SEO and real estate analyst for the French residential new-build market.\n\nReport date: {{ $now.format('DD/MM/YYYY') }}\n\nBelow are pre-computed metrics extracted from our tracking spreadsheet. All calculations (%, differences) are already done.\n\nYour job:\n1. Read each section carefully\n2. Write the final report in English, bullet points only\n3. For each section: interpret the numbers, flag anomalies, give one actionable recommendation\n4. End with a short Executive Summary (3-5 key takeaways)\n\n---\n\n{{ $json.report }}\n\n---\n\n🎯 Output rules:\n- English only\n- Bullet points only, no prose paragraphs\n- Add interpretation beyond the raw numbers (what does it mean for the business?)\n- Flag any anomaly or unusual variation (> ±20%)\n- Keep it concise",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [1600, 700],
+      "id": "c7e4f969-f260-453b-83cd-2732495ce3fc",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-4o",
+          "mode": "list",
+          "cachedResultName": "gpt-4o"
+        },
+        "responsesApiEnabled": false,
+        "options": {
+          "maxTokens": 8000
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [1600, 900],
+      "id": "5fd8edd5-d06d-46de-be6a-f8c98907cf68",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "apnKNfuPRPt3265G",
+          "name": "OpenAI account 6"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "7214d040-f11c-409d-bf5b-4fc05b33d3bc",
+              "name": "output",
+              "value": "={{ $json.output }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [1900, 700],
+      "id": "66c5509b-6d43-46ac-ab23-463c12460fb7",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "operation": "toText",
+        "sourceProperty": "output",
+        "options": {
+          "fileName": "=Sanity_check_{{ $now.format('YYYY-MM-DD') }}.doc"
+        }
+      },
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.1,
+      "position": [2200, 700],
+      "id": "468d9c2e-9dbd-4a3f-8328-45cc7b4edb66",
+      "name": "Convert to File"
+    },
+    {
+      "parameters": {
+        "driveId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "My Drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "root",
+          "cachedResultName": "/ (Root folder)"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [2500, 700],
+      "id": "295954d1-c47c-4e2d-8ca3-cc1d16f9b938",
+      "name": "Upload file",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "hUSKS8kbE7qdyiJz",
+          "name": "Mon Google Drive"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "fileId": {
+          "__rl": true,
+          "value": "={{ $json.id }}",
+          "mode": "id"
+        },
+        "newUpdatedFileName": "=Sanity check {{ $now.format('YYYY-MM-DD') }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [2800, 700],
+      "id": "054ada7b-ede0-441d-be8b-1c32d25edbca",
+      "name": "Update file",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "hUSKS8kbE7qdyiJz",
+          "name": "Mon Google Drive"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger1": {
+      "main": [
+        [
+          { "node": "GSheets_demand_global", "type": "main", "index": 0 },
+          { "node": "GSheets_demand_transaction", "type": "main", "index": 0 },
+          { "node": "GSheets_demand_asset", "type": "main", "index": 0 },
+          { "node": "GSheets_demand_departement", "type": "main", "index": 0 },
+          { "node": "GSheets_ranking_global_war", "type": "main", "index": 0 },
+          { "node": "GSheets_audience", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "GSheets_demand_global": {
+      "main": [[{ "node": "Merge All Sheets", "type": "main", "index": 0 }]]
+    },
+    "GSheets_demand_transaction": {
+      "main": [[{ "node": "Merge All Sheets", "type": "main", "index": 1 }]]
+    },
+    "GSheets_demand_asset": {
+      "main": [[{ "node": "Merge All Sheets", "type": "main", "index": 2 }]]
+    },
+    "GSheets_demand_departement": {
+      "main": [[{ "node": "Merge All Sheets", "type": "main", "index": 3 }]]
+    },
+    "GSheets_ranking_global_war": {
+      "main": [[{ "node": "Merge All Sheets", "type": "main", "index": 4 }]]
+    },
+    "GSheets_audience": {
+      "main": [[{ "node": "Merge All Sheets", "type": "main", "index": 5 }]]
+    },
+    "Merge All Sheets": {
+      "main": [[{ "node": "Pre-process Data", "type": "main", "index": 0 }]]
+    },
+    "Pre-process Data": {
+      "main": [[{ "node": "AI Agent", "type": "main", "index": 0 }]]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [[{ "node": "AI Agent", "type": "ai_languageModel", "index": 0 }]]
+    },
+    "AI Agent": {
+      "main": [[{ "node": "Edit Fields", "type": "main", "index": 0 }]]
+    },
+    "Edit Fields": {
+      "main": [[{ "node": "Convert to File", "type": "main", "index": 0 }]]
+    },
+    "Convert to File": {
+      "main": [[{ "node": "Upload file", "type": "main", "index": 0 }]]
+    },
+    "Upload file": {
+      "main": [[{ "node": "Update file", "type": "main", "index": 0 }]]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "87e95f50-df4f-413f-9c0d-5e3ea7b7c76c",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "0d2cc35bf4173ba6547bf653679ba4873189b39fa696743a086f77f7a38c2420"
+  },
+  "nodeGroups": [],
+  "id": "gzuSnaI4w6QnR3AN",
+  "tags": []
+}
