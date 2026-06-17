@@ -320,13 +320,14 @@
     <h3>Ajouter un graphique Google Sheets</h3>
 
     <div class="help-box">
-      <strong>Comment obtenir l'URL d'intégration ?</strong><br>
-      Dans Google Sheets : <code>Insertion</code> → <code>Graphique</code> → menu ⋮ du graphique → <code>Publier le graphique</code> → copier l'URL <code>iframe src="..."</code>
+      <strong>Sources supportées :</strong><br>
+      • <strong>Google Drive</strong> : coller le lien de partage <code>drive.google.com/open?id=...</code> — converti automatiquement<br>
+      • <strong>Google Sheets</strong> : <code>Insertion</code> → <code>Graphique</code> → ⋮ → <code>Publier le graphique</code> → copier <code>iframe src="..."</code>
     </div>
 
     <div>
       <label for="chart-url">URL d'intégration (iframe src)</label>
-      <input id="chart-url" type="url" placeholder="https://docs.google.com/spreadsheets/d/.../pubchart?..." />
+      <input id="chart-url" type="url" placeholder="https://drive.google.com/open?id=... ou docs.google.com/spreadsheets/..." />
     </div>
 
     <div>
@@ -479,15 +480,16 @@
   }
 
   function addChart() {
-    const url = document.getElementById('chart-url').value.trim();
+    const rawUrl = document.getElementById('chart-url').value.trim();
     const title = document.getElementById('chart-title').value.trim() || 'Graphique sans titre';
     const height = parseInt(document.getElementById('chart-height').value) || 400;
 
-    if (!url) {
+    if (!rawUrl) {
       alert('Veuillez saisir une URL d\'intégration.');
       return;
     }
 
+    const url = toDriveEmbed(rawUrl);
     const entry = { url, title, height };
 
     if (editingIndex !== null) {
@@ -544,6 +546,42 @@
   document.addEventListener('keydown', e => {
     if (e.key === 'Escape') closeModal();
   });
+
+  // ── Convert any Google Drive share URL to embed URL ──
+  function toDriveEmbed(url) {
+    // https://drive.google.com/open?id=FILE_ID  →  /file/d/FILE_ID/preview
+    const openMatch = url.match(/drive\.google\.com\/open\?.*id=([a-zA-Z0-9_-]+)/);
+    if (openMatch) return `https://drive.google.com/file/d/${openMatch[1]}/preview`;
+
+    // https://drive.google.com/file/d/FILE_ID/view  →  /preview
+    const viewMatch = url.match(/drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/);
+    if (viewMatch) return `https://drive.google.com/file/d/${viewMatch[1]}/preview`;
+
+    return url;
+  }
+
+  // Patch addChart to auto-convert Drive URLs
+  const _origAdd = addChart;
+
+  // ── Default charts (Google Drive) ──
+  const DEFAULT_CHARTS = [
+    { id: '1RxEsRzGpUS8BwW-NX26nUsm1lBasG-u3', title: 'Graphique 1' },
+    { id: '1ARr0Ea25rAgzdv43YB13gPNX3uCGLUYr', title: 'Graphique 2' },
+    { id: '1jnXLPHxIKR1jifw25SUIZuGeB6Xghxcm', title: 'Graphique 3' },
+    { id: '1iZgpiPC_MqmiE2NEfJTsIEoC-_Kbx4bx', title: 'Graphique 4' },
+    { id: '1hSSlKa1nrDgVNTpKD9ti5SH75OK5hBo-', title: 'Graphique 5' },
+    { id: '1dy6XFOxCUJnrscX1kOYFYyD3GoVHlSia', title: 'Graphique 6' },
+    { id: '1OJwrQMguKLw42ko2K2XJCaI7WEq_LGzx', title: 'Graphique 7' },
+  ];
+
+  if (charts.length === 0) {
+    charts = DEFAULT_CHARTS.map(c => ({
+      url: `https://drive.google.com/file/d/${c.id}/preview`,
+      title: c.title,
+      height: 480,
+    }));
+    // Don't persist yet — let user decide
+  }
 
   // ── Init ──
   render();
