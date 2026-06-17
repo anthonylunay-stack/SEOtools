@@ -215,7 +215,8 @@
     },
     {
       "parameters": {
-        "jsCode": "// Code node runs ONCE for all items — iterate with .map()\nconst allItems  = $input.all();\nconst allCharts = $('Parse AI Chart Configs1').all();\n\nreturn allItems.map((item, idx) => {\n  const sheetName = allCharts[idx]?.json?.sheetName || ('chart_' + idx);\n  return { json: { sheetName }, binary: item.binary };\n});\n"
+        "jsCode": "// Code node runs ONCE for all items — iterate with .map()\nconst allItems  = $input.all();\nconst allCharts = $('Parse AI Chart Configs1').all();\n\nreturn allItems.map((item, idx) => {\n  const sheetName = allCharts[idx]?.json?.sheetName || ('chart_' + idx);\n  return { json: { sheetName }, binary: item.binary };\n});\n",
+        "mode": "runOnceForAllItems"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -240,7 +241,9 @@
           "cachedResultName": "Sanity chech SLN",
           "cachedResultUrl": "https://drive.google.com/drive/folders/15-4YK35IWCcJXaQ4LzywC7fKrY4u5vcX"
         },
-        "options": {}
+        "options": {
+          "fileName": "={{ $json.sheetName + '_' + $now.format('YYYY-MM-DD') + '.png' }}"
+        }
       },
       "type": "n8n-nodes-base.googleDrive",
       "typeVersion": 3,
