@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>SEO Dashboard — Google Sheets Charts</title>
+  <title>SEO Dashboard</title>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -18,7 +18,6 @@
       --muted: #8890b5;
       --danger: #e05b5b;
       --success: #4ecca3;
-      --radius: 12px;
     }
 
     body {
@@ -33,7 +32,7 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 16px 28px;
+      padding: 14px 28px;
       background: var(--surface);
       border-bottom: 1px solid var(--border);
       position: sticky;
@@ -41,240 +40,216 @@
       z-index: 100;
     }
     header h1 {
-      font-size: 1.1rem;
+      font-size: 1rem;
       font-weight: 700;
-      letter-spacing: .5px;
       background: linear-gradient(135deg, var(--accent), var(--accent2));
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
     }
-    .header-actions { display: flex; gap: 10px; }
+    .header-actions { display: flex; gap: 8px; align-items: center; }
 
-    /* ── BUTTONS ── */
     button {
       cursor: pointer;
       border: none;
-      border-radius: 8px;
-      font-size: .85rem;
+      border-radius: 7px;
+      font-size: .82rem;
       font-weight: 600;
-      padding: 8px 16px;
+      padding: 7px 14px;
       transition: opacity .15s, transform .1s;
     }
     button:active { transform: scale(.97); }
-    .btn-primary { background: var(--accent); color: #fff; }
-    .btn-secondary { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
-    .btn-danger { background: var(--danger); color: #fff; }
-    button:hover { opacity: .85; }
+    .btn-primary  { background: var(--accent); color: #fff; }
+    .btn-secondary{ background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
+    .btn-danger   { background: var(--danger); color: #fff; }
+    button:hover  { opacity: .82; }
 
-    /* ── MAIN LAYOUT ── */
-    main { padding: 28px; }
-
+    /* ── TOOLBAR ── */
     .toolbar {
       display: flex;
       align-items: center;
       gap: 12px;
-      margin-bottom: 24px;
+      padding: 16px 28px 0;
       flex-wrap: wrap;
     }
-    .toolbar h2 { font-size: 1rem; color: var(--muted); flex: 1; }
+    .toolbar span { font-size: .85rem; color: var(--muted); flex: 1; }
+    .toolbar select {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      color: var(--text);
+      border-radius: 7px;
+      padding: 6px 10px;
+      font-size: .82rem;
+      cursor: pointer;
+    }
 
     /* ── GRID ── */
     #grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(480px, 1fr));
-      gap: 20px;
+      gap: 24px;
+      padding: 20px 28px 40px;
     }
 
-    /* ── CHART CARD ── */
-    .chart-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
+    /* ── CHART ITEM — no border, no card ── */
+    .chart-item {
+      position: relative;
+      border-radius: 10px;
       overflow: hidden;
-      display: flex;
-      flex-direction: column;
-      transition: box-shadow .2s;
+      background: transparent;
     }
-    .chart-card:hover { box-shadow: 0 4px 24px rgba(91,141,238,.15); }
 
-    .card-header {
+    /* hover overlay for controls */
+    .chart-overlay {
+      position: absolute;
+      top: 0; left: 0; right: 0;
       display: flex;
       align-items: center;
-      gap: 10px;
-      padding: 12px 16px;
-      background: var(--surface2);
-      border-bottom: 1px solid var(--border);
+      gap: 8px;
+      padding: 8px 12px;
+      background: linear-gradient(to bottom, rgba(0,0,0,.65) 0%, transparent 100%);
+      opacity: 0;
+      transition: opacity .2s;
+      z-index: 10;
+      pointer-events: none;
     }
-    .card-title {
+    .chart-item:hover .chart-overlay { opacity: 1; pointer-events: auto; }
+
+    .overlay-title {
       flex: 1;
-      font-size: .9rem;
+      font-size: .82rem;
       font-weight: 600;
-      outline: none;
+      color: #fff;
       background: transparent;
-      color: var(--text);
       border: none;
+      outline: none;
       border-bottom: 1px solid transparent;
       padding: 2px 4px;
-      border-radius: 4px;
     }
-    .card-title:focus {
-      border-bottom-color: var(--accent);
-      background: var(--surface);
-    }
-    .card-actions { display: flex; gap: 6px; }
-    .card-actions button {
+    .overlay-title:focus { border-bottom-color: var(--accent); }
+    .overlay-btn {
       padding: 4px 10px;
       font-size: .75rem;
+      border-radius: 5px;
     }
 
-    .chart-wrapper {
-      position: relative;
-      width: 100%;
-      flex: 1;
-      min-height: 320px;
-      background: var(--bg);
-    }
-    .chart-wrapper iframe {
-      width: 100%;
-      height: 100%;
-      min-height: 320px;
-      border: none;
+    /* iframe — full width, no frame */
+    .chart-item iframe {
       display: block;
+      width: 100%;
+      border: none;
+      border-radius: 10px;
     }
-    .chart-placeholder {
-      position: absolute;
-      inset: 0;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 10px;
-      color: var(--muted);
-      font-size: .85rem;
-      text-align: center;
-      padding: 20px;
-    }
-    .chart-placeholder svg { opacity: .4; }
 
-    /* ── RESIZE HANDLE ── */
+    /* text content rendered directly */
+    .chart-text {
+      background: var(--surface);
+      border-radius: 10px;
+      padding: 24px 28px;
+      font-size: .88rem;
+      line-height: 1.75;
+      color: var(--text);
+      overflow-y: auto;
+    }
+    .chart-text h1, .chart-text h2, .chart-text h3 {
+      color: var(--accent);
+      margin: 1.2em 0 .4em;
+      font-size: 1em;
+      font-weight: 700;
+    }
+    .chart-text h1 { font-size: 1.15em; }
+    .chart-text strong { color: #fff; }
+    .chart-text em { color: var(--muted); font-style: normal; }
+    .chart-text p { margin-bottom: .6em; }
+    .chart-text ul, .chart-text ol { padding-left: 1.4em; margin-bottom: .6em; }
+    .chart-text li { margin-bottom: .3em; }
+    .chart-text hr { border: none; border-top: 1px solid var(--border); margin: 1em 0; }
+    .chart-text .loading { color: var(--muted); font-style: italic; }
+
+    /* resize handle */
     .resize-handle {
-      height: 8px;
-      background: var(--surface2);
+      height: 7px;
       cursor: ns-resize;
       display: flex;
       align-items: center;
       justify-content: center;
+      opacity: 0;
+      transition: opacity .2s;
     }
+    .chart-item:hover .resize-handle { opacity: 1; }
     .resize-handle::after {
       content: '';
-      width: 32px;
-      height: 3px;
+      width: 28px; height: 3px;
       border-radius: 2px;
-      background: var(--border);
+      background: var(--muted);
     }
 
-    /* ── ADD CHART BUTTON ── */
+    /* ── ADD CARD ── */
     #add-card {
-      background: var(--surface);
       border: 2px dashed var(--border);
-      border-radius: var(--radius);
-      min-height: 180px;
+      border-radius: 10px;
+      min-height: 160px;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      gap: 10px;
+      gap: 8px;
       color: var(--muted);
       cursor: pointer;
-      font-size: .9rem;
+      font-size: .88rem;
       font-weight: 600;
       transition: border-color .2s, color .2s;
     }
     #add-card:hover { border-color: var(--accent); color: var(--accent); }
-    #add-card svg { opacity: .6; }
 
     /* ── MODAL ── */
     .modal-backdrop {
-      position: fixed;
-      inset: 0;
+      position: fixed; inset: 0;
       background: rgba(0,0,0,.6);
       backdrop-filter: blur(4px);
       z-index: 200;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      display: flex; align-items: center; justify-content: center;
     }
     .modal {
       background: var(--surface);
       border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: 28px;
-      width: min(520px, 95vw);
-      display: flex;
-      flex-direction: column;
-      gap: 18px;
+      border-radius: 14px;
+      padding: 26px;
+      width: min(500px, 94vw);
+      display: flex; flex-direction: column; gap: 16px;
     }
-    .modal h3 { font-size: 1.1rem; }
-    .modal p { color: var(--muted); font-size: .85rem; line-height: 1.6; }
-    .modal label { font-size: .85rem; font-weight: 600; display: block; margin-bottom: 6px; }
-    .modal input, .modal select {
-      width: 100%;
-      padding: 10px 12px;
+    .modal h3 { font-size: 1rem; }
+    .modal label { font-size: .82rem; font-weight: 600; display: block; margin-bottom: 5px; }
+    .modal input {
+      width: 100%; padding: 9px 11px;
       background: var(--surface2);
       border: 1px solid var(--border);
-      border-radius: 8px;
-      color: var(--text);
-      font-size: .9rem;
-      outline: none;
+      border-radius: 7px;
+      color: var(--text); font-size: .88rem; outline: none;
       transition: border-color .15s;
     }
-    .modal input:focus, .modal select:focus { border-color: var(--accent); }
-    .modal-footer { display: flex; gap: 10px; justify-content: flex-end; }
-
-    /* ── HELP BOX ── */
+    .modal input:focus { border-color: var(--accent); }
+    .modal-footer { display: flex; gap: 8px; justify-content: flex-end; }
     .help-box {
-      background: rgba(91,141,238,.08);
-      border: 1px solid rgba(91,141,238,.25);
-      border-radius: 8px;
-      padding: 12px 14px;
-      font-size: .8rem;
-      color: var(--muted);
-      line-height: 1.7;
+      background: rgba(91,141,238,.07);
+      border: 1px solid rgba(91,141,238,.2);
+      border-radius: 7px;
+      padding: 10px 13px;
+      font-size: .79rem; color: var(--muted); line-height: 1.65;
     }
     .help-box strong { color: var(--accent); }
     .help-box code {
-      background: var(--surface2);
-      padding: 1px 5px;
-      border-radius: 4px;
-      font-family: monospace;
-      font-size: .78rem;
+      background: var(--surface2); padding: 1px 5px;
+      border-radius: 3px; font-family: monospace; font-size: .77rem;
     }
-
-    /* ── EMPTY STATE ── */
-    #empty-state {
-      text-align: center;
-      padding: 60px 20px;
-      color: var(--muted);
-      display: none;
-    }
-    #empty-state h3 { font-size: 1.1rem; margin-bottom: 8px; color: var(--text); }
-    #empty-state p { font-size: .85rem; max-width: 380px; margin: 0 auto 20px; }
 
     /* ── TOAST ── */
     #toast {
-      position: fixed;
-      bottom: 24px;
-      right: 24px;
-      background: var(--success);
-      color: #0f1117;
-      font-size: .85rem;
-      font-weight: 700;
-      padding: 10px 18px;
-      border-radius: 8px;
-      opacity: 0;
-      transition: opacity .3s;
-      pointer-events: none;
-      z-index: 300;
+      position: fixed; bottom: 22px; right: 22px;
+      background: var(--success); color: #0f1117;
+      font-size: .82rem; font-weight: 700;
+      padding: 9px 16px; border-radius: 7px;
+      opacity: 0; transition: opacity .3s;
+      pointer-events: none; z-index: 300;
     }
     #toast.show { opacity: 1; }
   </style>
@@ -286,78 +261,68 @@
   <div class="header-actions">
     <button class="btn-secondary" onclick="exportConfig()">Exporter</button>
     <button class="btn-secondary" onclick="importConfig()">Importer</button>
-    <button class="btn-primary" onclick="openModal()">+ Ajouter un graphique</button>
+    <button class="btn-primary" onclick="openModal()">+ Ajouter</button>
   </div>
 </header>
 
-<main>
-  <div class="toolbar">
-    <h2 id="chart-count">0 graphique(s)</h2>
-    <select id="layout-select" onchange="applyLayout(this.value)">
-      <option value="2">2 colonnes</option>
-      <option value="1">1 colonne</option>
-      <option value="3">3 colonnes</option>
-    </select>
-  </div>
+<div class="toolbar">
+  <span id="chart-count"></span>
+  <select id="layout-select" onchange="applyLayout(this.value)">
+    <option value="2">2 colonnes</option>
+    <option value="1">1 colonne</option>
+    <option value="3">3 colonnes</option>
+  </select>
+</div>
 
-  <div id="empty-state">
-    <h3>Aucun graphique pour l'instant</h3>
-    <p>Ajoutez votre premier graphique Google Sheets en cliquant sur le bouton ci-dessous.</p>
-    <button class="btn-primary" onclick="openModal()">+ Ajouter un graphique</button>
+<div id="grid">
+  <div id="add-card" onclick="openModal()">
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+      <circle cx="12" cy="12" r="10"/><path d="M12 8v8M8 12h8"/>
+    </svg>
+    Ajouter un graphique
   </div>
-
-  <div id="grid">
-    <div id="add-card" onclick="openModal()">
-      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M12 8v8M8 12h8"/></svg>
-      Ajouter un graphique
-    </div>
-  </div>
-</main>
+</div>
 
 <!-- Modal -->
 <div class="modal-backdrop" id="modal" style="display:none">
   <div class="modal">
-    <h3>Ajouter un graphique Google Sheets</h3>
-
+    <h3>Ajouter / modifier un graphique</h3>
     <div class="help-box">
       <strong>Sources supportées :</strong><br>
-      • <strong>Google Drive</strong> : coller le lien de partage <code>drive.google.com/open?id=...</code> — converti automatiquement<br>
-      • <strong>Google Sheets</strong> : <code>Insertion</code> → <code>Graphique</code> → ⋮ → <code>Publier le graphique</code> → copier <code>iframe src="..."</code>
+      • <strong>Google Drive</strong> : lien de partage <code>drive.google.com/open?id=...</code><br>
+      • <strong>Google Doc</strong> : lien <code>docs.google.com/document/d/.../edit</code> → affiché en texte intégré<br>
+      • <strong>Google Sheets</strong> : <code>Publier le graphique</code> → copier <code>iframe src</code>
     </div>
-
     <div>
-      <label for="chart-url">URL d'intégration (iframe src)</label>
-      <input id="chart-url" type="url" placeholder="https://drive.google.com/open?id=... ou docs.google.com/spreadsheets/..." />
+      <label for="chart-url">URL</label>
+      <input id="chart-url" type="url" placeholder="https://drive.google.com/open?id=..." />
     </div>
-
     <div>
-      <label for="chart-title">Titre du graphique</label>
+      <label for="chart-title">Titre</label>
       <input id="chart-title" type="text" placeholder="Ex: Trafic organique mensuel" />
     </div>
-
     <div>
       <label for="chart-height">Hauteur (px)</label>
-      <input id="chart-height" type="number" value="400" min="200" max="900" step="50" />
+      <input id="chart-height" type="number" value="480" min="200" max="1200" step="40" />
     </div>
-
     <div class="modal-footer">
       <button class="btn-secondary" onclick="closeModal()">Annuler</button>
-      <button class="btn-primary" onclick="addChart()">Ajouter</button>
+      <button class="btn-primary" onclick="addChart()">Enregistrer</button>
     </div>
   </div>
 </div>
 
 <input type="file" id="import-input" accept=".json" style="display:none" onchange="handleImport(event)" />
-<div id="toast">Sauvegardé !</div>
+<div id="toast"></div>
 
 <script>
-  // Les 7 graphiques Drive sont toujours présents (hardcodés)
+  // ── Hardcoded Drive charts ──
   const DRIVE_CHARTS = [
-    { id: '1RxEsRzGpUS8BwW-NX26nUsm1lBasG-u3', title: 'Graphique 1' },
+    { id: '1RxEsRzGpUS8BwW-NX26nUsm1lBasG-u3', title: 'Analyse SEO' },
     { id: '1ARr0Ea25rAgzdv43YB13gPNX3uCGLUYr', title: 'Graphique 2' },
     { id: '1jnXLPHxIKR1jifw25SUIZuGeB6Xghxcm', title: 'Graphique 3' },
     { id: '1iZgpiPC_MqmiE2NEfJTsIEoC-_Kbx4bx', title: 'Graphique 4' },
-    { id: '1hSSlKa1nrDgVNTpKD9ti5SH75OK5hBo-', title: 'Graphique 5' },
+    { id: '1hSSlKa1nrDgVNTpKD9ti5SH75OK5hBo-',  title: 'Graphique 5' },
     { id: '1dy6XFOxCUJnrscX1kOYFYyD3GoVHlSia', title: 'Graphique 6' },
     { id: '1OJwrQMguKLw42ko2K2XJCaI7WEq_LGzx', title: 'Graphique 7' },
   ].map(c => ({
@@ -367,15 +332,12 @@
     height: 480,
   }));
 
-  // Fusionne les défauts avec les personnalisations sauvegardées
   function loadCharts() {
     const saved = JSON.parse(localStorage.getItem('seo_dashboard_charts') || '[]');
     const savedMap = Object.fromEntries(saved.map(c => [c.id || c.url, c]));
-    // Les 7 Drive en premier, avec overrides depuis localStorage
-    const base = DRIVE_CHARTS.map(c => ({ ...c, ...(savedMap[c.id] || {}) }));
-    // Puis les graphiques ajoutés manuellement (pas dans DRIVE_CHARTS)
     const driveIds = new Set(DRIVE_CHARTS.map(c => c.id));
-    const extra = saved.filter(c => c.id && !driveIds.has(c.id) || (!c.id && !driveIds.has(c.url)));
+    const base = DRIVE_CHARTS.map(c => ({ ...c, ...(savedMap[c.id] || {}) }));
+    const extra = saved.filter(c => !(c.id && driveIds.has(c.id)));
     return [...base, ...extra];
   }
 
@@ -383,92 +345,115 @@
 
   function save() {
     localStorage.setItem('seo_dashboard_charts', JSON.stringify(charts));
-    showToast('Sauvegardé !');
-  }
-
-  function reload() {
-    charts = loadCharts();
+    showToast('Sauvegardé');
   }
 
   function showToast(msg) {
     const t = document.getElementById('toast');
     t.textContent = msg;
     t.classList.add('show');
-    setTimeout(() => t.classList.remove('show'), 2000);
+    setTimeout(() => t.classList.remove('show'), 1800);
   }
 
+  // ── URL helpers ──
+  function toDriveEmbed(url) {
+    const openM = url.match(/drive\.google\.com\/open\?.*id=([a-zA-Z0-9_-]+)/);
+    if (openM) return `https://drive.google.com/file/d/${openM[1]}/preview`;
+    const viewM = url.match(/drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/);
+    if (viewM) return `https://drive.google.com/file/d/${viewM[1]}/preview`;
+    return url;
+  }
+
+  // Detect if a Drive URL points to a Google Doc (text) vs image/chart
+  function isDocEmbed(url) {
+    return url.includes('docs.google.com/document');
+  }
+
+  // Convert Google Doc edit/view URL to embeddable pub URL
+  function toDocEmbed(url) {
+    const idM = url.match(/\/document\/d\/([a-zA-Z0-9_-]+)/);
+    if (idM) return `https://docs.google.com/document/d/${idM[1]}/pub?embedded=true`;
+    return url;
+  }
+
+  // ── Render ──
   function render() {
     const grid = document.getElementById('grid');
     const addCard = document.getElementById('add-card');
-    const empty = document.getElementById('empty-state');
-
-    // Remove existing cards (keep add-card)
-    grid.querySelectorAll('.chart-card').forEach(el => el.remove());
-
+    grid.querySelectorAll('.chart-item').forEach(el => el.remove());
     document.getElementById('chart-count').textContent = `${charts.length} graphique(s)`;
-    empty.style.display = charts.length === 0 ? 'block' : 'none';
-    grid.style.display = charts.length === 0 ? 'none' : 'grid';
 
     charts.forEach((chart, i) => {
-      const card = buildCard(chart, i);
-      grid.insertBefore(card, addCard);
+      const item = buildItem(chart, i);
+      grid.insertBefore(item, addCard);
     });
   }
 
-  function buildCard(chart, i) {
-    const card = document.createElement('div');
-    card.className = 'chart-card';
-    card.dataset.index = i;
+  function buildItem(chart, i) {
+    const item = document.createElement('div');
+    item.className = 'chart-item';
+    item.dataset.index = i;
 
-    const h = chart.height || 400;
+    const h = chart.height || 480;
 
-    card.innerHTML = `
-      <div class="card-header">
-        <input class="card-title" value="${escHtml(chart.title)}"
-          onchange="updateTitle(${i}, this.value)"
-          title="Cliquer pour renommer" />
-        <div class="card-actions">
-          <button class="btn-secondary" onclick="editChart(${i})">Modifier</button>
-          <button class="btn-danger" onclick="removeChart(${i})">✕</button>
-        </div>
-      </div>
-      <div class="chart-wrapper" style="min-height:${h}px">
-        ${chart.url
-          ? `<iframe src="${escHtml(chart.url)}" style="min-height:${h}px" allowfullscreen loading="lazy"></iframe>`
-          : `<div class="chart-placeholder">
-              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                <rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/>
-              </svg>
-              <span>Aucune URL configurée</span>
-              <button class="btn-primary" style="font-size:.8rem" onclick="editChart(${i})">Ajouter une URL</button>
-            </div>`
-        }
-      </div>
-      <div class="resize-handle" data-index="${i}" title="Glisser pour redimensionner"></div>
+    // Controls overlay
+    const overlay = document.createElement('div');
+    overlay.className = 'chart-overlay';
+    overlay.innerHTML = `
+      <input class="overlay-title" value="${escHtml(chart.title)}"
+        onchange="updateTitle(${i}, this.value)" title="Renommer" />
+      <button class="btn-secondary overlay-btn" onclick="editChart(${i})">Modifier</button>
+      <button class="btn-danger overlay-btn" onclick="removeChart(${i})">✕</button>
     `;
+    item.appendChild(overlay);
 
-    // Resize drag
-    const handle = card.querySelector('.resize-handle');
-    handle.addEventListener('mousedown', startResize(i, card));
+    // Content
+    const url = chart.url || '';
+    if (isDocEmbed(url)) {
+      // Google Doc → iframe pub embedded
+      const frame = document.createElement('iframe');
+      frame.src = toDocEmbed(url);
+      frame.style.cssText = `width:100%;height:${h}px;border-radius:10px;`;
+      frame.setAttribute('loading', 'lazy');
+      item.appendChild(frame);
+    } else if (url) {
+      const frame = document.createElement('iframe');
+      frame.src = escHtml(url);
+      frame.style.cssText = `width:100%;height:${h}px;border-radius:10px;`;
+      frame.setAttribute('loading', 'lazy');
+      frame.setAttribute('allowfullscreen', '');
+      item.appendChild(frame);
+    } else {
+      const ph = document.createElement('div');
+      ph.className = 'chart-text';
+      ph.style.height = h + 'px';
+      ph.innerHTML = `<p class="loading">Aucune URL configurée. <button class="btn-primary" onclick="editChart(${i})">Ajouter</button></p>`;
+      item.appendChild(ph);
+    }
 
-    return card;
+    // Resize handle
+    const handle = document.createElement('div');
+    handle.className = 'resize-handle';
+    handle.title = 'Glisser pour redimensionner';
+    handle.addEventListener('mousedown', startResize(i, item));
+    item.appendChild(handle);
+
+    return item;
   }
 
-  function startResize(i, card) {
+  function startResize(i, item) {
     return function(e) {
       e.preventDefault();
       const startY = e.clientY;
-      const startH = charts[i].height || 400;
-      const wrapper = card.querySelector('.chart-wrapper');
-      const iframe = card.querySelector('iframe');
+      const startH = charts[i].height || 480;
+      const frame = item.querySelector('iframe, .chart-text');
 
       function onMove(ev) {
         const newH = Math.max(200, startH + (ev.clientY - startY));
-        wrapper.style.minHeight = newH + 'px';
-        if (iframe) iframe.style.minHeight = newH + 'px';
+        if (frame) frame.style.height = newH + 'px';
       }
       function onUp() {
-        const newH = parseInt(wrapper.style.minHeight);
+        const newH = frame ? parseInt(frame.style.height) : startH;
         charts[i].height = newH;
         save();
         document.removeEventListener('mousemove', onMove);
@@ -479,10 +464,7 @@
     };
   }
 
-  function updateTitle(i, val) {
-    charts[i].title = val;
-    save();
-  }
+  function updateTitle(i, val) { charts[i].title = val; save(); }
 
   function removeChart(i) {
     if (!confirm(`Supprimer "${charts[i].title}" ?`)) return;
@@ -497,15 +479,13 @@
   function openModal(idx = null) {
     editingIndex = idx;
     const c = idx !== null ? charts[idx] : null;
-    document.getElementById('chart-url').value = c ? c.url : '';
+    document.getElementById('chart-url').value   = c ? c.url   : '';
     document.getElementById('chart-title').value = c ? c.title : '';
-    document.getElementById('chart-height').value = c ? (c.height || 400) : 400;
+    document.getElementById('chart-height').value = c ? (c.height || 480) : 480;
     document.getElementById('modal').style.display = 'flex';
     setTimeout(() => document.getElementById('chart-url').focus(), 50);
   }
-
   function editChart(i) { openModal(i); }
-
   function closeModal() {
     document.getElementById('modal').style.display = 'none';
     editingIndex = null;
@@ -513,95 +493,54 @@
 
   function addChart() {
     const rawUrl = document.getElementById('chart-url').value.trim();
-    const title = document.getElementById('chart-title').value.trim() || 'Graphique sans titre';
-    const height = parseInt(document.getElementById('chart-height').value) || 400;
-
-    if (!rawUrl) {
-      alert('Veuillez saisir une URL d\'intégration.');
-      return;
-    }
-
+    const title  = document.getElementById('chart-title').value.trim() || 'Graphique sans titre';
+    const height = parseInt(document.getElementById('chart-height').value) || 480;
+    if (!rawUrl) { alert('Veuillez saisir une URL.'); return; }
     const url = toDriveEmbed(rawUrl);
     const entry = { url, title, height };
-
-    if (editingIndex !== null) {
-      charts[editingIndex] = entry;
-    } else {
-      charts.push(entry);
-    }
-
-    save();
-    closeModal();
-    render();
+    if (editingIndex !== null) charts[editingIndex] = entry;
+    else charts.push(entry);
+    save(); closeModal(); render();
   }
 
   // ── Layout ──
   function applyLayout(cols) {
     const minW = cols === '1' ? '100%' : cols === '3' ? '320px' : '480px';
-    document.getElementById('grid').style.gridTemplateColumns = `repeat(auto-fill, minmax(${minW}, 1fr))`;
+    document.getElementById('grid').style.gridTemplateColumns =
+      cols === '1' ? '1fr' : `repeat(auto-fill, minmax(${minW}, 1fr))`;
   }
 
   // ── Export / Import ──
   function exportConfig() {
-    const blob = new Blob([JSON.stringify(charts, null, 2)], { type: 'application/json' });
     const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = 'seo_dashboard_config.json';
+    a.href = URL.createObjectURL(new Blob([JSON.stringify(charts, null, 2)], { type: 'application/json' }));
+    a.download = 'seo_dashboard.json';
     a.click();
   }
-
-  function importConfig() {
-    document.getElementById('import-input').click();
-  }
-
+  function importConfig() { document.getElementById('import-input').click(); }
   function handleImport(e) {
-    const file = e.target.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = ev => {
+    const file = e.target.files[0]; if (!file) return;
+    const r = new FileReader();
+    r.onload = ev => {
       try {
         const data = JSON.parse(ev.target.result);
         if (!Array.isArray(data)) throw new Error();
-        charts = data;
-        save();
-        render();
-        showToast('Configuration importée !');
-      } catch {
-        alert('Fichier JSON invalide.');
-      }
+        charts = data; save(); render(); showToast('Configuration importée');
+      } catch { alert('Fichier JSON invalide.'); }
     };
-    reader.readAsText(file);
+    r.readAsText(file);
     e.target.value = '';
   }
 
-  // ── Keyboard close ──
-  document.addEventListener('keydown', e => {
-    if (e.key === 'Escape') closeModal();
-  });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
 
-  // ── Convert any Google Drive share URL to embed URL ──
-  function toDriveEmbed(url) {
-    const openMatch = url.match(/drive\.google\.com\/open\?.*id=([a-zA-Z0-9_-]+)/);
-    if (openMatch) return `https://drive.google.com/file/d/${openMatch[1]}/preview`;
-    const viewMatch = url.match(/drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/);
-    if (viewMatch) return `https://drive.google.com/file/d/${viewMatch[1]}/preview`;
-    return url;
-  }
-
-  // ── Init ──
-  render();
-</script>
-
-<!-- Utility: escape HTML to avoid XSS in card rendering -->
-<script>
   function escHtml(str) {
     return String(str)
-      .replace(/&/g, '&amp;')
-      .replace(/"/g, '&quot;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;');
+      .replace(/&/g,'&amp;').replace(/"/g,'&quot;')
+      .replace(/</g,'&lt;').replace(/>/g,'&gt;');
   }
-</script>
 
+  render();
+</script>
 </body>
 </html>
