@@ -301,7 +301,7 @@
 
     {
       "parameters": {
-        "jsCode": "// Re-attach sheetName to the binary item for Drive naming\nconst sheetName = $('Build Chart Config').first().json.sheetName;\nconst item = $input.first();\nreturn [{ json: { sheetName }, binary: item.binary }];\n"
+        "jsCode": "// Re-attach sheetName and rename binary key to 'data' (required by Google Drive upload)\nconst sheetName = $('Build Chart Config').first().json.sheetName;\nconst item = $input.first();\nconst binary = { data: item.binary.chartImage };\nreturn [{ json: { sheetName }, binary }];\n"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
