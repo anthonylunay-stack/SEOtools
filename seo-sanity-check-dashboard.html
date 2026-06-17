@@ -470,10 +470,9 @@ function parseOutput(text) {
   /* — Extract [CHARTS_JSON] block (mirrors N8N Code node) — */
   const jsonMatch = text.match(/\[CHARTS_JSON\]([\s\S]*?)\[\/CHARTS_JSON\]/);
   if (jsonMatch) {
-    let raw = jsonMatch[1].trim()
-      .replace(/^```(?:json)?\s*/i, '')
-      .replace(/\s*```$/, '')
-      .trim();
+    let raw = jsonMatch[1].trim();
+    /* strip any markdown code fences (```json ... ``` or ``` ... ```) */
+    raw = raw.replace(/^```(?:json)?\s*/im, '').replace(/\s*```\s*$/m, '').trim();
     try {
       result.charts = JSON.parse(raw);
     } catch {
