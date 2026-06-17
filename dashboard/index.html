@@ -351,11 +351,43 @@
 <div id="toast">Sauvegardé !</div>
 
 <script>
-  let charts = JSON.parse(localStorage.getItem('seo_dashboard_charts') || '[]');
+  // Les 7 graphiques Drive sont toujours présents (hardcodés)
+  const DRIVE_CHARTS = [
+    { id: '1RxEsRzGpUS8BwW-NX26nUsm1lBasG-u3', title: 'Graphique 1' },
+    { id: '1ARr0Ea25rAgzdv43YB13gPNX3uCGLUYr', title: 'Graphique 2' },
+    { id: '1jnXLPHxIKR1jifw25SUIZuGeB6Xghxcm', title: 'Graphique 3' },
+    { id: '1iZgpiPC_MqmiE2NEfJTsIEoC-_Kbx4bx', title: 'Graphique 4' },
+    { id: '1hSSlKa1nrDgVNTpKD9ti5SH75OK5hBo-', title: 'Graphique 5' },
+    { id: '1dy6XFOxCUJnrscX1kOYFYyD3GoVHlSia', title: 'Graphique 6' },
+    { id: '1OJwrQMguKLw42ko2K2XJCaI7WEq_LGzx', title: 'Graphique 7' },
+  ].map(c => ({
+    id: c.id,
+    url: `https://drive.google.com/file/d/${c.id}/preview`,
+    title: c.title,
+    height: 480,
+  }));
+
+  // Fusionne les défauts avec les personnalisations sauvegardées
+  function loadCharts() {
+    const saved = JSON.parse(localStorage.getItem('seo_dashboard_charts') || '[]');
+    const savedMap = Object.fromEntries(saved.map(c => [c.id || c.url, c]));
+    // Les 7 Drive en premier, avec overrides depuis localStorage
+    const base = DRIVE_CHARTS.map(c => ({ ...c, ...(savedMap[c.id] || {}) }));
+    // Puis les graphiques ajoutés manuellement (pas dans DRIVE_CHARTS)
+    const driveIds = new Set(DRIVE_CHARTS.map(c => c.id));
+    const extra = saved.filter(c => c.id && !driveIds.has(c.id) || (!c.id && !driveIds.has(c.url)));
+    return [...base, ...extra];
+  }
+
+  let charts = loadCharts();
 
   function save() {
     localStorage.setItem('seo_dashboard_charts', JSON.stringify(charts));
     showToast('Sauvegardé !');
+  }
+
+  function reload() {
+    charts = loadCharts();
   }
 
   function showToast(msg) {
@@ -549,38 +581,11 @@
 
   // ── Convert any Google Drive share URL to embed URL ──
   function toDriveEmbed(url) {
-    // https://drive.google.com/open?id=FILE_ID  →  /file/d/FILE_ID/preview
     const openMatch = url.match(/drive\.google\.com\/open\?.*id=([a-zA-Z0-9_-]+)/);
     if (openMatch) return `https://drive.google.com/file/d/${openMatch[1]}/preview`;
-
-    // https://drive.google.com/file/d/FILE_ID/view  →  /preview
     const viewMatch = url.match(/drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/);
     if (viewMatch) return `https://drive.google.com/file/d/${viewMatch[1]}/preview`;
-
     return url;
-  }
-
-  // Patch addChart to auto-convert Drive URLs
-  const _origAdd = addChart;
-
-  // ── Default charts (Google Drive) ──
-  const DEFAULT_CHARTS = [
-    { id: '1RxEsRzGpUS8BwW-NX26nUsm1lBasG-u3', title: 'Graphique 1' },
-    { id: '1ARr0Ea25rAgzdv43YB13gPNX3uCGLUYr', title: 'Graphique 2' },
-    { id: '1jnXLPHxIKR1jifw25SUIZuGeB6Xghxcm', title: 'Graphique 3' },
-    { id: '1iZgpiPC_MqmiE2NEfJTsIEoC-_Kbx4bx', title: 'Graphique 4' },
-    { id: '1hSSlKa1nrDgVNTpKD9ti5SH75OK5hBo-', title: 'Graphique 5' },
-    { id: '1dy6XFOxCUJnrscX1kOYFYyD3GoVHlSia', title: 'Graphique 6' },
-    { id: '1OJwrQMguKLw42ko2K2XJCaI7WEq_LGzx', title: 'Graphique 7' },
-  ];
-
-  if (charts.length === 0) {
-    charts = DEFAULT_CHARTS.map(c => ({
-      url: `https://drive.google.com/file/d/${c.id}/preview`,
-      title: c.title,
-      height: 480,
-    }));
-    // Don't persist yet — let user decide
   }
 
   // ── Init ──
