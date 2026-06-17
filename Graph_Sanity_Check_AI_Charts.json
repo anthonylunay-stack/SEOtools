@@ -233,7 +233,7 @@
           "response": {
             "response": {
               "responseFormat": "file",
-              "outputPropertyName": "chartImage"
+              "outputPropertyName": "data"
             }
           }
         }
@@ -246,7 +246,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// Rename binary field chartImage → data (required by Google Drive)\n// Recover sheetName from the upstream Parse AI Chart Configs node (paired item)\nconst sheetName = $('Parse AI Chart Configs').item.json.sheetName || 'chart';\nconst item = $input.first();\nconst binary = { data: item.binary.chartImage };\nreturn [{ json: { sheetName }, binary }];\n"
+        "jsCode": "// Recover sheetName using $itemIndex to match the correct upstream item\n// Binary is already named 'data' (set in QuickChart API outputPropertyName)\nconst idx = $itemIndex;\nconst sheetName = $('Parse AI Chart Configs').all()[idx]?.json?.sheetName || 'chart';\nconst item = $input.first();\nreturn [{ json: { sheetName }, binary: item.binary }];\n"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
