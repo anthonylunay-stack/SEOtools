@@ -1,0 +1,857 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SLN Sanity Check — SEO Dashboard</title>
+
+  <!-- Chart.js v3 + plugins -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@1.4.0/dist/chartjs-plugin-annotation.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+  <!-- Papa Parse for CSV -->
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --blue:   #4285F4;
+      --red:    #EA4335;
+      --yellow: #FBBC05;
+      --green:  #34A853;
+      --purple: #9C27B0;
+      --orange: #FF6D00;
+      --teal:   #00ACC1;
+      --brown:  #795548;
+      --bg:     #F8F9FA;
+      --card:   #FFFFFF;
+      --text:   #202124;
+      --muted:  #5F6368;
+      --border: #E8EAED;
+    }
+
+    body {
+      font-family: 'Google Sans', 'Segoe UI', Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    /* ── Header ── */
+    header {
+      background: var(--card);
+      border-bottom: 1px solid var(--border);
+      padding: 16px 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    header .logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    header .logo-dot {
+      width: 32px; height: 32px;
+      background: linear-gradient(135deg, var(--blue), var(--purple));
+      border-radius: 8px;
+    }
+    header h1 { font-size: 18px; font-weight: 600; }
+    header .subtitle { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+    #last-updated {
+      font-size: 12px;
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    #status-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--muted);
+    }
+    #status-dot.loading { background: var(--yellow); animation: pulse 1s infinite; }
+    #status-dot.ok      { background: var(--green); }
+    #status-dot.error   { background: var(--red); }
+
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+
+    /* ── Config banner ── */
+    #config-banner {
+      background: #FFF3CD;
+      border: 1px solid #FFECB5;
+      border-radius: 8px;
+      margin: 20px 32px 0;
+      padding: 14px 20px;
+      font-size: 13px;
+      display: none;
+    }
+    #config-banner strong { color: #856404; }
+    #config-banner code {
+      background: rgba(0,0,0,.07);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-family: monospace;
+    }
+
+    /* ── KPI strip ── */
+    .kpi-strip {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 16px;
+      padding: 20px 32px;
+    }
+    .kpi-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px 20px;
+    }
+    .kpi-card .kpi-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; }
+    .kpi-card .kpi-value { font-size: 26px; font-weight: 700; margin-top: 4px; }
+    .kpi-card .kpi-delta { font-size: 12px; margin-top: 4px; }
+    .kpi-card .kpi-delta.up   { color: var(--green); }
+    .kpi-card .kpi-delta.down { color: var(--red); }
+    .kpi-card .kpi-delta.neutral { color: var(--muted); }
+
+    /* ── Charts grid ── */
+    .charts-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 20px;
+      padding: 0 32px 32px;
+    }
+    .chart-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+      position: relative;
+    }
+    .chart-card.wide { grid-column: 1 / -1; }
+    .chart-card h2 {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: .5px;
+      margin-bottom: 16px;
+    }
+    .chart-wrapper {
+      position: relative;
+      height: 320px;
+    }
+    .chart-card.wide .chart-wrapper { height: 360px; }
+
+    /* spinner overlay */
+    .spinner {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(255,255,255,.8);
+      border-radius: 12px;
+      z-index: 10;
+    }
+    .spinner::after {
+      content: '';
+      width: 36px; height: 36px;
+      border: 3px solid var(--border);
+      border-top-color: var(--blue);
+      border-radius: 50%;
+      animation: spin .8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .error-msg {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: var(--red);
+      font-size: 13px;
+      text-align: center;
+      gap: 8px;
+      padding: 20px;
+    }
+    .error-msg svg { width: 32px; height: 32px; opacity: .6; }
+
+    /* ── Footer ── */
+    footer {
+      text-align: center;
+      padding: 20px;
+      font-size: 12px;
+      color: var(--muted);
+      border-top: 1px solid var(--border);
+    }
+
+    @media (max-width: 900px) {
+      .charts-grid { grid-template-columns: 1fr; }
+      .chart-card.wide { grid-column: auto; }
+      .kpi-strip { padding: 16px; }
+      .charts-grid { padding: 0 16px 24px; }
+      header { padding: 12px 16px; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-dot"></div>
+    <div>
+      <h1>SLN Sanity Check</h1>
+      <div class="subtitle">SEO &amp; Demand Intelligence — French New-Build Market</div>
+    </div>
+  </div>
+  <div id="last-updated">
+    <span id="status-dot" class="loading"></span>
+    <span id="update-text">Loading data…</span>
+  </div>
+</header>
+
+<div id="config-banner">
+  <strong>⚠️ Configuration required:</strong>
+  The Google Sheet is not publicly accessible yet.<br/>
+  Share the sheet with <em>"Anyone with the link can view"</em>, then reload.
+  Sheet ID: <code>1BlQRDytw-GXK9BHhMEqaxUXIGoImqfqY_kFjWNINcI4</code>
+</div>
+
+<!-- KPI strip -->
+<div class="kpi-strip">
+  <div class="kpi-card">
+    <div class="kpi-label">Global Demand (current month)</div>
+    <div class="kpi-value" id="kpi-global">—</div>
+    <div class="kpi-delta neutral" id="kpi-global-mom">MoM —</div>
+  </div>
+  <div class="kpi-card">
+    <div class="kpi-label">Global Demand YoY</div>
+    <div class="kpi-value" id="kpi-global-yoy">—</div>
+    <div class="kpi-delta neutral" id="kpi-global-yoy-sub">vs same month last year</div>
+  </div>
+  <div class="kpi-card">
+    <div class="kpi-label">SeLoger Neuf WAR Rank</div>
+    <div class="kpi-value" id="kpi-rank">#—</div>
+    <div class="kpi-delta neutral" id="kpi-rank-trend">trend —</div>
+  </div>
+  <div class="kpi-card">
+    <div class="kpi-label">Brand Click Share</div>
+    <div class="kpi-value" id="kpi-brand">—%</div>
+    <div class="kpi-delta neutral" id="kpi-brand-sub">of total audience</div>
+  </div>
+</div>
+
+<!-- Charts -->
+<div class="charts-grid">
+
+  <!-- Chart 1 — demand_global -->
+  <div class="chart-card wide">
+    <h2>Global Search Demand — YoY</h2>
+    <div class="chart-wrapper">
+      <div class="spinner" id="spin-global"></div>
+      <canvas id="chart-global"></canvas>
+    </div>
+  </div>
+
+  <!-- Chart 2 — demand_transaction -->
+  <div class="chart-card">
+    <h2>Demand by Transaction Segment</h2>
+    <div class="chart-wrapper">
+      <div class="spinner" id="spin-transaction"></div>
+      <canvas id="chart-transaction"></canvas>
+    </div>
+  </div>
+
+  <!-- Chart 3 — ranking_global_war -->
+  <div class="chart-card">
+    <h2>SEO WAR Ranking</h2>
+    <div class="chart-wrapper">
+      <div class="spinner" id="spin-ranking"></div>
+      <canvas id="chart-ranking"></canvas>
+    </div>
+  </div>
+
+  <!-- Chart 4 — demand_asset -->
+  <div class="chart-card">
+    <h2>Demand by Asset Type</h2>
+    <div class="chart-wrapper">
+      <div class="spinner" id="spin-asset"></div>
+      <canvas id="chart-asset"></canvas>
+    </div>
+  </div>
+
+  <!-- Chart 5 — audience -->
+  <div class="chart-card">
+    <h2>Audience Split (Brand vs Non-brand)</h2>
+    <div class="chart-wrapper">
+      <div class="spinner" id="spin-audience"></div>
+      <canvas id="chart-audience"></canvas>
+    </div>
+  </div>
+
+</div>
+
+<footer>
+  Data sourced from <strong>[AVIVAIPROJ] SLN Data</strong> Google Sheet · Refreshed every page load · Powered by n8n &amp; Chart.js
+</footer>
+
+<script>
+/* ─────────────────────────────────────────────────────────────────────────────
+   CONFIG — edit this section if the sheet ID or GIDs change
+   ───────────────────────────────────────────────────────────────────────────── */
+const SHEET_ID = '1BlQRDytw-GXK9BHhMEqaxUXIGoImqfqY_kFjWNINcI4';
+const SHEETS = {
+  demand_global:      1545992731,
+  demand_transaction: 996643932,
+  demand_asset:       219092738,
+  ranking_global_war: 232829744,
+  audience:           1576889957,
+};
+
+const PALETTE = ['#4285F4','#EA4335','#FBBC05','#34A853','#9C27B0','#FF6D00',
+                 '#00ACC1','#795548','#F06292','#AED581','#FFD54F','#4DD0E1',
+                 '#CE93D8','#FFAB40','#80CBC4','#EF9A9A'];
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   HELPERS
+   ───────────────────────────────────────────────────────────────────────────── */
+function csvUrl(gid) {
+  return `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=${gid}`;
+}
+
+async function fetchSheet(name) {
+  const url = csvUrl(SHEETS[name]);
+  return new Promise((resolve, reject) => {
+    Papa.parse(url, {
+      download: true,
+      header: true,
+      skipEmptyLines: true,
+      complete: r => resolve(r.data),
+      error: e => reject(e),
+    });
+  });
+}
+
+function hideSpinner(id) {
+  const el = document.getElementById(id);
+  if (el) el.style.display = 'none';
+}
+
+function showError(spinnerId, canvasId, msg) {
+  hideSpinner(spinnerId);
+  const canvas = document.getElementById(canvasId);
+  if (!canvas) return;
+  const wrapper = canvas.parentElement;
+  canvas.style.display = 'none';
+  const div = document.createElement('div');
+  div.className = 'error-msg';
+  div.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12" y2="16"/></svg>${msg}`;
+  wrapper.appendChild(div);
+}
+
+function num(v) { return parseFloat(String(v).replace(/\s/g,'').replace(',','.')) || 0; }
+
+function pct(a, b) {
+  if (!b) return null;
+  return ((a - b) / b * 100).toFixed(1);
+}
+
+function fmtPct(v) {
+  if (v === null) return '—';
+  const sign = v >= 0 ? '+' : '';
+  return `${sign}${v}%`;
+}
+
+function last(arr, n) { return arr.slice(-n); }
+
+function monthLabel(dateStr) {
+  // handles YYYY-MM, YYYY-MM-DD, MM/YYYY
+  const d = new Date(dateStr);
+  if (!isNaN(d)) return d.toLocaleDateString('en-GB', { month:'short', year:'2-digit' });
+  return dateStr;
+}
+
+function avg(arr) { return arr.reduce((a,b)=>a+b,0)/arr.length; }
+
+function setKpi(id, val) {
+  const el = document.getElementById(id);
+  if (el) el.textContent = val;
+}
+
+function setKpiDelta(id, val, cls) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.textContent = val;
+  el.className = `kpi-delta ${cls}`;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   CHART 1 — demand_global
+   ───────────────────────────────────────────────────────────────────────────── */
+async function buildGlobalChart() {
+  let rows;
+  try { rows = await fetchSheet('demand_global'); }
+  catch (e) {
+    showError('spin-global','chart-global','Could not load demand_global.<br/>Make sure the sheet is shared publicly.');
+    document.getElementById('config-banner').style.display = 'block';
+    return;
+  }
+  hideSpinner('spin-global');
+
+  // Expect columns: date (or month), volume
+  const dateCol   = Object.keys(rows[0]).find(k => /date|month/i.test(k)) || Object.keys(rows[0])[0];
+  const volCol    = Object.keys(rows[0]).find(k => /volume|vol/i.test(k))  || Object.keys(rows[0])[1];
+
+  const sorted = [...rows].sort((a,b) => String(a[dateCol]).localeCompare(String(b[dateCol])));
+  const N = sorted.length;
+
+  // Build two series: current 13 months vs previous 13 months
+  const cur  = last(sorted, 13);
+  const prev = sorted.slice(Math.max(0, N-26), Math.max(0, N-13));
+
+  const labels    = cur.map(r => monthLabel(r[dateCol]));
+  const curVols   = cur.map(r => num(r[volCol]));
+  const prevVols  = prev.map(r => num(r[volCol]));
+
+  // KPIs
+  const curLast   = curVols[curVols.length - 1];
+  const curPrev   = curVols[curVols.length - 2];
+  const yoyLast   = prevVols[prevVols.length - 1];
+  const momPct    = pct(curLast, curPrev);
+  const yoyPct    = pct(curLast, yoyLast);
+  const avg12     = Math.round(avg(curVols.slice(0,12)));
+
+  setKpi('kpi-global', curLast.toLocaleString());
+  setKpiDelta('kpi-global-mom', `MoM ${fmtPct(momPct)}`, momPct >= 0 ? 'up' : 'down');
+  setKpi('kpi-global-yoy', fmtPct(yoyPct));
+  setKpiDelta('kpi-global-yoy-sub', `vs same month last year`, yoyPct >= 0 ? 'up' : 'down');
+
+  new Chart(document.getElementById('chart-global'), {
+    type: 'line',
+    plugins: [ChartDataLabels],
+    data: {
+      labels,
+      datasets: [
+        {
+          label: 'Current year',
+          data: curVols,
+          borderColor: '#4285F4', borderWidth: 3,
+          pointRadius: 5, pointBackgroundColor: '#4285F4',
+          fill: false, backgroundColor: 'rgba(66,133,244,0.08)', tension: 0.35,
+        },
+        {
+          label: 'Previous year',
+          data: prevVols.length ? prevVols : Array(13).fill(null),
+          borderColor: '#EA4335', borderWidth: 2, borderDash: [6,3],
+          pointRadius: 3, pointBackgroundColor: '#EA4335',
+          fill: false, tension: 0.35,
+        },
+      ],
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        datalabels: { display: false },
+        title: {
+          display: true,
+          text: `Global Search Demand — YoY: ${fmtPct(yoyPct)} | MoM: ${fmtPct(momPct)}`,
+          font: { size: 14, weight: 'bold' }, padding: { bottom: 10 },
+        },
+        legend: { display: true, position: 'bottom', labels: { padding: 16, font: { size: 12 } } },
+        annotation: {
+          annotations: {
+            avgLine: {
+              type: 'line', yMin: avg12, yMax: avg12,
+              borderColor: 'rgba(66,133,244,0.5)', borderWidth: 1, borderDash: [4,4],
+              label: {
+                display: true, content: `12M Avg: ${avg12.toLocaleString()}`,
+                position: 'end', backgroundColor: 'rgba(66,133,244,0.1)',
+                color: '#4285F4', font: { size: 11 },
+              },
+            },
+          },
+        },
+      },
+      layout: { padding: { top: 10, right: 24, bottom: 10, left: 10 } },
+      scales: {
+        x: { grid: { display: false }, ticks: { font: { size: 11 } } },
+        y: {
+          beginAtZero: false,
+          title: { display: true, text: 'Search Volume' },
+          ticks: { font: { size: 11 } },
+        },
+      },
+    },
+  });
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   CHART 2 — demand_transaction
+   ───────────────────────────────────────────────────────────────────────────── */
+async function buildTransactionChart() {
+  let rows;
+  try { rows = await fetchSheet('demand_transaction'); }
+  catch (e) {
+    showError('spin-transaction','chart-transaction','Could not load demand_transaction.');
+    return;
+  }
+  hideSpinner('spin-transaction');
+
+  const dateCol = Object.keys(rows[0]).find(k => /date|month/i.test(k)) || Object.keys(rows[0])[0];
+  const segCol  = Object.keys(rows[0]).find(k => /segment|type|seg/i.test(k)) || Object.keys(rows[0])[1];
+  const volCol  = Object.keys(rows[0]).find(k => /volume|vol/i.test(k))  || Object.keys(rows[0])[2];
+
+  // Pivot
+  const dates    = [...new Set(rows.map(r => r[dateCol]))].sort();
+  const segments = [...new Set(rows.map(r => r[segCol]))];
+  const last12   = last(dates, 12);
+
+  const pivot = {};
+  rows.forEach(r => {
+    if (!pivot[r[segCol]]) pivot[r[segCol]] = {};
+    pivot[r[segCol]][r[dateCol]] = num(r[volCol]);
+  });
+
+  const labels = last12.map(monthLabel);
+
+  // Find best/declining segment (last month vs M-2)
+  let best = '', bestVal = -Infinity, declining = '', declVal = Infinity;
+  segments.forEach(seg => {
+    const d = pivot[seg] || {};
+    const vals = last12.map(dt => d[dt] || 0);
+    const diff = vals[vals.length-1] - vals[vals.length-2];
+    if (diff > bestVal)    { bestVal = diff;  best = seg; }
+    if (diff < declVal)    { declVal = diff;  declining = seg; }
+  });
+
+  const datasets = segments.map((seg, i) => ({
+    label: seg,
+    data: last12.map(dt => pivot[seg]?.[dt] ?? 0),
+    backgroundColor: PALETTE[i % PALETTE.length],
+    borderRadius: 3,
+  }));
+
+  new Chart(document.getElementById('chart-transaction'), {
+    type: 'bar',
+    plugins: [ChartDataLabels],
+    data: { labels, datasets },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        datalabels: {
+          display: true, anchor: 'end', align: 'top',
+          font: { size: 9, weight: 'bold' }, color: '#555',
+          formatter: v => v > 0 ? v.toLocaleString() : '',
+        },
+        title: {
+          display: true,
+          text: `Transaction Segments — Best: ${best} | Declining: ${declining}`,
+          font: { size: 13, weight: 'bold' }, padding: { bottom: 10 },
+        },
+        legend: { display: true, position: 'bottom', labels: { padding: 16, font: { size: 11 } } },
+      },
+      layout: { padding: { top: 10, right: 24, bottom: 10, left: 10 } },
+      scales: {
+        x: { stacked: false, grid: { display: false }, ticks: { font: { size: 10 } } },
+        y: {
+          title: { display: true, text: 'Search Volume' },
+          ticks: { font: { size: 11 } },
+        },
+      },
+    },
+  });
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   CHART 3 — ranking_global_war
+   ───────────────────────────────────────────────────────────────────────────── */
+async function buildRankingChart() {
+  let rows;
+  try { rows = await fetchSheet('ranking_global_war'); }
+  catch (e) {
+    showError('spin-ranking','chart-ranking','Could not load ranking_global_war.');
+    return;
+  }
+  hideSpinner('spin-ranking');
+
+  const dateCol = Object.keys(rows[0]).find(k => /date/i.test(k)) || Object.keys(rows[0])[0];
+  const hostCol = Object.keys(rows[0]).find(k => /host|url|domain/i.test(k)) || Object.keys(rows[0])[1];
+  const rankCol = Object.keys(rows[0]).find(k => /rank/i.test(k)) || Object.keys(rows[0])[2];
+
+  const dates = [...new Set(rows.map(r => r[dateCol]))].sort();
+  const hosts = [...new Set(rows.map(r => r[hostCol]))];
+  const last12 = last(dates, 12);
+  const labels = last12.map(monthLabel);
+
+  const pivot = {};
+  rows.forEach(r => {
+    if (!pivot[r[hostCol]]) pivot[r[hostCol]] = {};
+    pivot[r[hostCol]][r[dateCol]] = num(r[rankCol]) || null;
+  });
+
+  const SLN_RE = /selogerneuf|seloger[-_]neuf|seloger\.neuf/i;
+  const sln    = hosts.find(h => SLN_RE.test(h)) || hosts[0];
+  const slnVals = last12.map(dt => pivot[sln]?.[dt] ?? null);
+  const slnCur  = slnVals.filter(v => v !== null).at(-1);
+
+  // Trend: compare last 3 to first 3 of the 12
+  const firstAvg = avg(slnVals.slice(0,3).filter(v=>v!==null));
+  const lastAvg  = avg(slnVals.slice(-3).filter(v=>v!==null));
+  const improving = lastAvg < firstAvg; // lower rank = better
+
+  setKpi('kpi-rank', slnCur ? `#${slnCur}` : '#—');
+  setKpiDelta('kpi-rank-trend', improving ? '↑ Improving' : '↓ Declining', improving ? 'up' : 'down');
+
+  let colorIdx = 0;
+  const datasets = hosts.map(h => {
+    const isSln = SLN_RE.test(h);
+    const color = isSln ? '#4285F4' : PALETTE[1 + (colorIdx++ % (PALETTE.length-1))];
+    return {
+      label: h,
+      data: last12.map(dt => pivot[h]?.[dt] ?? null),
+      borderColor: color,
+      borderWidth: isSln ? 4 : 2,
+      pointRadius: isSln ? 6 : 3,
+      pointBackgroundColor: color,
+      tension: 0.3,
+      spanGaps: true,
+      fill: false,
+      order: isSln ? 0 : 1,
+    };
+  });
+
+  new Chart(document.getElementById('chart-ranking'), {
+    type: 'line',
+    plugins: [ChartDataLabels],
+    data: { labels, datasets },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        datalabels: { display: false },
+        title: {
+          display: true,
+          text: `SEO WAR Ranking — SeLoger Neuf: #${slnCur ?? '—'} | ${improving ? '↑ Improving' : '↓ Declining'}`,
+          font: { size: 13, weight: 'bold' }, padding: { bottom: 10 },
+        },
+        legend: { display: true, position: 'bottom', labels: { padding: 8, font: { size: 10 } } },
+        annotation: {
+          annotations: {
+            top: {
+              type: 'line', yMin: 1, yMax: 1,
+              borderColor: 'rgba(52,168,83,0.4)', borderWidth: 1, borderDash: [4,4],
+              label: {
+                display: true, content: 'Rank #1', position: 'start',
+                backgroundColor: 'rgba(52,168,83,0.1)', color: '#34A853', font: { size: 10 },
+              },
+            },
+          },
+        },
+      },
+      layout: { padding: { top: 10, right: 24, bottom: 10, left: 10 } },
+      scales: {
+        x: { grid: { display: false }, ticks: { font: { size: 10 } } },
+        y: {
+          reverse: true,
+          title: { display: true, text: 'WAR Rank (lower = better)' },
+          ticks: { stepSize: 1, font: { size: 11 } },
+        },
+      },
+    },
+  });
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   CHART 4 — demand_asset
+   ───────────────────────────────────────────────────────────────────────────── */
+async function buildAssetChart() {
+  let rows;
+  try { rows = await fetchSheet('demand_asset'); }
+  catch (e) {
+    showError('spin-asset','chart-asset','Could not load demand_asset.');
+    return;
+  }
+  hideSpinner('spin-asset');
+
+  const dateCol  = Object.keys(rows[0]).find(k => /date|month/i.test(k)) || Object.keys(rows[0])[0];
+  const assetCol = Object.keys(rows[0]).find(k => /asset|type|segment/i.test(k)) || Object.keys(rows[0])[1];
+  const volCol   = Object.keys(rows[0]).find(k => /volume|vol/i.test(k)) || Object.keys(rows[0])[2];
+
+  const dates  = [...new Set(rows.map(r => r[dateCol]))].sort();
+  const assets = [...new Set(rows.map(r => r[assetCol]))];
+  const last12 = last(dates, 12);
+  const labels = last12.map(monthLabel);
+
+  const pivot = {};
+  rows.forEach(r => {
+    if (!pivot[r[assetCol]]) pivot[r[assetCol]] = {};
+    pivot[r[assetCol]][r[dateCol]] = num(r[volCol]);
+  });
+
+  // Find top and declining asset (MoM last)
+  let topAsset = '', topVal = -Infinity, declAsset = '', declVal = Infinity;
+  assets.forEach(a => {
+    const vals = last12.map(dt => pivot[a]?.[dt] || 0);
+    const diff = vals[vals.length-1] - vals[vals.length-2];
+    if (diff > topVal)  { topVal  = diff;  topAsset  = a; }
+    if (diff < declVal) { declVal = diff;  declAsset = a; }
+  });
+
+  // Totals per date for the line
+  const totals = last12.map(dt => assets.reduce((s,a) => s + (pivot[a]?.[dt]||0), 0));
+
+  const barDatasets = assets.map((a, i) => ({
+    type: 'bar',
+    label: a,
+    data: last12.map(dt => pivot[a]?.[dt] ?? 0),
+    backgroundColor: PALETTE[i % PALETTE.length],
+    stack: 'stack0',
+    datalabels: {
+      display: 'auto', anchor: 'center', align: 'center',
+      font: { size: 9 }, color: 'white',
+      formatter: v => v > 100 ? v.toLocaleString() : '',
+    },
+  }));
+
+  const lineDataset = {
+    type: 'line',
+    label: 'Total',
+    data: totals,
+    borderColor: '#212121', borderWidth: 2,
+    pointRadius: 4, fill: false, tension: 0.3,
+    datalabels: { display: false },
+  };
+
+  new Chart(document.getElementById('chart-asset'), {
+    type: 'bar',
+    plugins: [ChartDataLabels],
+    data: { labels, datasets: [...barDatasets, lineDataset] },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        title: {
+          display: true,
+          text: `Demand by Asset Type — Top: ${topAsset} | Declining: ${declAsset}`,
+          font: { size: 13, weight: 'bold' }, padding: { bottom: 10 },
+        },
+        legend: { display: true, position: 'bottom', labels: { padding: 10, font: { size: 10 } } },
+      },
+      layout: { padding: { top: 10, right: 24, bottom: 10, left: 10 } },
+      scales: {
+        x: { stacked: true, grid: { display: false }, ticks: { font: { size: 10 } } },
+        y: {
+          stacked: true,
+          title: { display: true, text: 'Search Volume' },
+          ticks: { font: { size: 11 } },
+        },
+      },
+    },
+  });
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   CHART 5 — audience
+   ───────────────────────────────────────────────────────────────────────────── */
+async function buildAudienceChart() {
+  let rows;
+  try { rows = await fetchSheet('audience'); }
+  catch (e) {
+    showError('spin-audience','chart-audience','Could not load audience.');
+    return;
+  }
+  hideSpinner('spin-audience');
+
+  const typeCol   = Object.keys(rows[0]).find(k => /type|segment|kind/i.test(k)) || Object.keys(rows[0])[1];
+  const clickCol  = Object.keys(rows[0]).find(k => /click|vol/i.test(k)) || Object.keys(rows[0])[2];
+
+  const totals = {};
+  rows.forEach(r => {
+    const t = r[typeCol];
+    if (!t) return;
+    totals[t] = (totals[t] || 0) + num(r[clickCol]);
+  });
+
+  const types  = Object.keys(totals);
+  const values = types.map(t => Math.round(totals[t]));
+  const total  = values.reduce((a,b) => a+b, 0);
+  const pcts   = values.map(v => (v/total*100).toFixed(1));
+
+  // KPI
+  const brandIdx = types.findIndex(t => /brand/i.test(t) && !/non/i.test(t));
+  if (brandIdx >= 0) {
+    setKpi('kpi-brand', `${pcts[brandIdx]}%`);
+    setKpiDelta('kpi-brand-sub', `of total ${total.toLocaleString()} clicks`, 'neutral');
+  }
+
+  const titleParts = types.map((t,i) => `${t}: ${pcts[i]}%`).join(' | ');
+
+  new Chart(document.getElementById('chart-audience'), {
+    type: 'doughnut',
+    plugins: [ChartDataLabels],
+    data: {
+      labels: types,
+      datasets: [{
+        data: values,
+        backgroundColor: PALETTE.slice(0, types.length),
+        borderColor: 'white', borderWidth: 3,
+      }],
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      cutout: '60%',
+      plugins: {
+        datalabels: {
+          display: true,
+          font: { size: 13, weight: 'bold' },
+          color: 'white',
+          textAlign: 'center',
+          formatter: (value) => {
+            const p = (value / total * 100).toFixed(1);
+            return `${p}%`;
+          },
+        },
+        title: {
+          display: true,
+          text: `Audience Split — ${titleParts}`,
+          font: { size: 12, weight: 'bold' }, padding: { bottom: 10 },
+        },
+        legend: { display: true, position: 'bottom', labels: { padding: 16, font: { size: 12 } } },
+      },
+    },
+  });
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   INIT
+   ───────────────────────────────────────────────────────────────────────────── */
+async function init() {
+  const dot  = document.getElementById('status-dot');
+  const txt  = document.getElementById('update-text');
+
+  try {
+    await Promise.all([
+      buildGlobalChart(),
+      buildTransactionChart(),
+      buildRankingChart(),
+      buildAssetChart(),
+      buildAudienceChart(),
+    ]);
+    dot.className = 'ok';
+    txt.textContent = `Last loaded: ${new Date().toLocaleString('en-GB')}`;
+  } catch (e) {
+    dot.className = 'error';
+    txt.textContent = 'Some data failed to load';
+  }
+}
+
+init();
+</script>
+</body>
+</html>
