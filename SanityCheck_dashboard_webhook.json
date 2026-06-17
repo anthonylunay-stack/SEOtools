@@ -1,0 +1,459 @@
+{
+  "name": "SanityCheck dashboard",
+  "nodes": [
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1BlQRDytw-GXK9BHhMEqaxUXIGoImqfqY_kFjWNINcI4",
+          "mode": "list",
+          "cachedResultName": "[AVIVAIPROJ] SLN Data",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1BlQRDytw-GXK9BHhMEqaxUXIGoImqfqY_kFjWNINcI4/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1545992731,
+          "mode": "list",
+          "cachedResultName": "demand_global",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1BlQRDytw-GXK9BHhMEqaxUXIGoImqfqY_kFjWNINcI4/edit#gid=1545992731"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheetsTool",
+      "typeVersion": 4.7,
+      "position": [-576, 560],
+      "id": "53bb6ee6-45e7-4c6b-af10-f70a5bada006",
+      "name": "Tool_demand_global",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "sKJo0cSICgmr4UFl",
+          "name": "Google Sheets account 11"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1BlQRDytw-GXK9BHhMEqaxUXIGoImqfqY_kFjWNINcI4",
+          "mode": "list",
+          "cachedResultName": "[AVIVAIPROJ] SLN Data",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1BlQRDytw-GXK9BHhMEqaxUXIGoImqfqY_kFjWNINcI4/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 996643932,
+          "mode": "list",
+          "cachedResultName": "demand_transaction",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1BlQRDytw-GXK9BHhMEqaxUXIGoImqfqY_kFjWNINcI4/edit#gid=996643932"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheetsTool",
+      "typeVersion": 4.7,
+      "position": [-400, 560],
+      "id": "6ccb7769-72ed-4da1-bd5d-ba61cd1f66a6",
+      "name": "Tool_demand_transaction",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "sKJo0cSICgmr4UFl",
+          "name": "Google Sheets account 11"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1BlQRDytw-GXK9BHhMEqaxUXIGoImqfqY_kFjWNINcI4",
+          "mode": "list",
+          "cachedResultName": "[AVIVAIPROJ] SLN Data",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1BlQRDytw-GXK9BHhMEqaxUXIGoImqfqY_kFjWNINcI4/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 219092738,
+          "mode": "list",
+          "cachedResultName": "demand_asset",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1BlQRDytw-GXK9BHhMEqaxUXIGoImqfqY_kFjWNINcI4/edit#gid=219092738"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheetsTool",
+      "typeVersion": 4.7,
+      "position": [-208, 560],
+      "id": "30b090d0-4f54-43ac-8630-3b6511c18a50",
+      "name": "Tool_demand_asset",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "sKJo0cSICgmr4UFl",
+          "name": "Google Sheets account 11"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1BlQRDytw-GXK9BHhMEqaxUXIGoImqfqY_kFjWNINcI4",
+          "mode": "list",
+          "cachedResultName": "[AVIVAIPROJ] SLN Data",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1BlQRDytw-GXK9BHhMEqaxUXIGoImqfqY_kFjWNINcI4/edit#gid=232829744"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 232829744,
+          "mode": "list",
+          "cachedResultName": "ranking_global_war",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1BlQRDytw-GXK9BHhMEqaxUXIGoImqfqY_kFjWNINcI4/edit#gid=232829744"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheetsTool",
+      "typeVersion": 4.7,
+      "position": [-32, 560],
+      "id": "9fb37e11-b77c-47db-8e70-691afac74398",
+      "name": "Tool_ranking_global_war",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "sKJo0cSICgmr4UFl",
+          "name": "Google Sheets account 11"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1BlQRDytw-GXK9BHhMEqaxUXIGoImqfqY_kFjWNINcI4",
+          "mode": "list",
+          "cachedResultName": "[AVIVAIPROJ] SLN Data",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1BlQRDytw-GXK9BHhMEqaxUXIGoImqfqY_kFjWNINcI4/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1576889957,
+          "mode": "list",
+          "cachedResultName": "audience",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1BlQRDytw-GXK9BHhMEqaxUXIGoImqfqY_kFjWNINcI4/edit#gid=1576889957"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheetsTool",
+      "typeVersion": 4.7,
+      "position": [128, 560],
+      "id": "aaf48830-0089-40c4-a758-d0e62cdce7ef",
+      "name": "Tool_audience",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "sKJo0cSICgmr4UFl",
+          "name": "Google Sheets account 11"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 8 * * 1"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [-1100, 80],
+      "id": "fefa8c26-292d-4b21-ac33-7738a1566980",
+      "name": "Schedule Monday morning"
+    },
+    {
+      "parameters": {
+        "httpMethod": "GET",
+        "path": "seo-sanity-check",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [-1100, 240],
+      "id": "b1c2d3e4-f5a6-7890-abcd-ef1234567890",
+      "name": "Webhook Dashboard",
+      "webhookId": "seo-sanity-check"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-4o",
+          "mode": "list",
+          "cachedResultName": "gpt-4o"
+        },
+        "responsesApiEnabled": false,
+        "options": {
+          "maxTokens": 16000
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [-576, 272],
+      "id": "01c34abc-e84b-45ba-bf09-7b9456d26c23",
+      "name": "OpenAI Chat",
+      "credentials": {
+        "openAiApi": {
+          "id": "apnKNfuPRPt3265G",
+          "name": "OpenAI account 6"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "You are an SEO and real estate analyst specializing in online demand data for the French residential new-build market.\n\nReport date: {{ $now.format('DD/MM/YYYY') }}\n\n━━━ STEP 1 — FETCH DATA ━━━\nUse each tool to read ALL rows BEFORE writing anything:\n- Tool_demand_global → demand_global (columns: date/month, volume)\n- Tool_demand_transaction → demand_transaction (columns: date, segment.transaction, volume)\n- Tool_demand_asset → demand_asset (columns: date, segment.asset, volume)\n- Tool_ranking_global_war → ranking_global_war (columns: date, url_hostname, rank_organic_war)\n- Tool_audience → audience (columns: date, type, clicks)\n\n━━━ STEP 2 — WRITE ANALYSIS ━━━\n\n## 1. demand_global — Market trend\n- Current month volume vs M-1: absolute difference + %\n- Current month vs same month last year (YoY): absolute difference + %\n- 12-month trend: increasing or decreasing vs previous year?\n\n## 2. demand_transaction — By segment\n- Per segment: current month vs M-1 (number + %)\n- Per segment: current month vs same month last year (number + %)\n- Which segment is growing? Which is declining?\n\n## 3. ranking_global_war — SEO competitive ranking\n- List ALL unique url_hostname values found in the data — do not omit any competitor\n- For each competitor: SeLoger Neuf current WAR rank vs their current rank\n- Trend over last 12 months: improving or declining?\n\n## 4. demand_asset — By asset type\n- Current month volume vs M-1 per asset type: absolute + %\n- Current month vs YoY per asset type\n- Top growing and top declining asset type\n\n## 5. audience — Brand vs Non-brand\n- Current click split per type (%)\n- Evolution vs previous period\n\n🎯 Rules: English only — bullets only — real numbers mandatory — no methodology.\n\n━━━ STEP 3 — GENERATE ADVANCED CHARTS ━━━\n\nProduce exactly 5 Chart.js v3 configs. Use ONLY real numbers. QuickChart supports these extra plugins: chartjs-plugin-annotation AND chartjs-plugin-datalabels — USE THEM.\n\n⚠️ MANDATORY RULES FOR ALL 5 CHARTS:\n- options.plugins.title = { display: true, text: \"...\", font: { size: 16, weight: \"bold\" }, padding: { bottom: 10 } }\n- options.plugins.legend = { display: true, position: \"bottom\", labels: { padding: 16, font: { size: 12 } } }\n- options.layout = { padding: { top: 10, right: 24, bottom: 10, left: 10 } }\n- options.scales.x.grid = { display: false }\n- options.scales.x.ticks = { font: { size: 11 } }\n- options.scales.y.ticks = { font: { size: 11 } }\n- All values MUST be real numbers. null only for genuinely missing rank data.\n- NO placeholder text.\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n📊 CHART 1 — demand_global — DUAL-LINE + ANNOTATION\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\ntype: \"line\"\nLabels: last 13 month labels (\"Apr 24\" format)\nDataset 1 \"Current year\":\n  borderColor \"#4285F4\", borderWidth 3, pointRadius 5, pointBackgroundColor \"#4285F4\"\n  fill: false, backgroundColor: \"rgba(66,133,244,0.08)\", tension 0.35\nDataset 2 \"Previous year\":\n  borderColor \"#EA4335\", borderWidth 2, borderDash [6,3], pointRadius 3, pointBackgroundColor \"#EA4335\"\n  fill: false, tension 0.35\nscales.y.title = { display: true, text: \"Search Volume\" }\nscales.y.beginAtZero: false\n\nANNOTATION — add a horizontal line for the 12-month average of the CURRENT year:\noptions.plugins.annotation = {\n  \"annotations\": {\n    \"avgLine\": {\n      \"type\": \"line\",\n      \"yMin\": <computed 12-month average of current year as a number>,\n      \"yMax\": <same value>,\n      \"borderColor\": \"rgba(66,133,244,0.5)\",\n      \"borderWidth\": 1,\n      \"borderDash\": [4,4],\n      \"label\": { \"display\": true, \"content\": \"12M Avg: <value>\", \"position\": \"end\", \"backgroundColor\": \"rgba(66,133,244,0.1)\", \"color\": \"#4285F4\", \"font\": { \"size\": 11 } }\n    }\n  }\n}\n\nTitle text: \"Global Search Demand — YoY: [+X% or -X%] | MoM: [+X% or -X%]\"\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n📊 CHART 2 — demand_transaction — GROUPED BAR + DATALABELS\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\ntype: \"bar\"\nLabels: last 12 unique dates\nOne dataset per segment. Palette: [\"#4285F4\",\"#EA4335\",\"#FBBC05\",\"#34A853\",\"#9C27B0\",\"#FF6D00\"]\nstacked: false\nscales.y.title = { display: true, text: \"Search Volume\" }\n\nDATALABELS — show values on top of each bar:\noptions.plugins.datalabels = {\n  \"display\": true,\n  \"anchor\": \"end\",\n  \"align\": \"top\",\n  \"font\": { \"size\": 9, \"weight\": \"bold\" },\n  \"color\": \"#555\"\n}\n\nTitle: \"Transaction Segments — Best: [segment name] | Declining: [segment name]\"\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n📊 CHART 3 — ranking_global_war — MULTI-LINE + HIGHLIGHT SeLoger Neuf\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\ntype: \"line\"\nLabels: last 12 unique dates\n⚠️ Create ONE dataset per EVERY unique url_hostname found in the data — include ALL competitors without exception.\n\nFor the dataset where label contains \"selogerneuf\" or \"seloger-neuf\" or is SeLoger Neuf's domain:\n  borderWidth: 4, borderColor: \"#4285F4\", pointRadius: 6, pointBackgroundColor: \"#4285F4\", tension: 0.3, spanGaps: true, fill: false, order: 0\n\nFor all other competitor datasets:\n  borderWidth: 2, borderColor: pick sequentially from [\"#EA4335\",\"#FBBC05\",\"#34A853\",\"#9C27B0\",\"#FF6D00\",\"#00ACC1\",\"#795548\",\"#F06292\",\"#AED581\",\"#FFD54F\",\"#4DD0E1\",\"#CE93D8\",\"#FFAB40\",\"#80CBC4\",\"#EF9A9A\"], pointRadius: 3, tension: 0.3, spanGaps: true, fill: false\n\nscales.y.reverse: true\nscales.y.title = { display: true, text: \"WAR Rank (lower = better)\" }\nscales.y.ticks.stepSize: 1\n\nANNOTATION — horizontal line at rank 1:\noptions.plugins.annotation = {\n  \"annotations\": {\n    \"top\": {\n      \"type\": \"line\",\n      \"yMin\": 1, \"yMax\": 1,\n      \"borderColor\": \"rgba(52,168,83,0.4)\",\n      \"borderWidth\": 1,\n      \"borderDash\": [4,4],\n      \"label\": { \"display\": true, \"content\": \"Rank #1\", \"position\": \"start\", \"backgroundColor\": \"rgba(52,168,83,0.1)\", \"color\": \"#34A853\", \"font\": { \"size\": 10 } }\n    }\n  }\n}\n\nTitle: \"SEO WAR Ranking — SeLoger Neuf: #[current rank] | [↑ Improving / ↓ Declining]\"\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n📊 CHART 4 — demand_asset — STACKED BAR + TOTAL LINE + DATALABELS\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\ntype: \"bar\" (mixed with a line dataset for the total)\nLabels: last 12 unique dates\n\nFirst, add one \"bar\" dataset per asset type (stacked). Palette: [\"#4285F4\",\"#EA4335\",\"#FBBC05\",\"#34A853\",\"#9C27B0\",\"#FF6D00\"]\n  For each: type: \"bar\", stack: \"stack0\"\n\nThen add ONE extra dataset for the total per date:\n  type: \"line\", label: \"Total\", data: [<sum of all asset volumes per date>]\n  borderColor: \"#212121\", borderWidth: 2, pointRadius: 4, fill: false, tension: 0.3\n  datalabels: { display: false }\n\nscales.x.stacked: true\nscales.y.stacked: true\nscales.y.title = { display: true, text: \"Search Volume\" }\n\nDATALABELS on bar datasets only:\noptions.plugins.datalabels = {\n  \"display\": \"auto\",\n  \"anchor\": \"center\",\n  \"align\": \"center\",\n  \"font\": { \"size\": 9 },\n  \"color\": \"white\"\n}\n\nTitle: \"Demand by Asset Type — Top: [asset] | Declining: [asset]\"\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n📊 CHART 5 — audience — DOUGHNUT + DATALABELS PERCENTAGES\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\ntype: \"doughnut\"\nLabels: distinct audience types from data (e.g. brand, nonbrand, anonymous)\ndata: total clicks per type — SUM over ALL rows\nbackgroundColor: [\"#4285F4\", \"#34A853\", \"#FBBC05\", \"#9C27B0\"]\nborderColor: \"white\", borderWidth: 3\noptions.cutout: \"60%\"\n\nDATALABELS — show percentage inside each slice:\noptions.plugins.datalabels = {\n  \"display\": true,\n  \"font\": { \"size\": 13, \"weight\": \"bold\" },\n  \"color\": \"white\",\n  \"textAlign\": \"center\"\n}\n\nTitle: \"Audience Split — Brand: [X%] | Non-brand: [Y%] | Anon: [Z%]\"\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n🎨 Color palette: #4285F4 #EA4335 #FBBC05 #34A853 #9C27B0 #FF6D00 #00ACC1 #795548\n\nOutput — append at the very end of your response:\n\n[CHARTS_JSON]\n[\n  { \"sheetName\": \"demand_global\",      \"chartConfig\": { ...complete Chart.js v3 config... } },\n  { \"sheetName\": \"demand_transaction\", \"chartConfig\": { ...complete Chart.js v3 config... } },\n  { \"sheetName\": \"ranking_global_war\", \"chartConfig\": { ...complete Chart.js v3 config... } },\n  { \"sheetName\": \"demand_asset\",       \"chartConfig\": { ...complete Chart.js v3 config... } },\n  { \"sheetName\": \"audience\",           \"chartConfig\": { ...complete Chart.js v3 config... } }\n]\n[/CHARTS_JSON]",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [-416, 128],
+      "id": "9535ad92-f361-4128-a3c0-128c283cfa93",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "jsCode": "const aiOutput = $input.first().json.output || '';\n\nconst match = aiOutput.match(/\\[CHARTS_JSON\\]([\\s\\S]*?)\\[\\/CHARTS_JSON\\]/);\nif (!match) {\n  return [{ json: { error: 'No CHARTS_JSON block found', rawOutput: aiOutput.slice(-1200) } }];\n}\n\nlet raw = match[1].trim();\nraw = raw.replace(/^```(?:json)?\\s*/i, '').replace(/\\s*```$/, '').trim();\n\nlet charts;\ntry {\n  charts = JSON.parse(raw);\n} catch (e) {\n  const repaired = raw.replace(/,\\s*([\\]\\}])/g, '$1');\n  try {\n    charts = JSON.parse(repaired);\n  } catch (e2) {\n    return [{ json: { error: 'Failed to parse CHARTS_JSON: ' + e2.message, rawJson: raw.slice(0, 1200) } }];\n  }\n}\n\nif (!Array.isArray(charts) || charts.length === 0) {\n  return [{ json: { error: 'CHARTS_JSON is empty or not an array' } }];\n}\n\nreturn charts\n  .filter(c => c && c.chartConfig && c.chartConfig.data)\n  .map(c => ({ json: { sheetName: c.sheetName || 'chart', chartConfig: c.chartConfig } }));\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [-16, 240],
+      "id": "7a05eb54-a327-4659-9b8f-b47742514234",
+      "name": "Parse AI Chart Configs"
+    },
+    {
+      "parameters": {
+        "jsCode": "const allItems  = $input.all();\nconst allCharts = $('Parse AI Chart Configs').all();\n\nreturn allItems.map((item, idx) => {\n  const sheetName = allCharts[idx]?.json?.sheetName || ('chart_' + idx);\n  return { json: { sheetName }, binary: item.binary };\n});\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [208, 240],
+      "id": "d96c07b7-751f-4b79-afc7-d4fa9fdd17b3",
+      "name": "Attach Sheet Name"
+    },
+    {
+      "parameters": {
+        "driveId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "My Drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "15-4YK35IWCcJXaQ4LzywC7fKrY4u5vcX",
+          "mode": "list",
+          "cachedResultName": "Sanity chech SLN",
+          "cachedResultUrl": "https://drive.google.com/drive/folders/15-4YK35IWCcJXaQ4LzywC7fKrY4u5vcX"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [448, 240],
+      "id": "1f7b171a-fe89-4da9-90e6-2a18c5f6901b",
+      "name": "Upload Chart to Drive",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "hUSKS8kbE7qdyiJz",
+          "name": "Mon Google Drive"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "7214d040-f11c-409d-bf5b-4fc05b33d3bc",
+              "name": "output",
+              "value": "={{ $json.output }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [-16, 16],
+      "id": "9fe9c8ec-1efb-49ec-80f9-eb9856fcb03e",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "operation": "toText",
+        "sourceProperty": "output",
+        "options": {
+          "fileName": "=Sanity_check_{{ $now.format('YYYY-MM-DD') }}.doc"
+        }
+      },
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.1,
+      "position": [176, 16],
+      "id": "28c89f03-6218-48a9-bb91-45418e2243eb",
+      "name": "Convert to File"
+    },
+    {
+      "parameters": {
+        "driveId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "My Drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "15-4YK35IWCcJXaQ4LzywC7fKrY4u5vcX",
+          "mode": "list",
+          "cachedResultName": "Sanity chech SLN",
+          "cachedResultUrl": "https://drive.google.com/drive/folders/15-4YK35IWCcJXaQ4LzywC7fKrY4u5vcX"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [448, 16],
+      "id": "7427725d-7c98-423d-8213-2c6192c627bd",
+      "name": "Upload file",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "hUSKS8kbE7qdyiJz",
+          "name": "Mon Google Drive"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "fileId": {
+          "__rl": true,
+          "value": "={{ $json.id }}",
+          "mode": "id"
+        },
+        "newUpdatedFileName": "=Sanity check {{ $now.format('YYYY-MM-DD') }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [640, 16],
+      "id": "7f343e2b-fdcd-4610-bb67-cdb8490eef26",
+      "name": "Update file",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "hUSKS8kbE7qdyiJz",
+          "name": "Mon Google Drive"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Read directly from AI Agent — accessible from all branches\nconst output = $('AI Agent').first().json.output || '';\n\nreturn [\n  {\n    json: {\n      output,\n      generatedAt: new Date().toISOString()\n    }\n  }\n];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [640, 240],
+      "id": "c1a2b3d4-e5f6-7890-abcd-1234567890ab",
+      "name": "Build Webhook Response"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Access-Control-Allow-Origin",
+                "value": "*"
+              },
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [848, 240],
+      "id": "d2e3f4a5-b6c7-8901-bcde-234567890abc",
+      "name": "Respond to Webhook"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Tool_demand_global": {
+      "ai_tool": [[{ "node": "AI Agent", "type": "ai_tool", "index": 0 }]]
+    },
+    "Tool_demand_transaction": {
+      "ai_tool": [[{ "node": "AI Agent", "type": "ai_tool", "index": 0 }]]
+    },
+    "Tool_demand_asset": {
+      "ai_tool": [[{ "node": "AI Agent", "type": "ai_tool", "index": 0 }]]
+    },
+    "Tool_ranking_global_war": {
+      "ai_tool": [[{ "node": "AI Agent", "type": "ai_tool", "index": 0 }]]
+    },
+    "Tool_audience": {
+      "ai_tool": [[{ "node": "AI Agent", "type": "ai_tool", "index": 0 }]]
+    },
+    "Schedule Monday morning": {
+      "main": [[{ "node": "AI Agent", "type": "main", "index": 0 }]]
+    },
+    "Webhook Dashboard": {
+      "main": [[{ "node": "AI Agent", "type": "main", "index": 0 }]]
+    },
+    "OpenAI Chat": {
+      "ai_languageModel": [[{ "node": "AI Agent", "type": "ai_languageModel", "index": 0 }]]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          { "node": "Edit Fields",          "type": "main", "index": 0 },
+          { "node": "Parse AI Chart Configs","type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Parse AI Chart Configs": {
+      "main": [[{ "node": "Attach Sheet Name", "type": "main", "index": 0 }]]
+    },
+    "Attach Sheet Name": {
+      "main": [[{ "node": "Upload Chart to Drive", "type": "main", "index": 0 }]]
+    },
+    "Upload Chart to Drive": {
+      "main": [[{ "node": "Build Webhook Response", "type": "main", "index": 0 }]]
+    },
+    "Edit Fields": {
+      "main": [[{ "node": "Convert to File", "type": "main", "index": 0 }]]
+    },
+    "Convert to File": {
+      "main": [[{ "node": "Upload file", "type": "main", "index": 0 }]]
+    },
+    "Upload file": {
+      "main": [[{ "node": "Update file", "type": "main", "index": 0 }]]
+    },
+    "Build Webhook Response": {
+      "main": [[{ "node": "Respond to Webhook", "type": "main", "index": 0 }]]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "7bf45890-1234-5678-abcd-ef9876543210",
+  "meta": {
+    "instanceId": "0d2cc35bf4173ba6547bf653679ba4873189b39fa696743a086f77f7a38c2420"
+  },
+  "nodeGroups": [],
+  "tags": []
+}
