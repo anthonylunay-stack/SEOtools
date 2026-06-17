@@ -212,7 +212,7 @@
         },
         "responsesApiEnabled": false,
         "options": {
-          "maxTokens": 32000
+          "maxTokens": 16384
         }
       },
       "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
