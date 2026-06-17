@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SEO Sanity Check — SLN Dashboard</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1/dist/chartjs-plugin-annotation.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+  <style>
+    :root {
+      --bg:      #0d1117;
+      --surface: #161b22;
+      --card:    #1c2128;
+      --border:  #30363d;
+      --text:    #e6edf3;
+      --muted:   #7d8590;
+      --blue:    #4285F4;
+      --red:     #EA4335;
+      --yellow:  #FBBC05;
+      --green:   #34A853;
+      --purple:  #9C27B0;
+      --orange:  #FF6D00;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--bg); color: var(--text); font-family: -apple-system, 'Segoe UI', sans-serif; min-height: 100vh; }
+
+    /* ── Header ── */
+    header {
+      background: var(--surface); border-bottom: 1px solid var(--border);
+      padding: 14px 28px; display: flex; align-items: center; justify-content: space-between;
+      position: sticky; top: 0; z-index: 100;
+    }
+    .logo { display: flex; align-items: center; gap: 10px; font-size: 16px; font-weight: 700; }
+    .logo-icon {
+      width: 32px; height: 32px;
+      background: linear-gradient(135deg, var(--blue), #00d4aa);
+      border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 15px;
+    }
+    .logo-sub { color: var(--muted); font-weight: 400; margin-left: 6px; }
+    .header-right { display: flex; align-items: center; gap: 12px; font-size: 12px; color: var(--muted); }
+    .status-pill {
+      display: flex; align-items: center; gap: 6px;
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 20px; padding: 5px 12px; font-size: 12px;
+    }
+    .dot { width: 7px; height: 7px; border-radius: 50%; background: #34A853; flex-shrink: 0; }
+    .dot.loading { background: var(--yellow); animation: blink 1s infinite; }
+    .dot.error   { background: var(--red); }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.3} }
+    .run-date { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 5px 12px; font-size: 11px; color: var(--muted); }
+    .btn { background: var(--card); border: 1px solid var(--border); color: var(--text); padding: 6px 14px; border-radius: 8px; font-size: 12px; cursor: pointer; transition: border-color .2s; }
+    .btn:hover { border-color: var(--blue); }
+    .btn-primary { background: var(--blue); border-color: var(--blue); color: #fff; }
+    .btn-primary:hover { background: #3574e0; border-color: #3574e0; }
+
+    /* ── Main ── */
+    main { padding: 22px 28px; max-width: 1500px; margin: 0 auto; }
+
+    /* ── Import panel ── */
+    .import-bar {
+      background: linear-gradient(135deg, rgba(66,133,244,.08), rgba(52,168,83,.05));
+      border: 1px solid rgba(66,133,244,.25);
+      border-radius: 12px; padding: 14px 18px;
+      margin-bottom: 22px;
+      display: flex; flex-direction: column; gap: 10px;
+    }
+    .import-bar-top {
+      display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;
+    }
+    .import-info { font-size: 13px; color: var(--muted); display: flex; align-items: center; gap: 8px; }
+    .import-info strong { color: var(--text); }
+    .import-info code { background: rgba(255,255,255,.06); padding: 1px 5px; border-radius: 4px; font-size: 11px; }
+    .import-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+    .import-body { display: none; flex-direction: column; gap: 8px; }
+    .import-body.open { display: flex; }
+    textarea.paste-area {
+      background: var(--bg); border: 1px solid var(--border); border-radius: 8px;
+      color: var(--text); font-family: monospace; font-size: 12px;
+      padding: 10px 12px; resize: vertical; min-height: 100px; width: 100%;
+      outline: none;
+    }
+    textarea.paste-area:focus { border-color: var(--blue); }
+    .paste-hint { font-size: 11px; color: var(--muted); }
+
+    /* ── Drive info strip ── */
+    .drive-strip {
+      background: rgba(52,168,83,.06); border: 1px solid rgba(52,168,83,.2);
+      border-radius: 10px; padding: 10px 16px;
+      font-size: 12px; color: var(--muted);
+      display: flex; align-items: center; gap: 10px;
+      margin-bottom: 22px;
+    }
+    .drive-strip a { color: var(--green); text-decoration: none; }
+    .drive-strip a:hover { text-decoration: underline; }
+
+    /* ── Section label ── */
+    .section-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.2px; color: var(--muted); margin-bottom: 14px; padding-left: 2px; }
+
+    /* ── Analysis grid ── */
+    .analysis-card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 18px 20px; margin-bottom: 20px; }
+    .analysis-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 14px; }
+    @media (max-width: 1100px) { .analysis-grid { grid-template-columns: repeat(2, 1fr); } }
+    .analysis-block { display: flex; flex-direction: column; gap: 8px; }
+    .analysis-block-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .8px; padding-bottom: 7px; border-bottom: 1px solid var(--border); }
+    .analysis-text { font-size: 12px; color: var(--muted); line-height: 1.7; white-space: pre-wrap; }
+
+    /* ── Chart grids ── */
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-bottom: 18px; }
+    .grid-3 { display: grid; grid-template-columns: 2fr 2fr 1fr; gap: 18px; margin-bottom: 18px; }
+    @media (max-width: 1000px) { .grid-2, .grid-3 { grid-template-columns: 1fr; } }
+
+    /* ── Chart card ── */
+    .chart-card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 18px 20px; display: flex; flex-direction: column; gap: 14px; transition: border-color .2s; }
+    .chart-card:hover { border-color: rgba(66,133,244,.35); }
+    .card-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+    .card-title { font-size: 14px; font-weight: 600; margin-bottom: 3px; }
+    .card-sub { font-size: 12px; color: var(--muted); }
+    .sheet-tag { font-size: 10px; font-weight: 700; padding: 3px 8px; border-radius: 6px; background: rgba(66,133,244,.12); color: var(--blue); border: 1px solid rgba(66,133,244,.22); white-space: nowrap; flex-shrink: 0; }
+    .chart-area { position: relative; }
+    .chart-area canvas { display: block; width: 100%; height: 100%; }
+    .h-260 { height: 260px; }
+    .h-300 { height: 300px; }
+
+    /* ── Placeholder state ── */
+    .chart-placeholder { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; gap: 10px; color: var(--muted); font-size: 13px; }
+    .chart-placeholder .icon { font-size: 28px; opacity: .4; }
+    .chart-placeholder.loading .icon { animation: spin 1.2s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Toast ── */
+    #toast { position: fixed; bottom: 24px; right: 24px; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 10px 16px; font-size: 13px; color: var(--text); box-shadow: 0 4px 20px rgba(0,0,0,.4); opacity: 0; transform: translateY(8px); transition: opacity .3s, transform .3s; pointer-events: none; z-index: 999; }
+    #toast.show { opacity: 1; transform: translateY(0); }
+  </style>
+</head>
+<body>
+
+<!-- ══ HEADER ══ -->
+<header>
+  <div class="logo">
+    <div class="logo-icon">📊</div>
+    SEO Sanity Check
+    <span class="logo-sub">SeLoger Neuf</span>
+  </div>
+  <div class="header-right">
+    <div class="status-pill">
+      <span class="dot" id="statusDot"></span>
+      <span id="statusText">Ready</span>
+    </div>
+    <div class="run-date" id="runDate">Report date: —</div>
+    <button class="btn" onclick="loadFromN8N()">↺ Refresh webhook</button>
+  </div>
+</header>
+
+<main>
+
+  <!-- ══ Import bar ══ -->
+  <div class="import-bar">
+    <div class="import-bar-top">
+      <div class="import-info">
+        ⚡ <span>
+          <strong>2 input modes:</strong>
+          set <code>N8N_WEBHOOK_URL</code> for live fetch, or paste the AI Agent output below.
+          The dashboard parses <code>[CHARTS_JSON]</code> + analysis sections automatically.
+        </span>
+      </div>
+      <div class="import-actions">
+        <button class="btn" onclick="togglePaste()">📋 Paste N8N output</button>
+        <button class="btn btn-primary" onclick="loadFromN8N()">↺ Fetch from webhook</button>
+      </div>
+    </div>
+    <div class="import-body" id="importBody">
+      <textarea class="paste-area" id="pasteArea" rows="6"
+        placeholder="Paste the full AI Agent output here (analysis text + [CHARTS_JSON]...[/CHARTS_JSON] block)…"></textarea>
+      <div style="display:flex;gap:8px;align-items:center">
+        <button class="btn btn-primary" onclick="loadFromPaste()">Load pasted output</button>
+        <span class="paste-hint">The agent runs every Monday at 8 AM via N8N Schedule trigger.</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ Drive strip ══ -->
+  <div class="drive-strip">
+    📁 Charts &amp; analysis are also saved to Google Drive →
+    <a href="https://drive.google.com/drive/folders/15-4YK35IWCcJXaQ4LzywC7fKrY4u5vcX" target="_blank">
+      Sanity check SLN
+    </a>
+    &nbsp;·&nbsp; Analysis doc: <code style="background:rgba(255,255,255,.05);padding:1px 5px;border-radius:4px;font-size:11px">Sanity_check_YYYY-MM-DD.doc</code>
+  </div>
+
+  <!-- ══ Analysis ══ -->
+  <p class="section-label">Weekly analysis — AI Agent (GPT-4o)</p>
+  <div class="analysis-card">
+    <div class="analysis-grid">
+      <div class="analysis-block">
+        <div class="analysis-block-title" style="color:var(--blue)">1 · demand_global</div>
+        <div class="analysis-text" id="ana-demand_global">Waiting for data…</div>
+      </div>
+      <div class="analysis-block">
+        <div class="analysis-block-title" style="color:var(--red)">2 · demand_transaction</div>
+        <div class="analysis-text" id="ana-demand_transaction">Waiting for data…</div>
+      </div>
+      <div class="analysis-block">
+        <div class="analysis-block-title" style="color:var(--green)">3 · ranking_global_war</div>
+        <div class="analysis-text" id="ana-ranking_global_war">Waiting for data…</div>
+      </div>
+      <div class="analysis-block">
+        <div class="analysis-block-title" style="color:var(--yellow)">4 · demand_asset</div>
+        <div class="analysis-text" id="ana-demand_asset">Waiting for data…</div>
+      </div>
+      <div class="analysis-block">
+        <div class="analysis-block-title" style="color:var(--purple)">5 · audience</div>
+        <div class="analysis-text" id="ana-audience">Waiting for data…</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ Charts row 1 ══ -->
+  <p class="section-label">Market demand</p>
+  <div class="grid-2">
+    <div class="chart-card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Global Search Demand</div>
+          <div class="card-sub">YoY & MoM — current vs previous year</div>
+        </div>
+        <span class="sheet-tag">demand_global</span>
+      </div>
+      <div class="chart-area h-260" id="wrap-demand_global">
+        <div class="chart-placeholder loading"><span class="icon">⟳</span><span>Waiting for N8N…</span></div>
+      </div>
+    </div>
+    <div class="chart-card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Transaction Segments</div>
+          <div class="card-sub">Grouped bar — search volume by transaction type</div>
+        </div>
+        <span class="sheet-tag">demand_transaction</span>
+      </div>
+      <div class="chart-area h-260" id="wrap-demand_transaction">
+        <div class="chart-placeholder loading"><span class="icon">⟳</span><span>Waiting for N8N…</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ Charts row 2 ══ -->
+  <p class="section-label">Ranking · Asset demand · Audience</p>
+  <div class="grid-3">
+    <div class="chart-card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">SEO WAR Ranking</div>
+          <div class="card-sub">All competitors — rank lower = better</div>
+        </div>
+        <span class="sheet-tag">ranking_global_war</span>
+      </div>
+      <div class="chart-area h-300" id="wrap-ranking_global_war">
+        <div class="chart-placeholder loading"><span class="icon">⟳</span><span>Waiting for N8N…</span></div>
+      </div>
+    </div>
+    <div class="chart-card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Demand by Asset Type</div>
+          <div class="card-sub">Stacked bar + total line</div>
+        </div>
+        <span class="sheet-tag">demand_asset</span>
+      </div>
+      <div class="chart-area h-300" id="wrap-demand_asset">
+        <div class="chart-placeholder loading"><span class="icon">⟳</span><span>Waiting for N8N…</span></div>
+      </div>
+    </div>
+    <div class="chart-card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Audience Split</div>
+          <div class="card-sub">Brand · Non-brand · Anonymous</div>
+        </div>
+        <span class="sheet-tag">audience</span>
+      </div>
+      <div class="chart-area h-300" id="wrap-audience">
+        <div class="chart-placeholder loading"><span class="icon">⟳</span><span>Waiting for N8N…</span></div>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<div id="toast"></div>
+
+<script>
+/* ─────────────────────────────────────────
+   CONFIG
+───────────────────────────────────────── */
+const N8N_WEBHOOK_URL = 'https://aviv.app.n8n.cloud/webhook/seo-sanity-check';
+
+/* ─────────────────────────────────────────
+   REGISTER PLUGINS
+───────────────────────────────────────── */
+Chart.register(ChartDataLabels);
+
+/* ─────────────────────────────────────────
+   PLACEHOLDER DATA
+───────────────────────────────────────── */
+const PLACEHOLDER = {
+  analysis: {
+    demand_global:      '• Jun 25: 47 200 vs May 25: 46 100 → +1 100 (+2.4%)\n• YoY vs Jun 24: +5 200 (+12.4%)\n• 12-month trend: ↑ increasing vs previous year\n\n⚠ Placeholder — connect N8N for live data',
+    demand_transaction: '• Achat neuf: 20 100 (+1.5% MoM, +11.7% YoY) ↑\n• Investissement: 13 200 (+2.3% MoM, +10.0% YoY) ↑\n• VEFA: 8 600 (+2.4% MoM, +7.5% YoY)\n• Location: 4 300 (+2.4% MoM, +7.5% YoY)\n• Best: Achat neuf | Declining: Location (share)\n\n⚠ Placeholder',
+    ranking_global_war: '• SeLoger Neuf: WAR rank #1 (Jun 25)\n• neuf.fr: #2 · bienici.com: #3 · pap.fr: #4\n• leboncoin.fr: #5\n• Trend vs Jul 24 (#3): ↑ Improving\n\n⚠ Placeholder',
+    demand_asset:       '• Appartement: 22 100 (+1.4% MoM, +5.2% YoY)\n• Maison: 13 200 (+2.3% MoM, +10.0% YoY)\n• Studio: 6 500 (+3.2% MoM, +8.3% YoY)\n• Terrain: 3 200 (+3.2% MoM, +6.7% YoY)\n• Top growing: Studio | Declining: Terrain (share)\n\n⚠ Placeholder',
+    audience:           '• Brand: 38.2% of clicks\n• Non-brand: 44.6% of clicks\n• Anonymous: 17.2% of clicks\n• Non-brand leads — growth opportunity in brand\n\n⚠ Placeholder'
+  },
+  charts: [
+    {
+      sheetName: 'demand_global',
+      chartConfig: {
+        type: 'line',
+        data: {
+          labels: ['Jun 24','Jul 24','Aug 24','Sep 24','Oct 24','Nov 24','Dec 24','Jan 25','Feb 25','Mar 25','Apr 25','May 25','Jun 25'],
+          datasets: [
+            { label: 'Current year', data: [42000,39500,41200,43800,45100,44000,38500,40200,41800,43500,44800,46100,47200], borderColor: '#4285F4', borderWidth: 3, pointRadius: 5, pointBackgroundColor: '#4285F4', fill: true, backgroundColor: 'rgba(66,133,244,0.08)', tension: 0.35 },
+            { label: 'Previous year', data: [38000,36500,38200,40800,42100,41000,35500,37200,38800,40500,41800,43100,null], borderColor: '#EA4335', borderWidth: 2, borderDash: [6,3], pointRadius: 3, pointBackgroundColor: '#EA4335', fill: false, tension: 0.35 }
+          ]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: {
+            title: { display: true, text: 'Global Search Demand — YoY: +12.4% | MoM: +2.4%', font: { size: 14, weight: 'bold' }, padding: { bottom: 10 } },
+            legend: { display: true, position: 'bottom', labels: { padding: 16, font: { size: 12 } } },
+            datalabels: { display: false },
+            annotation: { annotations: { avgLine: { type: 'line', yMin: 43218, yMax: 43218, borderColor: 'rgba(66,133,244,0.5)', borderWidth: 1, borderDash: [4,4], label: { display: true, content: '12M Avg: 43 218', position: 'end', backgroundColor: 'rgba(66,133,244,0.1)', color: '#4285F4', font: { size: 11 } } } } }
+          },
+          layout: { padding: { top: 10, right: 24, bottom: 10, left: 10 } },
+          scales: { x: { grid: { display: false }, ticks: { font: { size: 11 } } }, y: { beginAtZero: false, ticks: { font: { size: 11 } }, title: { display: true, text: 'Search Volume' } } }
+        }
+      }
+    },
+    {
+      sheetName: 'demand_transaction',
+      chartConfig: {
+        type: 'bar',
+        data: {
+          labels: ['Jul 24','Aug 24','Sep 24','Oct 24','Nov 24','Dec 24','Jan 25','Feb 25','Mar 25','Apr 25','May 25','Jun 25'],
+          datasets: [
+            { label: 'Achat neuf',     data: [18000,17200,18800,19500,18900,16200,17100,17800,18600,19200,19800,20100], backgroundColor: '#4285F4', borderRadius: 4 },
+            { label: 'Investissement', data: [12000,11500,12200,12800,12300,10800,11200,11600,12100,12500,12900,13200], backgroundColor: '#EA4335', borderRadius: 4 },
+            { label: 'VEFA',           data: [8000,7800,8200,8500,8100,6900,7200,7500,7800,8100,8400,8600],  backgroundColor: '#FBBC05', borderRadius: 4 },
+            { label: 'Location',       data: [4000,3900,4100,4300,4100,3500,3600,3800,3900,4100,4200,4300],  backgroundColor: '#34A853', borderRadius: 4 }
+          ]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: {
+            title: { display: true, text: 'Transaction Segments — Best: Achat neuf | Declining: Location', font: { size: 14, weight: 'bold' }, padding: { bottom: 10 } },
+            legend: { display: true, position: 'bottom', labels: { padding: 16, font: { size: 12 } } },
+            datalabels: { display: true, anchor: 'end', align: 'top', font: { size: 9, weight: 'bold' }, color: '#888' }
+          },
+          layout: { padding: { top: 10, right: 24, bottom: 10, left: 10 } },
+          scales: { x: { grid: { display: false }, ticks: { font: { size: 11 } } }, y: { ticks: { font: { size: 11 } }, title: { display: true, text: 'Search Volume' } } }
+        }
+      }
+    },
+    {
+      sheetName: 'ranking_global_war',
+      chartConfig: {
+        type: 'line',
+        data: {
+          labels: ['Jul 24','Aug 24','Sep 24','Oct 24','Nov 24','Dec 24','Jan 25','Feb 25','Mar 25','Apr 25','May 25','Jun 25'],
+          datasets: [
+            { label: 'selogerneuf.com', data: [3,3,2,2,2,2,1,1,2,1,1,1], borderColor: '#4285F4', borderWidth: 4, pointRadius: 6, pointBackgroundColor: '#4285F4', tension: 0.3, spanGaps: true, fill: false, order: 0 },
+            { label: 'neuf.fr',         data: [2,2,3,3,3,3,3,2,3,3,2,2], borderColor: '#EA4335', borderWidth: 2, pointRadius: 3, tension: 0.3, spanGaps: true, fill: false },
+            { label: 'bienici.com',     data: [1,1,1,1,1,1,2,3,1,2,3,3], borderColor: '#FBBC05', borderWidth: 2, pointRadius: 3, tension: 0.3, spanGaps: true, fill: false },
+            { label: 'pap.fr',          data: [4,4,4,4,4,4,4,4,4,4,4,4], borderColor: '#34A853', borderWidth: 2, pointRadius: 3, tension: 0.3, spanGaps: true, fill: false },
+            { label: 'leboncoin.fr',    data: [5,5,5,5,5,5,5,5,5,5,5,5], borderColor: '#9C27B0', borderWidth: 2, pointRadius: 3, tension: 0.3, spanGaps: true, fill: false }
+          ]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: {
+            title: { display: true, text: 'SEO WAR Ranking — SeLoger Neuf: #1 | ↑ Improving', font: { size: 14, weight: 'bold' }, padding: { bottom: 10 } },
+            legend: { display: true, position: 'bottom', labels: { padding: 16, font: { size: 12 } } },
+            datalabels: { display: false },
+            annotation: { annotations: { top: { type: 'line', yMin: 1, yMax: 1, borderColor: 'rgba(52,168,83,0.4)', borderWidth: 1, borderDash: [4,4], label: { display: true, content: 'Rank #1', position: 'start', backgroundColor: 'rgba(52,168,83,0.1)', color: '#34A853', font: { size: 10 } } } } }
+          },
+          layout: { padding: { top: 10, right: 24, bottom: 10, left: 10 } },
+          scales: { x: { grid: { display: false }, ticks: { font: { size: 11 } } }, y: { reverse: true, ticks: { font: { size: 11 }, stepSize: 1 }, title: { display: true, text: 'WAR Rank (lower = better)' } } }
+        }
+      }
+    },
+    {
+      sheetName: 'demand_asset',
+      chartConfig: {
+        type: 'bar',
+        data: {
+          labels: ['Jul 24','Aug 24','Sep 24','Oct 24','Nov 24','Dec 24','Jan 25','Feb 25','Mar 25','Apr 25','May 25','Jun 25'],
+          datasets: [
+            { type: 'bar',  label: 'Appartement', data: [21000,20200,21800,22500,21900,18200,19100,19800,20600,21200,21800,22100], backgroundColor: '#4285F4', stack: 'stack0' },
+            { type: 'bar',  label: 'Maison',       data: [12000,11500,12200,12800,12300,10800,11200,11600,12100,12500,12900,13200], backgroundColor: '#EA4335', stack: 'stack0' },
+            { type: 'bar',  label: 'Studio',       data: [6000,5800,6200,6500,6100,5200,5400,5600,5800,6100,6300,6500],  backgroundColor: '#FBBC05', stack: 'stack0' },
+            { type: 'bar',  label: 'Terrain',      data: [3000,2900,3100,3200,3100,2600,2700,2800,2900,3000,3100,3200],  backgroundColor: '#34A853', stack: 'stack0' },
+            { type: 'line', label: 'Total', data: [42000,40400,43300,45000,43400,36800,38400,39800,41400,42800,44100,45000], borderColor: '#e2e8f0', borderWidth: 2, pointRadius: 4, fill: false, tension: 0.3, datalabels: { display: false } }
+          ]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: {
+            title: { display: true, text: 'Demand by Asset Type — Top: Appartement | Declining: Terrain', font: { size: 14, weight: 'bold' }, padding: { bottom: 10 } },
+            legend: { display: true, position: 'bottom', labels: { padding: 16, font: { size: 12 } } },
+            datalabels: { display: 'auto', anchor: 'center', align: 'center', font: { size: 9 }, color: 'white' }
+          },
+          layout: { padding: { top: 10, right: 24, bottom: 10, left: 10 } },
+          scales: { x: { stacked: true, grid: { display: false }, ticks: { font: { size: 11 } } }, y: { stacked: true, ticks: { font: { size: 11 } }, title: { display: true, text: 'Search Volume' } } }
+        }
+      }
+    },
+    {
+      sheetName: 'audience',
+      chartConfig: {
+        type: 'doughnut',
+        data: {
+          labels: ['Brand', 'Non-brand', 'Anonymous'],
+          datasets: [{ data: [38.2, 44.6, 17.2], backgroundColor: ['#4285F4','#34A853','#FBBC05'], borderColor: 'white', borderWidth: 3 }]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          cutout: '60%',
+          plugins: {
+            title: { display: true, text: 'Audience Split — Brand: 38.2% | Non-brand: 44.6% | Anon: 17.2%', font: { size: 14, weight: 'bold' }, padding: { bottom: 10 } },
+            legend: { display: true, position: 'bottom', labels: { padding: 16, font: { size: 12 } } },
+            datalabels: {
+              display: true, font: { size: 13, weight: 'bold' }, color: 'white', textAlign: 'center',
+              formatter: (v, ctx) => { const t = ctx.dataset.data.reduce((a,b) => a+b, 0); return Math.round(v / t * 1000) / 10 + '%'; }
+            }
+          }
+        }
+      }
+    }
+  ]
+};
+
+/* ─────────────────────────────────────────
+   CHART REGISTRY
+───────────────────────────────────────── */
+const charts = {};
+function destroyChart(id) { if (charts[id]) { charts[id].destroy(); delete charts[id]; } }
+
+function renderChart(sheetName, config) {
+  const wrap = document.getElementById('wrap-' + sheetName);
+  if (!wrap) return;
+  destroyChart(sheetName);
+  wrap.innerHTML = '<canvas></canvas>';
+  const canvas = wrap.querySelector('canvas');
+  /* datalabels opt-out safety */
+  if (config.options?.plugins?.datalabels === false) config.options.plugins.datalabels = { display: false };
+  try {
+    charts[sheetName] = new Chart(canvas.getContext('2d'), config);
+  } catch(e) {
+    wrap.innerHTML = `<div class="chart-placeholder"><span class="icon">⚠️</span><span>Render error: ${e.message}</span></div>`;
+  }
+}
+
+/* ─────────────────────────────────────────
+   PARSE AI AGENT OUTPUT
+   Mirrors Parse AI Chart Configs1 node logic
+───────────────────────────────────────── */
+function parseOutput(text) {
+  const result = { charts: [], analysis: {} };
+
+  /* — Extract [CHARTS_JSON] block (mirrors N8N Code node) — */
+  const jsonMatch = text.match(/\[CHARTS_JSON\]([\s\S]*?)\[\/CHARTS_JSON\]/);
+  if (jsonMatch) {
+    let raw = jsonMatch[1].trim()
+      .replace(/^```(?:json)?\s*/i, '')
+      .replace(/\s*```$/, '')
+      .trim();
+    try {
+      result.charts = JSON.parse(raw);
+    } catch {
+      /* trailing-comma repair (same as N8N node) */
+      const repaired = raw.replace(/,\s*([\]\}])/g, '$1');
+      try { result.charts = JSON.parse(repaired); } catch(e2) {
+        toast('⚠️ JSON parse error: ' + e2.message, 5000);
+      }
+    }
+    if (!Array.isArray(result.charts)) result.charts = [];
+    result.charts = result.charts.filter(c => c?.chartConfig?.data);
+  }
+
+  /* — Extract analysis sections — */
+  const sections = [
+    { key: 'demand_global',      re: /##\s*1\.[^\n]*([\s\S]*?)(?=##\s*\d+\.|$)/i },
+    { key: 'demand_transaction', re: /##\s*2\.[^\n]*([\s\S]*?)(?=##\s*\d+\.|$)/i },
+    { key: 'ranking_global_war', re: /##\s*3\.[^\n]*([\s\S]*?)(?=##\s*\d+\.|$)/i },
+    { key: 'demand_asset',       re: /##\s*4\.[^\n]*([\s\S]*?)(?=##\s*\d+\.|$)/i },
+    { key: 'audience',           re: /##\s*5\.[^\n]*([\s\S]*?)(?=##\s*\d+\.|$)/i }
+  ];
+  sections.forEach(({ key, re }) => {
+    const m = text.match(re);
+    if (m) result.analysis[key] = m[1].trim().replace(/\[CHARTS_JSON\][\s\S]*/, '').trim();
+  });
+
+  return result;
+}
+
+/* ─────────────────────────────────────────
+   APPLY DATA TO UI
+───────────────────────────────────────── */
+function applyData(data) {
+  /* analysis */
+  Object.entries(data.analysis).forEach(([k, v]) => {
+    const el = document.getElementById('ana-' + k);
+    if (el) el.textContent = v || '—';
+  });
+  /* charts */
+  data.charts.forEach(({ sheetName, chartConfig }) => renderChart(sheetName, chartConfig));
+}
+
+/* ─────────────────────────────────────────
+   STATUS
+───────────────────────────────────────── */
+function setStatus(state, label) {
+  document.getElementById('statusDot').className = 'dot' + (state === 'loading' ? ' loading' : state === 'error' ? ' error' : '');
+  document.getElementById('statusText').textContent = label;
+}
+
+/* ─────────────────────────────────────────
+   TOAST
+───────────────────────────────────────── */
+function toast(msg, ms = 3000) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), ms);
+}
+
+/* ─────────────────────────────────────────
+   PASTE MODE
+───────────────────────────────────────── */
+function togglePaste() {
+  const body = document.getElementById('importBody');
+  body.classList.toggle('open');
+}
+
+function loadFromPaste() {
+  const text = document.getElementById('pasteArea').value.trim();
+  if (!text) { toast('⚠️ Nothing pasted'); return; }
+  const data = parseOutput(text);
+  if (data.charts.length === 0 && Object.keys(data.analysis).length === 0) {
+    toast('⚠️ No charts or analysis found — check the format', 4000); return;
+  }
+  applyData(data);
+  setStatus('ok', 'Loaded (paste)');
+  document.getElementById('runDate').textContent = 'Report date: ' + new Date().toLocaleDateString('en-GB', { day:'2-digit', month:'short', year:'numeric' });
+  document.getElementById('importBody').classList.remove('open');
+  toast('✅ Dashboard updated from pasted output');
+}
+
+/* ─────────────────────────────────────────
+   WEBHOOK MODE
+───────────────────────────────────────── */
+async function loadFromN8N() {
+  const isConfigured = !N8N_WEBHOOK_URL.includes('TON-INSTANCE');
+
+  if (!isConfigured) {
+    toast('ℹ️ N8N_WEBHOOK_URL not set — showing placeholder data');
+    applyData(PLACEHOLDER);
+    setStatus('ok', 'Placeholder');
+    document.getElementById('runDate').textContent = 'Report date: placeholder';
+    return;
+  }
+
+  setStatus('loading', 'Fetching…');
+  document.querySelectorAll('[id^="wrap-"]').forEach(el =>
+    el.innerHTML = '<div class="chart-placeholder loading"><span class="icon">⟳</span><span>Loading…</span></div>'
+  );
+
+  try {
+    const res = await fetch(N8N_WEBHOOK_URL, { signal: AbortSignal.timeout(60000) });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+
+    const body = await res.json();
+    /* N8N Edit Fields1 node outputs { output: "..." } */
+    const rawText = Array.isArray(body)
+      ? (body[0]?.output ?? body[0]?.text ?? JSON.stringify(body))
+      : (body?.output ?? body?.text ?? JSON.stringify(body));
+
+    const data = parseOutput(rawText);
+    if (data.charts.length === 0) throw new Error('No valid [CHARTS_JSON] in response');
+
+    applyData(data);
+    setStatus('ok', 'Live');
+    document.getElementById('runDate').textContent = 'Report date: ' + new Date().toLocaleDateString('en-GB', { day:'2-digit', month:'short', year:'numeric' });
+    toast('✅ Dashboard updated from N8N');
+
+  } catch(e) {
+    setStatus('error', 'Error');
+    toast('❌ ' + e.message, 5000);
+    applyData(PLACEHOLDER);
+  }
+}
+
+/* ─────────────────────────────────────────
+   INIT
+───────────────────────────────────────── */
+loadFromN8N();
+</script>
+</body>
+</html>
