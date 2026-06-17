@@ -237,7 +237,7 @@
             {
               "id": "7214d040-f11c-409d-bf5b-4fc05b33d3bc",
               "name": "output",
-              "value": "={{ $json.output }}",
+              "value": "={{ $json.output.replace(/\\n*#+\\s*Charts?\\s*\\n\\[CHARTS_JSON\\][\\s\\S]*?\\[\\/CHARTS_JSON\\]/gi, '').trim() }}",
               "type": "string"
             }
           ]
