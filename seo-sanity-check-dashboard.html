@@ -467,24 +467,28 @@ function renderChart(sheetName, config) {
 function parseOutput(text) {
   const result = { charts: [], analysis: {} };
 
-  /* — Extract [CHARTS_JSON] block (mirrors N8N Code node) — */
-  const jsonMatch = text.match(/\[CHARTS_JSON\]([\s\S]*?)\[\/CHARTS_JSON\]/);
-  if (jsonMatch) {
-    let raw = jsonMatch[1].trim();
-    /* strip any markdown code fences (```json ... ``` or ``` ... ```) */
+  /* — Extract [CHARTS_JSON] block — */
+  function tryParseCharts(raw) {
     raw = raw.replace(/^```(?:json)?\s*/im, '').replace(/\s*```\s*$/m, '').trim();
-    try {
-      result.charts = JSON.parse(raw);
-    } catch {
-      /* trailing-comma repair (same as N8N node) */
-      const repaired = raw.replace(/,\s*([\]\}])/g, '$1');
-      try { result.charts = JSON.parse(repaired); } catch(e2) {
-        toast('⚠️ JSON parse error: ' + e2.message, 5000);
-      }
+    try { return JSON.parse(raw); } catch {}
+    try { return JSON.parse(raw.replace(/,\s*([\]\}])/g, '$1')); } catch(e) {
+      toast('⚠️ JSON parse error: ' + e.message, 5000);
     }
-    if (!Array.isArray(result.charts)) result.charts = [];
-    result.charts = result.charts.filter(c => c?.chartConfig?.data);
+    return [];
   }
+
+  const tagMatch = text.match(/\[CHARTS_JSON\]([\s\S]*?)\[\/CHARTS_JSON\]/);
+  if (tagMatch) {
+    result.charts = tryParseCharts(tagMatch[1].trim());
+  } else {
+    /* fallback: AI omitted wrapper tags — find first JSON array in response */
+    const arrayMatch = text.match(/(```(?:json)?\s*)(\[\s*\{[\s\S]*?\}\s*\])/);
+    if (arrayMatch) {
+      result.charts = tryParseCharts(arrayMatch[2]);
+    }
+  }
+  if (!Array.isArray(result.charts)) result.charts = [];
+  result.charts = result.charts.filter(c => c?.chartConfig?.data);
 
   /* — Extract analysis sections — */
   const sections = [
