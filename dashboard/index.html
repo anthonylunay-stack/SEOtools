@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SEO Dashboard</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0f1117;
+      --surface: #1a1d27;
+      --surface2: #22263a;
+      --border: #2e3350;
+      --accent: #5b8dee;
+      --accent2: #7c5be8;
+      --text: #e8eaf6;
+      --muted: #8890b5;
+      --danger: #e05b5b;
+      --success: #4ecca3;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    /* ── HEADER ── */
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 28px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    header h1 {
+      font-size: 1rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .header-meta {
+      font-size: .78rem;
+      color: var(--muted);
+      margin-left: 16px;
+    }
+    .header-left { display: flex; align-items: center; }
+    .header-actions { display: flex; gap: 8px; align-items: center; }
+
+    button {
+      cursor: pointer;
+      border: none;
+      border-radius: 7px;
+      font-size: .82rem;
+      font-weight: 600;
+      padding: 7px 14px;
+      transition: opacity .15s, transform .1s;
+    }
+    button:active { transform: scale(.97); }
+    .btn-primary  { background: var(--accent); color: #fff; }
+    .btn-secondary{ background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
+    button:hover  { opacity: .82; }
+
+    /* ── TABS ── */
+    .tabs {
+      display: flex;
+      gap: 4px;
+      padding: 12px 28px 0;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface);
+    }
+    .tab {
+      padding: 8px 18px;
+      border-radius: 8px 8px 0 0;
+      font-size: .82rem;
+      font-weight: 600;
+      color: var(--muted);
+      cursor: pointer;
+      border: 1px solid transparent;
+      border-bottom: none;
+      background: transparent;
+      transition: color .15s, background .15s;
+    }
+    .tab:hover { color: var(--text); }
+    .tab.active {
+      color: var(--text);
+      background: var(--bg);
+      border-color: var(--border);
+    }
+
+    /* ── PANELS ── */
+    .panel { display: none; padding: 24px 28px 40px; }
+    .panel.active { display: block; }
+
+    /* ── STATUS BAR ── */
+    .status-bar {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 20px;
+      font-size: .82rem;
+      color: var(--muted);
+    }
+    .status-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--muted);
+      flex-shrink: 0;
+    }
+    .status-dot.ok { background: var(--success); }
+    .status-dot.loading { background: var(--accent); animation: pulse 1s infinite; }
+    .status-dot.error { background: var(--danger); }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+
+    /* ── CHARTS GRID ── */
+    #charts-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(500px, 1fr));
+      gap: 24px;
+    }
+
+    .chart-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    .chart-card-title {
+      padding: 12px 16px;
+      font-size: .85rem;
+      font-weight: 600;
+      color: var(--muted);
+      border-bottom: 1px solid var(--border);
+    }
+    .chart-card img {
+      width: 100%;
+      display: block;
+      background: #fff;
+    }
+    .chart-placeholder {
+      height: 320px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--muted);
+      font-size: .85rem;
+      background: var(--surface2);
+    }
+
+    /* ── ANALYSIS PANEL ── */
+    .analysis-container {
+      max-width: 900px;
+    }
+    #analysis-content {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 24px 28px;
+      line-height: 1.7;
+      font-size: .88rem;
+      color: var(--text);
+    }
+    #analysis-content h2 {
+      font-size: 1rem;
+      color: var(--accent);
+      margin: 20px 0 8px;
+      font-weight: 700;
+    }
+    #analysis-content h2:first-child { margin-top: 0; }
+    #analysis-content ul { padding-left: 20px; margin-bottom: 8px; }
+    #analysis-content li { margin-bottom: 4px; }
+
+    /* ── EMPTY STATE ── */
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--muted);
+      grid-column: 1 / -1;
+    }
+    .empty-state svg { opacity: .3; margin-bottom: 16px; display: block; margin-left: auto; margin-right: auto; }
+    .empty-state p { font-size: .9rem; line-height: 1.6; }
+
+    /* ── TOAST ── */
+    #toast {
+      position: fixed; bottom: 22px; right: 22px;
+      background: var(--success); color: #0f1117;
+      font-size: .82rem; font-weight: 700;
+      padding: 9px 16px; border-radius: 7px;
+      opacity: 0; transition: opacity .3s;
+      pointer-events: none; z-index: 300;
+    }
+    #toast.show { opacity: 1; }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <h1>&#x1F4CA; SEO Dashboard</h1>
+    <span class="header-meta" id="header-date"></span>
+  </div>
+  <div class="header-actions">
+    <button class="btn-secondary" onclick="refreshData()">&#x21BA; Actualiser</button>
+  </div>
+</header>
+
+<nav class="tabs">
+  <button class="tab active" onclick="switchTab('charts', this)">Graphiques</button>
+  <button class="tab" onclick="switchTab('analysis', this)">Analyse</button>
+</nav>
+
+<div class="panel active" id="panel-charts">
+  <div class="status-bar">
+    <span class="status-dot loading" id="status-dot"></span>
+    <span id="status-text">Chargement des donn&#233;es&#8230;</span>
+  </div>
+  <div id="charts-grid"></div>
+</div>
+
+<div class="panel" id="panel-analysis">
+  <div class="analysis-container">
+    <div id="analysis-content">
+      <span style="color:var(--muted)">Chargement de l&#x2019;analyse&#8230;</span>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+  const REPO   = 'anthonylunay-stack/SEOtools';
+  const BRANCH = 'claude/blissful-edison-3cslu0';
+  const RAW    = 'https://raw.githubusercontent.com/' + REPO + '/' + BRANCH;
+  const DATA_URL = RAW + '/dashboard/data/sanity_check.json';
+
+  function switchTab(name, btn) {
+    document.querySelectorAll('.tab').forEach(function(t) { t.classList.remove('active'); });
+    document.querySelectorAll('.panel').forEach(function(p) { p.classList.remove('active'); });
+    btn.classList.add('active');
+    document.getElementById('panel-' + name).classList.add('active');
+  }
+
+  function setStatus(state, text) {
+    var dot = document.getElementById('status-dot');
+    dot.className = 'status-dot ' + state;
+    document.getElementById('status-text').textContent = text;
+  }
+
+  function showToast(msg) {
+    var t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(function() { t.classList.remove('show'); }, 2000);
+  }
+
+  function loadData() {
+    setStatus('loading', 'Chargement des données…');
+    fetch(DATA_URL + '?t=' + Date.now())
+      .then(function(res) {
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        return res.json();
+      })
+      .then(function(data) {
+        renderCharts(data);
+        renderAnalysis(data);
+        var date = '';
+        if (data.generatedAt) {
+          date = 'Généré le ' + new Date(data.generatedAt).toLocaleDateString('fr-FR', {
+            day: '2-digit', month: 'long', year: 'numeric'
+          });
+        }
+        document.getElementById('header-date').textContent = date;
+        setStatus('ok', (data.charts ? data.charts.length : 0) + ' graphique(s) chargé(s)');
+      })
+      .catch(function(err) {
+        setStatus('error', 'Erreur : ' + err.message);
+        renderEmpty();
+      });
+  }
+
+  function renderCharts(data) {
+    var grid = document.getElementById('charts-grid');
+    grid.innerHTML = '';
+    var charts = data.charts || [];
+    if (charts.length === 0) { renderEmpty(); return; }
+
+    charts.forEach(function(chart) {
+      var card = document.createElement('div');
+      card.className = 'chart-card';
+
+      var titleEl = document.createElement('div');
+      titleEl.className = 'chart-card-title';
+      titleEl.textContent = chart.title || chart.name;
+      card.appendChild(titleEl);
+
+      var ph = document.createElement('div');
+      ph.className = 'chart-placeholder';
+      ph.textContent = 'Chargement…';
+      card.appendChild(ph);
+
+      var imgUrl = RAW + '/dashboard/charts/' + chart.file + '?t=' + Date.now();
+      var img = document.createElement('img');
+      img.alt = chart.title || chart.name;
+      img.loading = 'lazy';
+      img.onload = function() {
+        card.removeChild(ph);
+        card.appendChild(img);
+      };
+      img.onerror = function() {
+        ph.textContent = 'Graphique indisponible';
+      };
+      img.src = imgUrl;
+
+      grid.appendChild(card);
+    });
+  }
+
+  function renderAnalysis(data) {
+    var container = document.getElementById('analysis-content');
+    var text = data.analysis || '';
+    if (!text) {
+      container.innerHTML = '<span style="color:var(--muted)">Aucune analyse disponible.</span>';
+      return;
+    }
+    var escaped = text
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
+    var html = escaped
+      .replace(/^## (.+)$/gm, '<h2>$1</h2>')
+      .replace(/^# (.+)$/gm, '<h2>$1</h2>')
+      .replace(/^\* (.+)$/gm, '<li>$1</li>')
+      .replace(/^- (.+)$/gm, '<li>$1</li>')
+      .replace(/(<li>[^]*?<\/li>\n?)+/g, function(m) { return '<ul>' + m + '</ul>'; });
+    container.innerHTML = html;
+  }
+
+  function renderEmpty() {
+    var grid = document.getElementById('charts-grid');
+    grid.innerHTML = '<div class="empty-state">' +
+      '<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2">' +
+      '<rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>' +
+      '<p>Aucun graphique disponible.<br>Le workflow n8n n&rsquo;a pas encore &eacute;t&eacute; ex&eacute;cut&eacute;.</p>' +
+      '</div>';
+  }
+
+  function refreshData() {
+    showToast('Actualisation…');
+    loadData();
+  }
+
+  loadData();
+</script>
+</body>
+</html>
