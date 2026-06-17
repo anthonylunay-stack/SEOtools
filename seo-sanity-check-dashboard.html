@@ -593,7 +593,10 @@ async function loadFromN8N() {
       : (body?.output ?? body?.text ?? JSON.stringify(body));
 
     const data = parseOutput(rawText);
-    if (data.charts.length === 0) throw new Error('No valid [CHARTS_JSON] in response');
+    if (data.charts.length === 0) {
+      const preview = rawText.slice(0, 400).replace(/</g, '&lt;');
+      throw new Error(`No valid [CHARTS_JSON] in response.<br><br><strong>Réponse reçue (400 premiers caractères) :</strong><br><code style="font-size:11px;word-break:break-all;white-space:pre-wrap">${preview}</code>`);
+    }
 
     applyData(data);
     setStatus('ok', 'Live');
