@@ -576,11 +576,18 @@ async function loadFromN8N() {
   );
 
   try {
-    const res = await fetch(N8N_WEBHOOK_URL, { signal: AbortSignal.timeout(60000) });
-    if (!res.ok) throw new Error('HTTP ' + res.status);
+    let res;
+    try {
+      res = await fetch(N8N_WEBHOOK_URL, { signal: AbortSignal.timeout(60000) });
+    } catch(netErr) {
+      const isCors = netErr instanceof TypeError;
+      throw new Error(isCors
+        ? 'CORS / réseau — vérifie que le workflow est activé et que le nœud "Respond to Webhook" est présent (header Access-Control-Allow-Origin: *)'
+        : 'Réseau : ' + netErr.message);
+    }
+    if (!res.ok) throw new Error('N8N a répondu HTTP ' + res.status + ' — workflow activé ?');
 
     const body = await res.json();
-    /* N8N Edit Fields1 node outputs { output: "..." } */
     const rawText = Array.isArray(body)
       ? (body[0]?.output ?? body[0]?.text ?? JSON.stringify(body))
       : (body?.output ?? body?.text ?? JSON.stringify(body));
@@ -595,9 +602,20 @@ async function loadFromN8N() {
 
   } catch(e) {
     setStatus('error', 'Error');
-    toast('❌ ' + e.message, 5000);
+    showErrorBanner(e.message);
     applyData(PLACEHOLDER);
   }
+}
+
+function showErrorBanner(msg) {
+  let banner = document.getElementById('errorBanner');
+  if (!banner) {
+    banner = document.createElement('div');
+    banner.id = 'errorBanner';
+    banner.style.cssText = 'background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.35);border-radius:10px;padding:12px 18px;font-size:13px;color:#fca5a5;margin-bottom:16px;display:flex;align-items:flex-start;gap:10px;';
+    document.querySelector('main').prepend(banner);
+  }
+  banner.innerHTML = `<span style="font-size:18px;flex-shrink:0">❌</span><div><strong style="color:#f87171">Erreur webhook N8N</strong><br>${msg}<br><span style="color:#7d8590;font-size:12px;margin-top:4px;display:block">Les données affichées sont des placeholders. Ouvre F12 → Console pour plus de détails.</span></div><button onclick="this.parentElement.remove()" style="margin-left:auto;background:none;border:none;color:#7d8590;cursor:pointer;font-size:16px;flex-shrink:0">✕</button>`;
 }
 
 /* ─────────────────────────────────────────
