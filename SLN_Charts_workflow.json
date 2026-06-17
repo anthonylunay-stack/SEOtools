@@ -1,0 +1,201 @@
+{
+  "name": "SLN Charts Generator",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "weeks",
+              "triggerAtDay": [1],
+              "triggerAtHour": 20
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [0, 0],
+      "id": "chart-trigger-001",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "operation": "download",
+        "fileId": {
+          "__rl": true,
+          "value": "1BlQRDytw-GXK9BHhMEqaxUXIGoImqfqY_kFjWNINcI4",
+          "mode": "list",
+          "cachedResultName": "[AVIVAIPROJ] SLN Data",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1BlQRDytw-GXK9BHhMEqaxUXIGoImqfqY_kFjWNINcI4/edit?usp=drivesdk"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [220, 0],
+      "id": "chart-download-002",
+      "name": "Download Sheet",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "hUSKS8kbE7qdyiJz",
+          "name": "Mon Google Drive"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const binary = $input.first().binary;\n\nconst sheetNames = [\n  'demand_global',\n  'demand_transaction',\n  'demand_asset',\n  'demand_region',\n  'demand_departement',\n  'ranking_global_war',\n  'audience'\n];\n\nreturn sheetNames.map(name => ({\n  json: { sheetName: name },\n  binary: binary\n}));\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [440, 0],
+      "id": "chart-split-003",
+      "name": "Split by Sheet"
+    },
+    {
+      "parameters": {
+        "operation": "xlsx",
+        "options": {
+          "sheetName": "={{ $json.sheetName }}"
+        }
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1.1,
+      "position": [660, 0],
+      "id": "chart-extract-004",
+      "name": "Extract from File"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Group all rows by sheetName, keep last 24 rows (2 years monthly)\nconst sheets = {};\n\nfor (const item of $input.all()) {\n  const name = item.json.sheetName ?? 'Unknown';\n  if (!sheets[name]) sheets[name] = [];\n  const { sheetName: _ignored, ...rowData } = item.json;\n  sheets[name].push(rowData);\n}\n\nreturn Object.entries(sheets).map(([name, rows]) => ({\n  json: {\n    sheetName: name,\n    rows: rows.slice(-24)\n  }\n}));\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [880, 0],
+      "id": "chart-group-005",
+      "name": "Group Rows"
+    },
+    {
+      "parameters": {
+        "jsCode": "const item = $input.first();\nconst { sheetName, rows } = item.json;\n\n// Helper: get distinct sorted values\nconst distinct = (arr) => [...new Set(arr)].sort();\n\n// Helper: friendly label truncation\nconst short = (s, n=15) => s && s.length > n ? s.slice(0,n)+'…' : s;\n\nlet chartConfig = null;\n\n// --- demand_global: line chart volume over time ---\nif (sheetName === 'demand_global') {\n  const labels = rows.map(r => r.date || r.mois || r.month || Object.values(r)[0]);\n  const volumes = rows.map(r => {\n    const v = r.volume || r.clicks || r.impressions || Object.values(r)[1];\n    return isNaN(Number(v)) ? 0 : Number(v);\n  });\n  chartConfig = {\n    type: 'line',\n    data: {\n      labels,\n      datasets: [{\n        label: 'Search Volume',\n        data: volumes,\n        fill: true,\n        backgroundColor: 'rgba(66,133,244,0.15)',\n        borderColor: '#4285F4',\n        borderWidth: 2,\n        pointRadius: 3,\n        tension: 0.3\n      }]\n    },\n    options: {\n      plugins: { title: { display: true, text: 'Demand Global — Monthly Volume', font: { size: 16 } } },\n      scales: { y: { beginAtZero: false } }\n    }\n  };\n}\n\n// --- demand_transaction: grouped bar by segment ---\nelse if (sheetName === 'demand_transaction') {\n  const dateKey = Object.keys(rows[0]).find(k => k.toLowerCase().includes('date') || k.toLowerCase().includes('mois')) || Object.keys(rows[0])[0];\n  const segKey  = Object.keys(rows[0]).find(k => k.toLowerCase().includes('segment') || k.toLowerCase().includes('transaction')) || Object.keys(rows[0])[1];\n  const volKey  = Object.keys(rows[0]).find(k => k.toLowerCase().includes('volume') || k.toLowerCase().includes('click')) || Object.keys(rows[0])[2];\n\n  const dates    = distinct(rows.map(r => r[dateKey])).slice(-12);\n  const segments = distinct(rows.map(r => r[segKey]));\n\n  const palette = ['#4285F4','#EA4335','#FBBC05','#34A853','#9C27B0','#FF6D00','#00ACC1'];\n\n  const datasets = segments.map((seg, i) => {\n    const data = dates.map(d => {\n      const match = rows.find(r => r[dateKey] === d && r[segKey] === seg);\n      return match ? Number(match[volKey]) || 0 : 0;\n    });\n    return { label: seg, data, backgroundColor: palette[i % palette.length] };\n  });\n\n  chartConfig = {\n    type: 'bar',\n    data: { labels: dates, datasets },\n    options: {\n      plugins: { title: { display: true, text: 'Demand by Transaction Segment', font: { size: 16 } } },\n      scales: { x: { stacked: false }, y: { stacked: false, beginAtZero: true } }\n    }\n  };\n}\n\n// --- demand_asset: stacked bar by asset type ---\nelse if (sheetName === 'demand_asset') {\n  const dateKey  = Object.keys(rows[0]).find(k => k.toLowerCase().includes('date') || k.toLowerCase().includes('mois')) || Object.keys(rows[0])[0];\n  const assetKey = Object.keys(rows[0]).find(k => k.toLowerCase().includes('asset') || k.toLowerCase().includes('type') || k.toLowerCase().includes('bien')) || Object.keys(rows[0])[1];\n  const volKey   = Object.keys(rows[0]).find(k => k.toLowerCase().includes('volume') || k.toLowerCase().includes('click')) || Object.keys(rows[0])[2];\n\n  const dates  = distinct(rows.map(r => r[dateKey])).slice(-12);\n  const assets = distinct(rows.map(r => r[assetKey]));\n  const palette = ['#4285F4','#EA4335','#FBBC05','#34A853','#9C27B0'];\n\n  const datasets = assets.map((asset, i) => {\n    const data = dates.map(d => {\n      const match = rows.find(r => r[dateKey] === d && r[assetKey] === asset);\n      return match ? Number(match[volKey]) || 0 : 0;\n    });\n    return { label: short(String(asset)), data, backgroundColor: palette[i % palette.length] };\n  });\n\n  chartConfig = {\n    type: 'bar',\n    data: { labels: dates, datasets },\n    options: {\n      plugins: { title: { display: true, text: 'Demand by Asset Type', font: { size: 16 } } },\n      scales: { x: { stacked: true }, y: { stacked: true, beginAtZero: true } }\n    }\n  };\n}\n\n// --- demand_region: horizontal bar top 15 regions ---\nelse if (sheetName === 'demand_region') {\n  const regionKey = Object.keys(rows[0]).find(k => k.toLowerCase().includes('region') || k.toLowerCase().includes('région')) || Object.keys(rows[0])[0];\n  const volKey    = Object.keys(rows[0]).find(k => k.toLowerCase().includes('volume') || k.toLowerCase().includes('click')) || Object.keys(rows[0])[1];\n\n  // Aggregate volume per region across all rows\n  const totals = {};\n  for (const r of rows) {\n    const region = r[regionKey];\n    totals[region] = (totals[region] || 0) + (Number(r[volKey]) || 0);\n  }\n  const sorted = Object.entries(totals).sort((a, b) => b[1] - a[1]).slice(0, 15);\n\n  chartConfig = {\n    type: 'bar',\n    data: {\n      labels: sorted.map(([k]) => k),\n      datasets: [{ label: 'Total Volume', data: sorted.map(([, v]) => v), backgroundColor: '#4285F4' }]\n    },\n    options: {\n      indexAxis: 'y',\n      plugins: { title: { display: true, text: 'Top 15 Regions by Search Volume', font: { size: 16 } } },\n      scales: { x: { beginAtZero: true } }\n    }\n  };\n}\n\n// --- demand_departement: horizontal bar top 15 départements ---\nelse if (sheetName === 'demand_departement') {\n  const deptKey = Object.keys(rows[0]).find(k => k.toLowerCase().includes('dept') || k.toLowerCase().includes('departement') || k.toLowerCase().includes('département')) || Object.keys(rows[0])[0];\n  const volKey  = Object.keys(rows[0]).find(k => k.toLowerCase().includes('volume') || k.toLowerCase().includes('click')) || Object.keys(rows[0])[1];\n\n  const totals = {};\n  for (const r of rows) {\n    const dept = r[deptKey];\n    totals[dept] = (totals[dept] || 0) + (Number(r[volKey]) || 0);\n  }\n  const sorted = Object.entries(totals).sort((a, b) => b[1] - a[1]).slice(0, 15);\n\n  chartConfig = {\n    type: 'bar',\n    data: {\n      labels: sorted.map(([k]) => k),\n      datasets: [{ label: 'Total Volume', data: sorted.map(([, v]) => v), backgroundColor: '#34A853' }]\n    },\n    options: {\n      indexAxis: 'y',\n      plugins: { title: { display: true, text: 'Top 15 Départements by Search Volume', font: { size: 16 } } },\n      scales: { x: { beginAtZero: true } }\n    }\n  };\n}\n\n// --- ranking_global_war: multi-line rank over time (lower = better) ---\nelse if (sheetName === 'ranking_global_war') {\n  const dateKey = Object.keys(rows[0]).find(k => k.toLowerCase().includes('date') || k.toLowerCase().includes('mois')) || Object.keys(rows[0])[0];\n  const hostKey = Object.keys(rows[0]).find(k => k.toLowerCase().includes('host') || k.toLowerCase().includes('url') || k.toLowerCase().includes('domain')) || Object.keys(rows[0])[1];\n  const rankKey = Object.keys(rows[0]).find(k => k.toLowerCase().includes('rank') || k.toLowerCase().includes('rang') || k.toLowerCase().includes('position')) || Object.keys(rows[0])[2];\n\n  const dates = distinct(rows.map(r => r[dateKey])).slice(-12);\n  const hosts = distinct(rows.map(r => r[hostKey]));\n  const palette = ['#4285F4','#EA4335','#FBBC05','#34A853','#9C27B0','#FF6D00'];\n\n  const datasets = hosts.map((host, i) => {\n    const data = dates.map(d => {\n      const match = rows.find(r => r[dateKey] === d && r[hostKey] === host);\n      return match ? Number(match[rankKey]) || null : null;\n    });\n    return {\n      label: short(String(host), 20),\n      data,\n      borderColor: palette[i % palette.length],\n      backgroundColor: 'transparent',\n      borderWidth: 2,\n      pointRadius: 3,\n      tension: 0.3,\n      spanGaps: true\n    };\n  });\n\n  chartConfig = {\n    type: 'line',\n    data: { labels: dates, datasets },\n    options: {\n      plugins: { title: { display: true, text: 'SEO Ranking — Competitors (lower = better)', font: { size: 16 } } },\n      scales: { y: { reverse: true, beginAtZero: false } }\n    }\n  };\n}\n\n// --- audience: doughnut brand vs nonbrand vs anonymous ---\nelse if (sheetName === 'audience') {\n  // Sum volumes per audience type across all rows\n  const brandKey     = Object.keys(rows[0]).find(k => k.toLowerCase().includes('brand') && !k.toLowerCase().includes('non') && !k.toLowerCase().includes('anon'));\n  const nonbrandKey  = Object.keys(rows[0]).find(k => k.toLowerCase().includes('nonbrand') || (k.toLowerCase().includes('non') && k.toLowerCase().includes('brand')));\n  const anonymousKey = Object.keys(rows[0]).find(k => k.toLowerCase().includes('anon'));\n\n  if (brandKey && nonbrandKey) {\n    const brand     = rows.reduce((s, r) => s + (Number(r[brandKey])     || 0), 0);\n    const nonbrand  = rows.reduce((s, r) => s + (Number(r[nonbrandKey])  || 0), 0);\n    const anonymous = anonymousKey ? rows.reduce((s, r) => s + (Number(r[anonymousKey]) || 0), 0) : 0;\n\n    const labels = anonymousKey ? ['Brand', 'Non-brand', 'Anonymous'] : ['Brand', 'Non-brand'];\n    const data   = anonymousKey ? [brand, nonbrand, anonymous] : [brand, nonbrand];\n\n    chartConfig = {\n      type: 'doughnut',\n      data: {\n        labels,\n        datasets: [{\n          data,\n          backgroundColor: ['#4285F4', '#34A853', '#FBBC05'],\n          borderWidth: 2\n        }]\n      },\n      options: {\n        plugins: {\n          title: { display: true, text: 'Audience Split — Brand vs Non-brand', font: { size: 16 } },\n          legend: { position: 'bottom' }\n        }\n      }\n    };\n  } else {\n    // Fallback: bar chart with all numeric columns\n    const numericKeys = Object.keys(rows[0]).filter(k => !isNaN(Number(rows[0][k])));\n    const labelKey = Object.keys(rows[0])[0];\n    chartConfig = {\n      type: 'bar',\n      data: {\n        labels: rows.map(r => r[labelKey]),\n        datasets: numericKeys.map((k, i) => ({\n          label: k,\n          data: rows.map(r => Number(r[k]) || 0),\n          backgroundColor: ['#4285F4','#34A853','#FBBC05'][i] || '#9E9E9E'\n        }))\n      },\n      options: {\n        plugins: { title: { display: true, text: 'Audience Data', font: { size: 16 } } }\n      }\n    };\n  }\n}\n\n// Generic fallback: bar chart first numeric column over first text column\nif (!chartConfig) {\n  const keys = Object.keys(rows[0]);\n  const labelKey  = keys[0];\n  const valueKey  = keys.find((k, i) => i > 0 && !isNaN(Number(rows[0][k]))) || keys[1];\n  chartConfig = {\n    type: 'bar',\n    data: {\n      labels: rows.map(r => String(r[labelKey]).slice(0, 15)),\n      datasets: [{\n        label: valueKey,\n        data: rows.map(r => Number(r[valueKey]) || 0),\n        backgroundColor: '#4285F4'\n      }]\n    },\n    options: {\n      plugins: { title: { display: true, text: sheetName, font: { size: 16 } } }\n    }\n  };\n}\n\nreturn [{ json: { sheetName, chartConfig } }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1100, 0],
+      "id": "chart-build-006",
+      "name": "Build Chart Config"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://quickchart.io/chart",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={\n  \"chart\": {{ JSON.stringify($json.chartConfig) }},\n  \"width\": 900,\n  \"height\": 500,\n  \"backgroundColor\": \"white\",\n  \"format\": \"png\"\n}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file",
+              "outputPropertyName": "chartImage"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1320, 0],
+      "id": "chart-request-007",
+      "name": "QuickChart API"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Pass through sheetName alongside the binary image\nconst item = $input.first();\nreturn [{\n  json: { sheetName: $('Build Chart Config').first().json.sheetName },\n  binary: item.binary\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1540, 0],
+      "id": "chart-enrich-008",
+      "name": "Attach Sheet Name"
+    },
+    {
+      "parameters": {
+        "driveId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "My Drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "root",
+          "cachedResultName": "/ (Root folder)"
+        },
+        "options": {
+          "fileName": "=SLN_Chart_{{ $json.sheetName }}_{{ $now.format('yyyy-MM') }}.png"
+        }
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [1760, 0],
+      "id": "chart-upload-009",
+      "name": "Upload Chart to Drive",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "hUSKS8kbE7qdyiJz",
+          "name": "Mon Google Drive"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [[{ "node": "Download Sheet", "type": "main", "index": 0 }]]
+    },
+    "Download Sheet": {
+      "main": [[{ "node": "Split by Sheet", "type": "main", "index": 0 }]]
+    },
+    "Split by Sheet": {
+      "main": [[{ "node": "Extract from File", "type": "main", "index": 0 }]]
+    },
+    "Extract from File": {
+      "main": [[{ "node": "Group Rows", "type": "main", "index": 0 }]]
+    },
+    "Group Rows": {
+      "main": [[{ "node": "Build Chart Config", "type": "main", "index": 0 }]]
+    },
+    "Build Chart Config": {
+      "main": [[{ "node": "QuickChart API", "type": "main", "index": 0 }]]
+    },
+    "QuickChart API": {
+      "main": [[{ "node": "Attach Sheet Name", "type": "main", "index": 0 }]]
+    },
+    "Attach Sheet Name": {
+      "main": [[{ "node": "Upload Chart to Drive", "type": "main", "index": 0 }]]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "chart-v1-0000-0000-000000000001",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "0d2cc35bf4173ba6547bf653679ba4873189b39fa696743a086f77f7a38c2420"
+  },
+  "id": "SLNChartsWorkflow01",
+  "tags": []
+}
