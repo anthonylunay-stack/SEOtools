@@ -570,15 +570,22 @@ async function loadFromN8N() {
     return;
   }
 
-  setStatus('loading', 'Fetching…');
+  setStatus('loading', 'Running AI Agent…');
   document.querySelectorAll('[id^="wrap-"]').forEach(el =>
-    el.innerHTML = '<div class="chart-placeholder loading"><span class="icon">⟳</span><span>Loading…</span></div>'
+    el.innerHTML = '<div class="chart-placeholder loading"><span class="icon">⟳</span><span>AI Agent running — may take 2-3 min…</span></div>'
   );
+  /* live elapsed timer */
+  const startTs = Date.now();
+  const timerEl = document.getElementById('runDate');
+  const timerInterval = setInterval(() => {
+    const s = Math.floor((Date.now() - startTs) / 1000);
+    timerEl.textContent = `Running… ${s}s / ~120s`;
+  }, 1000);
 
   try {
     let res;
     try {
-      res = await fetch(N8N_WEBHOOK_URL, { signal: AbortSignal.timeout(60000) });
+      res = await fetch(N8N_WEBHOOK_URL, { signal: AbortSignal.timeout(300000) });
     } catch(netErr) {
       const isCors = netErr instanceof TypeError;
       throw new Error(isCors
@@ -598,12 +605,14 @@ async function loadFromN8N() {
       throw new Error(`No valid [CHARTS_JSON] in response.<br><br><strong>Réponse reçue (400 premiers caractères) :</strong><br><code style="font-size:11px;word-break:break-all;white-space:pre-wrap">${preview}</code>`);
     }
 
+    clearInterval(timerInterval);
     applyData(data);
     setStatus('ok', 'Live');
     document.getElementById('runDate').textContent = 'Report date: ' + new Date().toLocaleDateString('en-GB', { day:'2-digit', month:'short', year:'numeric' });
     toast('✅ Dashboard updated from N8N');
 
   } catch(e) {
+    clearInterval(timerInterval);
     setStatus('error', 'Error');
     showErrorBanner(e.message);
     applyData(PLACEHOLDER);
