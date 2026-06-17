@@ -211,7 +211,8 @@
         6256
       ],
       "id": "caad364a-a4ec-43f8-8c93-6db882fdbe1f",
-      "name": "QuickChart API1"
+      "name": "QuickChart API1",
+      "onError": "continueErrorOutput"
     },
     {
       "parameters": {
@@ -422,7 +423,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// Sanitize Chart.js config before sending to QuickChart\n// Removes JS function strings and fixes common issues that cause 400 errors\nconst item = $input.first();\nconst config = item.json.chartConfig;\n\nfunction sanitize(obj) {\n  if (obj === null || obj === undefined) return obj;\n  if (Array.isArray(obj)) return obj.map(sanitize);\n  if (typeof obj === 'object') {\n    const out = {};\n    for (const [k, v] of Object.entries(obj)) {\n      // Remove keys whose value is a JS function string\n      if (typeof v === 'string' && /^\\s*function\\s*\\(/.test(v)) continue;\n      if (typeof v === 'string' && /^\\s*\\(.*\\)\\s*=>/.test(v)) continue;\n      out[k] = sanitize(v);\n    }\n    return out;\n  }\n  // Replace non-finite numbers with null\n  if (typeof obj === 'number' && !isFinite(obj)) return null;\n  return obj;\n}\n\nconst sanitized = sanitize(config);\n\nreturn [{ json: { sheetName: item.json.sheetName, chartConfig: sanitized } }];\n"
+        "jsCode": "\nconst item = $input.first();\nconst raw = item.json.chartConfig;\n\n// Deep-clean: remove JS functions, fix non-finite numbers, remove null keys\nfunction clean(obj) {\n  if (obj === null || obj === undefined) return null;\n  if (Array.isArray(obj)) return obj.map(clean).filter(v => v !== undefined);\n  if (typeof obj === 'object') {\n    const out = {};\n    for (const [k, v] of Object.entries(obj)) {\n      if (typeof v === 'string' && /^\\s*(function\\s*\\(|\\(.*\\)\\s*=>)/.test(v)) continue;\n      const cleaned = clean(v);\n      if (cleaned !== undefined) out[k] = cleaned;\n    }\n    return out;\n  }\n  if (typeof obj === 'number') return isFinite(obj) ? obj : null;\n  return obj;\n}\n\nlet config = clean(raw);\n\n// Ensure required top-level fields exist\nif (!config || !config.type || !config.data) {\n  throw new Error('chartConfig missing required fields: type or data');\n}\n\n// Fix annotation plugin: QuickChart v3 expects annotations as an object map, not array\nif (config.options?.plugins?.annotation?.annotations) {\n  const anns = config.options.plugins.annotation.annotations;\n  if (Array.isArray(anns)) {\n    const obj = {};\n    anns.forEach((a, i) => { obj['ann' + i] = a; });\n    config.options.plugins.annotation.annotations = obj;\n  }\n}\n\n// Ensure scales use v3 format (x/y keys, not xAxes/yAxes arrays)\nif (config.options?.scales) {\n  const scales = config.options.scales;\n  // Remove v2-style arrays if present\n  delete scales.xAxes;\n  delete scales.yAxes;\n}\n\n// For doughnut/pie: data.datasets[0].data must be array of numbers (not objects)\nif ((config.type === 'doughnut' || config.type === 'pie') && config.data?.datasets?.[0]?.data) {\n  config.data.datasets[0].data = config.data.datasets[0].data.map(v =>\n    typeof v === 'object' && v !== null ? (v.y ?? v.value ?? 0) : (Number(v) || 0)\n  );\n}\n\nreturn [{ json: { sheetName: item.json.sheetName, chartConfig: config } }];\n"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -432,6 +433,19 @@
       ],
       "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
       "name": "Sanitize Chart Config1"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Log exact payload sent to QuickChart — check n8n execution logs if 400 persists\nconst item = $input.first();\nconst payload = {\n  version: '3',\n  chart: item.json.chartConfig,\n  width: 1100,\n  height: 600,\n  backgroundColor: 'white',\n  format: 'png'\n};\n\n// Validate chart has required fields\nconst c = item.json.chartConfig;\nif (!c) throw new Error('[QuickChart Debug] chartConfig is null/undefined for: ' + item.json.sheetName);\nif (!c.type) throw new Error('[QuickChart Debug] Missing chart.type for: ' + item.json.sheetName);\nif (!c.data) throw new Error('[QuickChart Debug] Missing chart.data for: ' + item.json.sheetName);\nif (!c.data.datasets || c.data.datasets.length === 0) throw new Error('[QuickChart Debug] No datasets for: ' + item.json.sheetName);\n\n// Log payload size for debugging\nconst payloadStr = JSON.stringify(payload);\nconsole.log('[QuickChart Debug] sheetName:', item.json.sheetName, '| payload size:', payloadStr.length, 'chars');\n\nreturn [{ json: item.json }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1100,
+        6256
+      ],
+      "id": "d3b4c5e6-f7a8-9012-bcde-f12345678901",
+      "name": "Debug QuickChart Payload1"
     }
   ],
   "pinData": {},
@@ -596,6 +610,17 @@
       ]
     },
     "Sanitize Chart Config1": {
+      "main": [
+        [
+          {
+            "node": "Debug QuickChart Payload1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Debug QuickChart Payload1": {
       "main": [
         [
           {
