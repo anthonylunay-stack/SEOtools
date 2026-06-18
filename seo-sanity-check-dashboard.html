@@ -508,7 +508,8 @@ function parseOutput(text) {
     if (rawChunk) result.charts = tryParseCharts(rawChunk.trim());
   }
   if (!Array.isArray(result.charts)) result.charts = [];
-  result.charts = result.charts.filter(c => c?.chartConfig?.data);
+  // Accept both legacy format (chartConfig.data) and minimal format (s + t + d)
+  result.charts = result.charts.filter(c => c?.chartConfig?.data || (c?.s && c?.t && c?.d));
 
   /* — Extract analysis sections — */
   const sections = [
@@ -527,6 +528,71 @@ function parseOutput(text) {
 }
 
 /* ─────────────────────────────────────────
+   EXPAND MINIMAL CHART FORMAT → Chart.js config
+───────────────────────────────────────── */
+function expandMinimalChart(item) {
+  const colors6 = ['#4285F4','#EA4335','#FBBC05','#34A853','#FF6D00','#7B1FA2'];
+  const baseOpts = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      title: { display: true, text: item.title || item.s, font: { size: 16, weight: 'bold' }, padding: { bottom: 10 } },
+      legend: { display: true, position: 'bottom', labels: { padding: 16, font: { size: 12 } } }
+    },
+    layout: { padding: { top: 10, right: 24, bottom: 10, left: 10 } }
+  };
+
+  if (item.t === 'line') {
+    const datasets = (item.d || []).map((ds, i) => ({
+      label: ds.n,
+      data: ds.v,
+      borderColor: ds.c || colors6[i],
+      backgroundColor: (ds.c || colors6[i]) + '22',
+      borderWidth: ds.bw || 2,
+      borderDash: ds.dash ? [6,3] : [],
+      pointRadius: 3,
+      tension: 0.3,
+      fill: false
+    }));
+    const plugins = { ...baseOpts.plugins };
+    if (item.avg) {
+      plugins.annotation = { annotations: { avgLine: { type: 'line', yMin: item.avg, yMax: item.avg, borderColor: '#FBBC05', borderWidth: 1, borderDash: [4,4], label: { content: 'Avg', display: true, position: 'end', font: { size: 10 } } } } };
+    }
+    const yScale = item.yrev
+      ? { reverse: true }
+      : { beginAtZero: false };
+    return { type: 'line', data: { labels: item.l, datasets }, options: { ...baseOpts, plugins, scales: { x: { grid: { display: false } }, y: yScale } } };
+  }
+
+  if (item.t === 'bar') {
+    const datasets = (item.d || []).map((ds, i) => ({
+      label: ds.n,
+      data: ds.v,
+      backgroundColor: ds.c || colors6[i]
+    }));
+    return { type: 'bar', data: { labels: item.l, datasets }, options: { ...baseOpts, scales: { x: { grid: { display: false } }, y: { beginAtZero: true } } } };
+  }
+
+  if (item.t === 'barstack') {
+    const datasets = (item.d || []).map((ds, i) => ({
+      label: ds.n,
+      data: ds.v,
+      backgroundColor: ds.c || colors6[i],
+      stack: 'stack0'
+    }));
+    return { type: 'bar', data: { labels: item.l, datasets }, options: { ...baseOpts, scales: { x: { grid: { display: false }, stacked: true }, y: { stacked: true, beginAtZero: true } } } };
+  }
+
+  if (item.t === 'doughnut') {
+    const ds = item.d && item.d[0] ? item.d[0] : { v: [] };
+    return { type: 'doughnut', data: { labels: item.l, datasets: [{ data: ds.v, backgroundColor: ['#4285F4','#34A853','#FBBC05','#FF6D00','#7B1FA2','#EA4335'].slice(0, ds.v.length) }] }, options: { ...baseOpts, cutout: '60%', plugins: { ...baseOpts.plugins } } };
+  }
+
+  // fallback: assume it's already a full Chart.js config
+  return item.chartConfig || item;
+}
+
+/* ─────────────────────────────────────────
    APPLY DATA TO UI
 ───────────────────────────────────────── */
 function applyData(data) {
@@ -536,7 +602,11 @@ function applyData(data) {
     if (el) el.textContent = v || '—';
   });
   /* charts */
-  data.charts.forEach(({ sheetName, chartConfig }) => renderChart(sheetName, chartConfig));
+  data.charts.forEach(item => {
+    const sheetName = item.sheetName || item.s;
+    const cfg = item.chartConfig ? item.chartConfig : expandMinimalChart(item);
+    renderChart(sheetName, cfg);
+  });
 }
 
 /* ─────────────────────────────────────────
