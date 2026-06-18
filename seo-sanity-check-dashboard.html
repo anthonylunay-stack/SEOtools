@@ -468,10 +468,24 @@ function parseOutput(text) {
   const result = { charts: [], analysis: {} };
 
   /* — Extract [CHARTS_JSON] block — */
+
+  /* Use bracket-counting to extract a complete JSON array from a string */
+  function extractArray(str) {
+    str = str.replace(/^```(?:json)?\s*/im, '').trim();
+    const start = str.indexOf('[');
+    if (start === -1) return null;
+    let depth = 0;
+    for (let i = start; i < str.length; i++) {
+      if (str[i] === '[') depth++;
+      else if (str[i] === ']') { depth--; if (depth === 0) return str.slice(start, i + 1); }
+    }
+    return str.slice(start); // unclosed — return anyway for repair attempt
+  }
+
   function tryParseCharts(raw) {
-    raw = raw.replace(/^```(?:json)?\s*/im, '').replace(/\s*```\s*$/m, '').trim();
-    try { return JSON.parse(raw); } catch {}
-    try { return JSON.parse(raw.replace(/,\s*([\]\}])/g, '$1')); } catch(e) {
+    const candidate = extractArray(raw) || raw;
+    try { return JSON.parse(candidate); } catch {}
+    try { return JSON.parse(candidate.replace(/,\s*([\]\}])/g, '$1')); } catch(e) {
       toast('⚠️ JSON parse error: ' + e.message, 5000);
     }
     return [];
@@ -481,13 +495,13 @@ function parseOutput(text) {
   const tagMatch = text.match(/\*{0,2}\[CHARTS_JSON\]\*{0,2}([\s\S]*?)\*{0,2}\[\/CHARTS_JSON\]\*{0,2}/);
   /* 2 — opening tag only (AI omitted closing tag) */
   const openMatch = !tagMatch && text.match(/\*{0,2}\[CHARTS_JSON\]\*{0,2}\s*([\s\S]+)/);
-  /* 3 — no tags at all, bare JSON array (with or without code fences) */
-  const bareMatch = !tagMatch && !openMatch && text.match(/(?:```(?:json)?\s*)?([\s\S]*?\[\s*\{[\s\S]*\}\s*\])(?:\s*```)?/);
+  /* 3 — no tags, first JSON array in response */
+  const bareMatch = !tagMatch && !openMatch && text.match(/```(?:json)?\s*([\s\S]+)/);
 
   const rawChunk = tagMatch  ? tagMatch[1]
                  : openMatch ? openMatch[1]
                  : bareMatch ? bareMatch[1]
-                 : null;
+                 : text;
   if (rawChunk) result.charts = tryParseCharts(rawChunk.trim());
   if (!Array.isArray(result.charts)) result.charts = [];
   result.charts = result.charts.filter(c => c?.chartConfig?.data);
