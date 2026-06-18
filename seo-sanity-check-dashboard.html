@@ -477,7 +477,7 @@ function parseOutput(text) {
     return [];
   }
 
-  const tagMatch = text.match(/\[CHARTS_JSON\]([\s\S]*?)\[\/CHARTS_JSON\]/);
+  const tagMatch = text.match(/\*{0,2}\[CHARTS_JSON\]\*{0,2}([\s\S]*?)\*{0,2}\[\/CHARTS_JSON\]\*{0,2}/);
   if (tagMatch) {
     result.charts = tryParseCharts(tagMatch[1].trim());
   } else {
