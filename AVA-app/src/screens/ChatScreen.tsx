@@ -1,178 +1,170 @@
 import React, { useState, useRef, useEffect } from 'react';
 import {
-  View, Text, StyleSheet, TextInput, TouchableOpacity,
-  FlatList, Linking, KeyboardAvoidingView, Platform, Animated,
+  View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet, Linking, KeyboardAvoidingView, Platform, Animated,
 } from 'react-native';
-import { Colors, Spacing, Radius, FontSize } from '../theme';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import AVALogo from '../components/AVALogo';
+import { Colors, Spacing, BorderRadius, FontSize } from '../theme';
 
 interface Message {
   id: string;
   text: string;
-  role: 'bot' | 'user';
-  time: string;
+  isBot: boolean;
+  timestamp: Date;
 }
 
-const now = () => new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
-
-const REPLIES: Record<string, string> = {
-  droit: "Vous bénéficiez de plusieurs droits fondamentaux :\n\n• Déposer plainte à tout moment, sans preuves physiques\n• Ordonnance de protection (délai : 6 jours)\n• Éviction du conjoint violent du domicile\n• Aide juridictionnelle selon vos ressources\n\nConsultez l'onglet Ressources pour tous les détails.",
-  plaint: "Pour déposer une plainte :\n\n1. Rendez-vous au commissariat ou à la gendarmerie\n2. Apportez tout élément disponible : certificats médicaux, messages, photos\n3. La police est légalement tenue d'enregistrer votre plainte\n4. Conservez le récépissé de dépôt\n\nEn cas de difficulté, appelez le 3919.",
-  ordonnance: "L'ordonnance de protection :\n\n• Délivrée par le Juge aux Affaires Familiales\n• Délai maximum : 6 jours\n• Peut interdire tout approchement\n• Peut vous attribuer la jouissance du domicile\n• Suspend les droits de visite si nécessaire",
-  heberg: "Solutions d'hébergement :\n\n• 115 — Urgence logement, 24h/24\n• Centres spécialisés pour femmes victimes\n• 116 006 — France Victimes\n• Associations locales : CIDFF, Planning Familial\n\nTous les détails dans l'onglet Ressources.",
-  default: "Je comprends. Je peux vous aider sur :\n\n• Vos droits en tant que victime\n• Comment porter plainte\n• L'ordonnance de protection\n• L'hébergement d'urgence\n• L'aide juridictionnelle\n\nL'onglet Ressources contient aussi de nombreuses informations pratiques.",
-};
-
-function getReply(text: string): string {
-  const t = text.toLowerCase();
-  if (t.includes('droit')) return REPLIES.droit;
-  if (t.includes('plaint')) return REPLIES.plaint;
-  if (t.includes('ordonnance')) return REPLIES.ordonnance;
-  if (t.includes('hébergement') || t.includes('logement')) return REPLIES.heberg;
-  return REPLIES.default;
-}
-
-const INITIAL: Message[] = [
-  { id: '1', text: "Bonjour, je suis AVA, votre assistante juridique spécialisée dans l'accompagnement des victimes de violences conjugales.\n\nTout ce que vous me confiez reste strictement confidentiel.", role: 'bot', time: now() },
-  { id: '2', text: "En quoi puis-je vous aider ?", role: 'bot', time: now() },
+const LOCAL_RESPONSES: [string, string][] = [
+  ['droit', "En tant que victime de violences conjugales, vous disposez de plusieurs droits fondamentaux :\n\n• Déposer plainte au commissariat ou à la gendarmerie\n• Demander une ordonnance de protection\n• Bénéficier de l'aide juridictionnelle gratuite\n• Être accompagnée par une association spécialisée\n\nSouhaitez-vous des informations sur l'une de ces démarches ?"],
+  ['plaint', "Pour déposer une plainte :\n\n1. Rendez-vous au commissariat ou à la gendarmerie\n2. Vous pouvez être accompagnée par une personne de confiance\n3. Demandez un certificat médical si vous avez des blessures\n4. La plainte peut être déposée même sans certificat médical\n5. Vous recevrez un récépissé de dépôt de plainte"],
+  ['ordonnance', "L'ordonnance de protection est délivrée par le juge aux affaires familiales.\n\nElle peut :\n• Interdire à votre conjoint de vous approcher\n• Vous attribuer la jouissance du domicile\n• Fixer temporairement la résidence des enfants\n• Être délivrée en 6 jours\n\nContactez un avocat ou l'association locale d'aide aux victimes."],
+  ['hébergement', "Solutions d'hébergement d'urgence :\n\n• 115 : SAMU Social\n• 3919 : orientation vers des structures spécialisées\n• Centres d'hébergement pour femmes victimes\n• CHRS (Centres d'Hébergement et de Réinsertion Sociale)"],
+  ['logement', "Solutions d'hébergement d'urgence :\n\n• 115 : SAMU Social\n• 3919 : orientation vers des structures spécialisées\n• Centres d'hébergement pour femmes victimes\n• CHRS"],
+  ['aide jurid', "L'aide juridictionnelle vous permet d'accéder gratuitement à un avocat.\n\nConditions :\n• Ressources < 1 000€/mois (aide totale)\n• Ressources entre 1 000€ et 1 500€ (aide partielle)\n\nDémarche :\n1. Formulaire au tribunal judiciaire\n2. Joignez vos justificatifs\n3. Décision sous 1 mois"],
+  ['avocat', "Un avocat commis d'office peut intervenir immédiatement en urgence.\n\nPour l'aide juridictionnelle :\n• Ressources < 1 000€/mois = aide totale (gratuit)\n• Retirez le formulaire au tribunal judiciaire\n• Joignez vos justificatifs de ressources"],
 ];
 
-export default function ChatScreen() {
-  const [messages, setMessages] = useState<Message[]>(INITIAL);
-  const [input, setInput] = useState('');
-  const [typing, setTyping] = useState(false);
-  const listRef = useRef<FlatList>(null);
+function getResponse(message: string): string {
+  const lower = message.toLowerCase();
+  for (const [key, response] of LOCAL_RESPONSES) {
+    if (lower.includes(key)) return response;
+  }
+  return "Je comprends votre situation et je suis là pour vous aider. Pourriez-vous me préciser votre question ?\n\nJe peux vous informer sur :\n• Vos droits en tant que victime\n• Comment déposer une plainte\n• L'ordonnance de protection\n• Les solutions d'hébergement\n• L'aide juridictionnelle\n\nEn cas de danger immédiat, appelez le 3919 ou le 17.";
+}
+
+function TypingIndicator() {
   const dot1 = useRef(new Animated.Value(0)).current;
   const dot2 = useRef(new Animated.Value(0)).current;
   const dot3 = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    if (!typing) return;
-    const anim = (d: Animated.Value, delay: number) =>
-      Animated.loop(Animated.sequence([
-        Animated.delay(delay),
-        Animated.timing(d, { toValue: -5, duration: 300, useNativeDriver: true }),
-        Animated.timing(d, { toValue: 0, duration: 300, useNativeDriver: true }),
-      ]));
-    const a = Animated.parallel([anim(dot1, 0), anim(dot2, 200), anim(dot3, 400)]);
-    a.start();
-    return () => a.stop();
-  }, [typing]);
-
-  const send = () => {
-    if (!input.trim()) return;
-    const userMsg: Message = { id: Date.now().toString(), text: input.trim(), role: 'user', time: now() };
-    const txt = input.trim();
-    setMessages(m => [...m, userMsg]);
-    setInput('');
-    setTyping(true);
-    setTimeout(() => {
-      setTyping(false);
-      const botMsg: Message = { id: (Date.now() + 1).toString(), text: getReply(txt), role: 'bot', time: now() };
-      setMessages(m => [...m, botMsg]);
-    }, 1200 + Math.random() * 600);
-  };
+    const animate = (dot: Animated.Value, delay: number) =>
+      Animated.loop(
+        Animated.sequence([
+          Animated.delay(delay),
+          Animated.timing(dot, { toValue: -6, duration: 300, useNativeDriver: true }),
+          Animated.timing(dot, { toValue: 0, duration: 300, useNativeDriver: true }),
+        ])
+      ).start();
+    animate(dot1, 0);
+    animate(dot2, 150);
+    animate(dot3, 300);
+  }, []);
 
   return (
-    <KeyboardAvoidingView style={s.container} behavior={Platform.OS === 'ios' ? 'padding' : undefined} keyboardVerticalOffset={90}>
-      <View style={s.header}>
-        <AVALogo size={40} />
-        <View style={s.headerInfo}>
-          <Text style={s.headerName}>AVA</Text>
-          <Text style={s.headerSub}>votre avocat de poche</Text>
-        </View>
-        <View style={s.onlineRow}>
-          <View style={s.onlineDot} />
-          <Text style={s.onlineText}>En ligne</Text>
-        </View>
-      </View>
-
-      <TouchableOpacity style={s.urgBar} onPress={() => Linking.openURL('tel:3919')}>
-        <View>
-          <View style={s.urgLeft}>
-            <View style={s.urgDot} />
-            <Text style={s.urgTitle}>Numéro d'urgence gratuit · 24h/24</Text>
-          </View>
-          <Text style={s.urgSub}>Ligne d'écoute nationale destinée aux femmes victimes de violences</Text>
-        </View>
-        <Text style={s.urgNum}>3919</Text>
-      </TouchableOpacity>
-
-      <FlatList
-        ref={listRef}
-        data={messages}
-        keyExtractor={m => m.id}
-        contentContainerStyle={s.msgs}
-        onContentSizeChange={() => listRef.current?.scrollToEnd({ animated: true })}
-        renderItem={({ item }) => (
-          <View style={[s.msg, item.role === 'user' ? s.msgUser : s.msgBot]}>
-            <View style={[s.bubble, item.role === 'user' ? s.bubbleUser : s.bubbleBot]}>
-              <Text style={[s.bubbleText, item.role === 'user' && { color: '#fff' }]}>{item.text}</Text>
-            </View>
-            <Text style={[s.btime, item.role === 'user' && { textAlign: 'right' }]}>{item.time}</Text>
-          </View>
-        )}
-        ListFooterComponent={typing ? (
-          <View style={[s.msg, s.msgBot]}>
-            <View style={[s.bubble, s.bubbleBot, { flexDirection: 'row', gap: 4, paddingVertical: 13, paddingHorizontal: 16 }]}>
-              {[dot1, dot2, dot3].map((d, i) => (
-                <Animated.View key={i} style={[s.typDot, { transform: [{ translateY: d }] }]} />
-              ))}
-            </View>
-          </View>
-        ) : null}
-      />
-
-      <View style={s.inputBar}>
-        <View style={s.inputWrap}>
-          <TextInput
-            style={s.input}
-            value={input}
-            onChangeText={setInput}
-            placeholder="Écrivez votre message…"
-            placeholderTextColor={Colors.MUTED + '88'}
-            multiline
-            maxLength={500}
-            onSubmitEditing={send}
-          />
-        </View>
-        <TouchableOpacity style={[s.sendBtn, !input.trim() && s.sendBtnOff]} onPress={send} disabled={!input.trim()}>
-          <Text style={s.sendIcon}>→</Text>
-        </TouchableOpacity>
-      </View>
-    </KeyboardAvoidingView>
+    <View style={typingStyles.container}>
+      {[dot1, dot2, dot3].map((d, i) => (
+        <Animated.View key={i} style={[typingStyles.dot, { transform: [{ translateY: d }] }]} />
+      ))}
+    </View>
   );
 }
 
-const s = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.WHITE },
-  header: { flexDirection: 'row', alignItems: 'center', gap: 10, padding: Spacing.MD, borderBottomWidth: 1, borderBottomColor: Colors.BORDER, backgroundColor: Colors.WHITE },
-  headerInfo: { flex: 1 },
-  headerName: { fontFamily: 'serif', fontSize: FontSize.XL, fontWeight: '400', color: Colors.INK },
-  headerSub: { fontSize: 12, color: Colors.MUTED },
-  onlineRow: { flexDirection: 'row', alignItems: 'center', gap: 5 },
-  onlineDot: { width: 7, height: 7, borderRadius: 4, backgroundColor: Colors.GREEN },
-  onlineText: { fontSize: 11, color: Colors.GREEN },
-  urgBar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12, backgroundColor: '#FFF2F5', borderBottomWidth: 1, borderBottomColor: 'rgba(184,92,114,0.15)', paddingHorizontal: Spacing.MD, paddingVertical: 10 },
-  urgLeft: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 2 },
-  urgDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: Colors.ROSE },
-  urgTitle: { fontSize: 12, fontWeight: '500', color: Colors.ROSE_D, letterSpacing: 0.3 },
-  urgSub: { fontSize: 11, color: Colors.MUTED, lineHeight: 16, paddingLeft: 12 },
-  urgNum: { fontFamily: 'serif', fontSize: 28, fontWeight: '600', color: Colors.ROSE, flexShrink: 0 },
-  msgs: { padding: Spacing.MD, gap: 10 },
-  msg: { maxWidth: '80%', gap: 3 },
-  msgBot: { alignSelf: 'flex-start' },
-  msgUser: { alignSelf: 'flex-end' },
-  bubble: { padding: 10, paddingHorizontal: 13, borderRadius: 18 },
-  bubbleBot: { backgroundColor: Colors.CREAM, borderWidth: 1, borderColor: Colors.BORDER, borderBottomLeftRadius: 4 },
+const typingStyles = StyleSheet.create({
+  container: { flexDirection: 'row', gap: 4, padding: Spacing.MD, backgroundColor: Colors.CREAM, borderRadius: BorderRadius.LG, alignSelf: 'flex-start', marginBottom: Spacing.SM },
+  dot: { width: 8, height: 8, borderRadius: 4, backgroundColor: Colors.MUTED },
+});
+
+export default function ChatScreen() {
+  const [messages, setMessages] = useState<Message[]>([
+    { id: '1', text: "Bonjour, je suis AVA, votre assistante juridique. Tout ce que vous me confiez reste strictement confidentiel.\n\nEn quoi puis-je vous aider ?", isBot: true, timestamp: new Date() },
+  ]);
+  const [input, setInput] = useState('');
+  const [isTyping, setIsTyping] = useState(false);
+  const listRef = useRef<FlatList>(null);
+
+  const send = async () => {
+    if (!input.trim()) return;
+    const userMsg: Message = { id: Date.now().toString(), text: input.trim(), isBot: false, timestamp: new Date() };
+    const userInput = input.trim();
+    setInput('');
+    setMessages((prev) => [...prev, userMsg]);
+    setIsTyping(true);
+    setTimeout(() => {
+      const botMsg: Message = { id: (Date.now() + 1).toString(), text: getResponse(userInput), isBot: true, timestamp: new Date() };
+      setMessages((prev) => [...prev, botMsg]);
+      setIsTyping(false);
+    }, 1200);
+  };
+
+  const formatTime = (d: Date) => d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+
+  const renderItem = ({ item }: { item: Message }) => (
+    <View style={[styles.msgRow, item.isBot ? styles.msgRowBot : styles.msgRowUser]}>
+      <View style={[styles.bubble, item.isBot ? styles.bubbleBot : styles.bubbleUser]}>
+        <Text style={[styles.bubbleText, item.isBot ? styles.bubbleTextBot : styles.bubbleTextUser]}>{item.text}</Text>
+      </View>
+      <Text style={styles.timestamp}>{formatTime(item.timestamp)}</Text>
+    </View>
+  );
+
+  return (
+    <SafeAreaView style={styles.container}>
+      <View style={styles.header}>
+        <AVALogo size={40} />
+        <View style={{ flex: 1 }}>
+          <Text style={styles.headerName}>AVA</Text>
+          <Text style={styles.headerSub}>votre avocat de poche</Text>
+        </View>
+        <View style={styles.onlineBadge}>
+          <View style={styles.onlineDot} />
+          <Text style={styles.onlineText}>En ligne</Text>
+        </View>
+      </View>
+      <TouchableOpacity style={styles.urgenceBanner} onPress={() => Linking.openURL('tel:3919')}>
+        <Text style={styles.urgenceText}>🚨 Urgence violences conjugales : 3919 — Appuyer pour appeler</Text>
+      </TouchableOpacity>
+      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }} keyboardVerticalOffset={0}>
+        <FlatList
+          ref={listRef}
+          data={messages}
+          keyExtractor={(m) => m.id}
+          renderItem={renderItem}
+          contentContainerStyle={styles.list}
+          onContentSizeChange={() => listRef.current?.scrollToEnd({ animated: true })}
+          ListFooterComponent={isTyping ? <TypingIndicator /> : null}
+        />
+        <View style={styles.inputBar}>
+          <TextInput
+            style={styles.textInput}
+            value={input}
+            onChangeText={setInput}
+            placeholder="Posez votre question..."
+            placeholderTextColor={Colors.MUTED}
+            multiline
+            maxLength={1000}
+          />
+          <TouchableOpacity style={styles.sendBtn} onPress={send}>
+            <Text style={styles.sendText}>➤</Text>
+          </TouchableOpacity>
+        </View>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: Colors.CREAM },
+  header: { flexDirection: 'row', alignItems: 'center', gap: Spacing.SM, padding: Spacing.MD, backgroundColor: Colors.WHITE, borderBottomWidth: 1, borderBottomColor: Colors.BORDER },
+  headerName: { fontSize: FontSize.LG, fontWeight: '700', color: Colors.INK },
+  headerSub: { fontSize: FontSize.XS, color: Colors.MUTED },
+  onlineBadge: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  onlineDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: Colors.SUCCESS },
+  onlineText: { fontSize: FontSize.XS, color: Colors.SUCCESS, fontWeight: '600' },
+  urgenceBanner: { backgroundColor: 'rgba(192,57,43,0.08)', padding: Spacing.SM, borderBottomWidth: 1, borderBottomColor: 'rgba(192,57,43,0.2)' },
+  urgenceText: { fontSize: FontSize.XS, color: Colors.DANGER, textAlign: 'center', fontWeight: '500' },
+  list: { padding: Spacing.MD, gap: Spacing.SM },
+  msgRow: { maxWidth: '80%', marginBottom: Spacing.SM },
+  msgRowBot: { alignSelf: 'flex-start' },
+  msgRowUser: { alignSelf: 'flex-end' },
+  bubble: { borderRadius: BorderRadius.LG, padding: Spacing.MD },
+  bubbleBot: { backgroundColor: Colors.WHITE, borderWidth: 1, borderColor: Colors.BORDER, borderBottomLeftRadius: 4 },
   bubbleUser: { backgroundColor: Colors.ROSE, borderBottomRightRadius: 4 },
-  bubbleText: { fontSize: FontSize.MD, lineHeight: 22, color: Colors.INK },
-  btime: { fontSize: 10, color: Colors.MUTED, opacity: 0.55, paddingHorizontal: 3 },
-  typDot: { width: 5, height: 5, borderRadius: 3, backgroundColor: Colors.MUTED },
-  inputBar: { flexDirection: 'row', alignItems: 'flex-end', gap: 9, padding: Spacing.SM, paddingHorizontal: 14, paddingBottom: 26, backgroundColor: Colors.WHITE, borderTopWidth: 1, borderTopColor: Colors.BORDER },
-  inputWrap: { flex: 1, backgroundColor: Colors.CREAM, borderWidth: 1, borderColor: Colors.PALE, borderRadius: 20, paddingHorizontal: 14, paddingVertical: 8 },
-  input: { fontSize: FontSize.MD, color: Colors.INK, maxHeight: 72, lineHeight: 20 },
-  sendBtn: { width: 38, height: 38, borderRadius: 19, backgroundColor: Colors.ROSE_L, alignItems: 'center', justifyContent: 'center' },
-  sendBtnOff: { backgroundColor: Colors.PALE },
-  sendIcon: { fontSize: 18, color: Colors.ROSE, fontWeight: '600' },
+  bubbleText: { fontSize: FontSize.MD, lineHeight: 22 },
+  bubbleTextBot: { color: Colors.INK },
+  bubbleTextUser: { color: Colors.WHITE },
+  timestamp: { fontSize: FontSize.XS, color: Colors.MUTED, marginTop: 4 },
+  inputBar: { flexDirection: 'row', alignItems: 'flex-end', gap: Spacing.SM, padding: Spacing.MD, backgroundColor: Colors.WHITE, borderTopWidth: 1, borderTopColor: Colors.BORDER },
+  textInput: { flex: 1, backgroundColor: Colors.CREAM, borderRadius: BorderRadius.MD, paddingHorizontal: Spacing.MD, paddingVertical: Spacing.SM, fontSize: FontSize.MD, color: Colors.INK, maxHeight: 80 },
+  sendBtn: { backgroundColor: Colors.ROSE, borderRadius: BorderRadius.FULL, width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
+  sendText: { color: Colors.WHITE, fontSize: FontSize.MD },
 });

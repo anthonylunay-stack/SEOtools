@@ -1,178 +1,134 @@
-import React, { useState, useRef } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Animated, Linking } from 'react-native';
-import { Colors, Spacing, Radius, FontSize } from '../theme';
+import React, { useState } from 'react';
+import {
+  View, Text, TouchableOpacity, ScrollView, StyleSheet, Linking,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { Colors, Spacing, BorderRadius, FontSize } from '../theme';
 
-interface AccordionItem {
-  id: string;
-  title: string;
-  sub: string;
-  color: string;
-  content: React.ReactNode;
-}
+const EMERGENCY_NUMBERS = [
+  { number: '3919', label: 'Violences Femmes Info', desc: '24h/24, 7j/7, gratuit', color: Colors.ROSE },
+  { number: '17', label: 'Police Secours', desc: 'En cas de danger immédiat', color: '#1565C0' },
+  { number: '115', label: 'SAMU Social', desc: "Hébergement d'urgence", color: Colors.SUCCESS },
+  { number: '116006', label: 'Aide aux victimes', desc: 'Soutien psychologique', color: '#6A1B9A' },
+];
 
-function Accordion({ item, isOpen, onToggle }: { item: AccordionItem; isOpen: boolean; onToggle: () => void }) {
-  const anim = useRef(new Animated.Value(isOpen ? 1 : 0)).current;
-
-  React.useEffect(() => {
-    Animated.timing(anim, { toValue: isOpen ? 1 : 0, duration: 300, useNativeDriver: false }).start();
-  }, [isOpen]);
-
-  const maxHeight = anim.interpolate({ inputRange: [0, 1], outputRange: [0, 600] });
-  const rotate = anim.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '180deg'] });
-
-  return (
-    <View style={acc.item}>
-      <TouchableOpacity style={acc.trigger} onPress={onToggle}>
-        <View style={[acc.ico, { backgroundColor: item.color + '22' }]}>
-          <Text style={[acc.icoText, { color: item.color }]}>●</Text>
-        </View>
-        <View style={acc.text}>
-          <Text style={acc.title}>{item.title}</Text>
-          <Text style={acc.sub}>{item.sub}</Text>
-        </View>
-        <Animated.Text style={[acc.chevron, { transform: [{ rotate }] }]}>›</Animated.Text>
-      </TouchableOpacity>
-      <Animated.View style={[acc.content, { maxHeight }]}>
-        <View style={acc.inner}>{item.content}</View>
-      </Animated.View>
-    </View>
-  );
-}
-
-function Card({ title, text }: { title: string; text: string }) {
-  return (
-    <View style={s.card}>
-      <Text style={s.cardTitle}>{title}</Text>
-      <Text style={s.cardText}>{text}</Text>
-    </View>
-  );
-}
-
-function Step({ num, title, text }: { num: number; title: string; text: string }) {
-  return (
-    <View style={s.stepRow}>
-      <View style={s.stepNum}><Text style={s.stepNumText}>{num}</Text></View>
-      <View style={{ flex: 1 }}>
-        <Text style={s.stepTitle}>{title}</Text>
-        <Text style={s.stepText}>{text}</Text>
-      </View>
-    </View>
-  );
-}
-
-function ECall({ num, label, color, tel }: { num: string; label: string; color: string; tel: string }) {
-  return (
-    <TouchableOpacity style={[s.ecall, { backgroundColor: color }]} onPress={() => Linking.openURL(`tel:${tel}`)}>
-      <Text style={s.ecallNum}>{num}</Text>
-      <Text style={s.ecallLabel}>{label}</Text>
-    </TouchableOpacity>
-  );
-}
+const ACCORDIONS = [
+  {
+    id: 'droits',
+    icon: '🛡',
+    iconColor: Colors.ROSE,
+    title: 'Vos droits',
+    items: [
+      { title: 'Ordonnance de protection', desc: "Mesure d'urgence délivrée par le JAF en 6 jours pour vous protéger." },
+      { title: 'Dépôt de plainte', desc: "Vous pouvez déposer plainte au commissariat ou à la gendarmerie, même sans certificat médical." },
+      { title: 'Éviction du conjoint violent', desc: "Le juge peut ordonner l'éviction du conjoint violent du domicile conjugal." },
+      { title: 'Aide juridictionnelle', desc: "Accès gratuit à un avocat si vos ressources sont insuffisantes." },
+      { title: "Avocat d'urgence", desc: "Un avocat commis d'office peut intervenir immédiatement en garde à vue ou en urgence." },
+    ],
+  },
+  {
+    id: 'procedure',
+    icon: '⏱',
+    iconColor: '#1565C0',
+    title: 'Étapes de la procédure',
+    items: [
+      { title: 'Étape 1 — Signalement / Plainte', desc: "Déposez plainte au commissariat ou à la gendarmerie. Décrivez les faits précisément." },
+      { title: 'Étape 2 — Enquête', desc: "Les forces de l'ordre enquêtent et recueillent les preuves (constat, témoignages, etc.)." },
+      { title: 'Étape 3 — Décision du parquet', desc: "Le procureur décide des poursuites : classement, médiation, ou renvoi en jugement." },
+      { title: 'Étape 4 — Mesures de protection', desc: "Ordonnance de protection, interdiction d'approche, bracelet anti-rapprochement." },
+      { title: 'Étape 5 — Jugement', desc: "L'auteur des violences est jugé. Des dommages et intérêts peuvent vous être alloués." },
+    ],
+  },
+  {
+    id: 'logement',
+    icon: '🏠',
+    iconColor: Colors.SUCCESS,
+    title: 'Aide au logement',
+    items: [
+      { title: '115 — SAMU Social', desc: "Hébergement d'urgence disponible 24h/24. Appelez le 115 pour être orientée." },
+      { title: 'Centres spécialisés', desc: "Centres d'hébergement réservés aux femmes victimes de violences avec accompagnement." },
+      { title: 'DALO', desc: "Droit au Logement Opposable : recours possible si vous êtes sans domicile." },
+      { title: 'Associations locales', desc: "De nombreuses associations proposent des hébergements temporaires et un accompagnement social." },
+    ],
+  },
+  {
+    id: 'urgence',
+    icon: '📞',
+    iconColor: Colors.AMBER,
+    title: "Numéros d'urgence",
+    isEmergency: true,
+  },
+];
 
 export default function ResourcesScreen() {
-  const [open, setOpen] = useState<string | null>(null);
+  const [openId, setOpenId] = useState<string | null>(null);
 
-  const items: AccordionItem[] = [
-    {
-      id: 'droits', title: 'Vos droits', sub: 'Ce que la loi vous garantit', color: Colors.ROSE,
-      content: (
-        <>
-          <Card title="Ordonnance de protection" text="Le Juge aux Affaires Familiales peut délivrer une ordonnance en urgence dans un délai de 6 jours. Elle peut interdire au conjoint de vous approcher, vous attribuer la jouissance du domicile et suspendre les droits de visite." />
-          <Card title="Dépôt de plainte" text="Vous pouvez déposer plainte à tout moment, même sans preuves physiques. La police ou la gendarmerie est légalement tenue d'enregistrer votre plainte." />
-          <Card title="Éviction du conjoint violent" text="Le juge peut ordonner l'expulsion du conjoint violent du domicile conjugal, même s'il en est propriétaire ou co-propriétaire." />
-          <Card title="Aide juridictionnelle" text="Selon vos ressources, vous pouvez bénéficier d'une prise en charge totale ou partielle des frais d'avocat et de procédure judiciaire." />
-          <Card title="Accès à un avocat d'urgence" text="Via le barreau de votre département, vous pouvez obtenir une consultation juridique gratuite, même en dehors des heures d'ouverture." />
-        </>
-      ),
-    },
-    {
-      id: 'etapes', title: 'Étapes de la procédure', sub: 'De la plainte au jugement', color: '#3B82F6',
-      content: (
-        <View style={s.card}>
-          <Step num={1} title="Signalement ou plainte" text="Commissariat, gendarmerie ou directement au procureur. Vous recevez un récépissé." />
-          <Step num={2} title="Enquête de police" text="Auditions, collecte de preuves, certificats médicaux. Peut durer quelques semaines." />
-          <Step num={3} title="Décision du parquet" text="Le procureur décide de classer, d'un rappel à la loi, ou de poursuites pénales." />
-          <Step num={4} title="Mesures de protection" text="Ordonnance de protection, bracelet électronique anti-rapprochement, interdiction de contact." />
-          <Step num={5} title="Jugement" text="Tribunal correctionnel. Vous pouvez vous constituer partie civile pour obtenir réparation." />
-        </View>
-      ),
-    },
-    {
-      id: 'logement', title: 'Aide au logement', sub: 'Hébergement d\'urgence et solutions', color: Colors.SUCCESS,
-      content: (
-        <>
-          <Card title="115 — Numéro national d'urgence" text="Gratuit, disponible 24h/24 et 7j/7. Oriente vers des centres d'hébergement d'urgence disponibles près de chez vous." />
-          <Card title="Centres d'hébergement spécialisés" text="Des structures dédiées aux femmes victimes de violences proposent un accueil confidentiel, sécurisé et gratuit, parfois avec vos enfants." />
-          <Card title="Demande de logement social prioritaire" text="Les victimes de violences conjugales bénéficient d'une priorité dans l'attribution de logements sociaux (DALO). Un travailleur social peut vous accompagner." />
-          <Card title="Associations d'accompagnement" text="France Victimes (116 006), Le Planning Familial, CIDFF — ces associations proposent un soutien global : logement, juridique, psychologique." />
-        </>
-      ),
-    },
-    {
-      id: 'urgences', title: 'Numéros d\'urgence', sub: 'Contacts essentiels', color: Colors.AMBER,
-      content: (
-        <>
-          <ECall num="3919" label="Violence Femmes Info · Gratuit 24h/24" color={Colors.ROSE} tel="3919" />
-          <ECall num="17" label="Police secours · Danger immédiat" color="#1D4ED8" tel="17" />
-          <ECall num="115" label="Hébergement d'urgence · 24h/24" color={Colors.SUCCESS} tel="115" />
-          <ECall num="116 006" label="France Victimes · Gratuit" color="#5B21B6" tel="116006" />
-        </>
-      ),
-    },
-  ];
+  const toggle = (id: string) => setOpenId(openId === id ? null : id);
 
   return (
-    <View style={s.container}>
-      <View style={s.header}>
-        <Text style={s.title}>Ressources</Text>
-        <Text style={s.sub}>Informations juridiques et pratiques</Text>
+    <SafeAreaView style={styles.container}>
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>Ressources</Text>
+        <Text style={styles.headerSub}>Informations juridiques et contacts utiles</Text>
       </View>
-      <ScrollView showsVerticalScrollIndicator={false}>
-        {items.map(item => (
-          <Accordion
-            key={item.id}
-            item={item}
-            isOpen={open === item.id}
-            onToggle={() => setOpen(open === item.id ? null : item.id)}
-          />
+      <ScrollView contentContainerStyle={styles.content}>
+        {ACCORDIONS.map((acc) => (
+          <View key={acc.id} style={styles.accordion}>
+            <TouchableOpacity style={styles.accordionHeader} onPress={() => toggle(acc.id)}>
+              <Text style={[styles.accordionIcon, { color: acc.iconColor }]}>{acc.icon}</Text>
+              <Text style={styles.accordionTitle}>{acc.title}</Text>
+              <Text style={styles.accordionChevron}>{openId === acc.id ? '▲' : '▼'}</Text>
+            </TouchableOpacity>
+            {openId === acc.id && (
+              <View style={styles.accordionBody}>
+                {acc.isEmergency ? (
+                  EMERGENCY_NUMBERS.map((n) => (
+                    <TouchableOpacity key={n.number} style={[styles.emergencyCard, { borderLeftColor: n.color }]} onPress={() => Linking.openURL(`tel:${n.number}`)}>
+                      <Text style={[styles.emergencyNumber, { color: n.color }]}>{n.number}</Text>
+                      <View>
+                        <Text style={styles.emergencyLabel}>{n.label}</Text>
+                        <Text style={styles.emergencyDesc}>{n.desc}</Text>
+                      </View>
+                    </TouchableOpacity>
+                  ))
+                ) : (
+                  acc.items?.map((item, i) => (
+                    <View key={i} style={styles.item}>
+                      <Text style={styles.itemTitle}>{item.title}</Text>
+                      <Text style={styles.itemDesc}>{item.desc}</Text>
+                    </View>
+                  ))
+                )}
+              </View>
+            )}
+          </View>
         ))}
-        <Text style={s.disclaimer}>
-          AVA est une assistante IA. Elle ne remplace pas un avocat qualifié.{'\n'}
-          En cas de danger immédiat, appelez le 17 ou le 3919.
+        <Text style={styles.disclaimer}>
+          Ces informations sont fournies à titre indicatif et ne constituent pas un conseil juridique personnalisé. Consultez un avocat pour votre situation spécifique.
         </Text>
       </ScrollView>
-    </View>
+    </SafeAreaView>
   );
 }
 
-const acc = StyleSheet.create({
-  item: { borderBottomWidth: 1, borderBottomColor: Colors.BORDER },
-  trigger: { flexDirection: 'row', alignItems: 'center', gap: 14, paddingHorizontal: Spacing.MD, paddingVertical: 18, backgroundColor: Colors.WHITE },
-  ico: { width: 40, height: 40, borderRadius: 11, alignItems: 'center', justifyContent: 'center' },
-  icoText: { fontSize: 16 },
-  text: { flex: 1 },
-  title: { fontSize: 15, fontWeight: '500', color: Colors.INK },
-  sub: { fontSize: 12, color: Colors.MUTED, marginTop: 2 },
-  chevron: { fontSize: 22, color: Colors.MUTED, fontWeight: '300' },
-  content: { overflow: 'hidden', backgroundColor: Colors.CREAM },
-  inner: { padding: Spacing.MD, gap: 8 },
-});
-
-const s = StyleSheet.create({
+const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.CREAM },
-  header: { backgroundColor: Colors.WHITE, paddingTop: 16, paddingHorizontal: Spacing.LG, paddingBottom: Spacing.MD, borderBottomWidth: 1, borderBottomColor: Colors.BORDER },
-  title: { fontFamily: 'serif', fontSize: FontSize.XXL, fontWeight: '400', color: Colors.INK },
-  sub: { fontSize: FontSize.SM, color: Colors.MUTED, marginTop: 3 },
-  card: { backgroundColor: Colors.WHITE, borderWidth: 1, borderColor: Colors.BORDER, borderRadius: Radius.MD, padding: 15, marginBottom: 8 },
-  cardTitle: { fontSize: 14, fontWeight: '500', color: Colors.INK, marginBottom: 5 },
-  cardText: { fontSize: FontSize.SM, color: Colors.MUTED, lineHeight: 22 },
-  stepRow: { flexDirection: 'row', gap: 10, alignItems: 'flex-start', paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: Colors.BORDER },
-  stepNum: { width: 22, height: 22, borderRadius: 11, backgroundColor: Colors.ROSE_L, alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 1 },
-  stepNumText: { fontSize: 11, fontWeight: '500', color: Colors.ROSE_D },
-  stepTitle: { fontSize: FontSize.SM, fontWeight: '500', color: Colors.INK },
-  stepText: { fontSize: 12, color: Colors.MUTED, marginTop: 2, lineHeight: 18 },
-  ecall: { borderRadius: Radius.MD, padding: 13, paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 8 },
-  ecallNum: { fontFamily: 'serif', fontSize: 26, color: '#fff', fontWeight: '600' },
-  ecallLabel: { fontSize: 11, color: 'rgba(255,255,255,0.8)', marginTop: 1 },
-  disclaimer: { fontSize: 11, color: Colors.MUTED, textAlign: 'center', lineHeight: 18, opacity: 0.7, padding: 20 },
+  header: { backgroundColor: Colors.WHITE, padding: Spacing.LG, borderBottomWidth: 1, borderBottomColor: Colors.BORDER },
+  headerTitle: { fontSize: FontSize.XL, fontWeight: '700', color: Colors.INK },
+  headerSub: { fontSize: FontSize.SM, color: Colors.MUTED, marginTop: 2 },
+  content: { padding: Spacing.MD, gap: Spacing.SM },
+  accordion: { backgroundColor: Colors.WHITE, borderRadius: BorderRadius.LG, overflow: 'hidden', borderWidth: 1, borderColor: Colors.BORDER },
+  accordionHeader: { flexDirection: 'row', alignItems: 'center', padding: Spacing.MD, gap: Spacing.SM },
+  accordionIcon: { fontSize: 20, width: 28 },
+  accordionTitle: { flex: 1, fontSize: FontSize.MD, fontWeight: '600', color: Colors.INK },
+  accordionChevron: { fontSize: FontSize.XS, color: Colors.MUTED },
+  accordionBody: { padding: Spacing.MD, gap: Spacing.SM, backgroundColor: Colors.ROSE_FAINT, borderTopWidth: 1, borderTopColor: Colors.BORDER },
+  item: { backgroundColor: Colors.WHITE, borderRadius: BorderRadius.MD, padding: Spacing.MD },
+  itemTitle: { fontSize: FontSize.MD, fontWeight: '600', color: Colors.INK, marginBottom: 4 },
+  itemDesc: { fontSize: FontSize.SM, color: Colors.MUTED, lineHeight: 20 },
+  emergencyCard: { flexDirection: 'row', alignItems: 'center', gap: Spacing.MD, backgroundColor: Colors.WHITE, borderRadius: BorderRadius.MD, padding: Spacing.MD, borderLeftWidth: 4 },
+  emergencyNumber: { fontSize: FontSize.XL, fontWeight: '800', minWidth: 60 },
+  emergencyLabel: { fontSize: FontSize.MD, fontWeight: '600', color: Colors.INK },
+  emergencyDesc: { fontSize: FontSize.SM, color: Colors.MUTED },
+  disclaimer: { fontSize: FontSize.XS, color: Colors.MUTED, lineHeight: 18, textAlign: 'center', paddingVertical: Spacing.MD },
 });

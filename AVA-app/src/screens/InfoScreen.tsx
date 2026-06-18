@@ -1,45 +1,67 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
-import { Colors, Spacing, Radius, FontSize } from '../theme';
+import { View, Text, ScrollView, StyleSheet } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { Colors, Spacing, BorderRadius, FontSize } from '../theme';
 
-function Card({ title, text }: { title: string; text: string }) {
-  return (
-    <View style={s.card}>
-      <Text style={s.cardTitle}>{title}</Text>
-      <Text style={s.cardText}>{text}</Text>
-    </View>
-  );
-}
+const INFO_CARDS = [
+  {
+    icon: '🤖',
+    title: "Qu'est-ce qu'AVA ?",
+    content: "AVA (Assistante Virtuelle Avocate) est une application mobile conçue pour accompagner les victimes de violences conjugales dans leurs démarches juridiques. Elle fournit des informations juridiques générales, disponibles 24h/24, dans un espace strictement confidentiel.",
+  },
+  {
+    icon: '🔒',
+    title: 'Confidentialité garantie',
+    content: "Tous vos échanges sont chiffrés de bout en bout. Vos données personnelles sont stockées sur des serveurs sécurisés en France, conformément au RGPD. AVA ne partage jamais vos informations avec des tiers sans votre consentement explicite.",
+  },
+  {
+    icon: '⚖️',
+    title: "Limites d'AVA",
+    content: "AVA fournit des informations juridiques générales et ne remplace pas un avocat. Pour toute démarche juridique spécifique, consultez un professionnel du droit. AVA n'est pas un service d'urgence — en cas de danger, appelez le 17 ou le 3919.",
+  },
+];
 
 export default function InfoScreen() {
   return (
-    <View style={s.container}>
-      <View style={s.header}>
-        <Text style={s.title}>Informations</Text>
-        <Text style={s.sub}>À propos d'AVA</Text>
+    <SafeAreaView style={styles.container}>
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>Informations</Text>
+        <Text style={styles.headerSub}>À propos d'AVA</Text>
       </View>
-      <ScrollView style={s.body} showsVerticalScrollIndicator={false}>
-        <Text style={s.sectionTitle}>À PROPOS</Text>
-        <Card title="Qu'est-ce qu'AVA ?" text="AVA est une assistante juridique IA spécialisée dans l'accompagnement des victimes de violences conjugales. Elle fournit des informations juridiques fiables et vous aide à comprendre vos droits et vos options." />
-        <Card title="Confidentialité garantie" text="Toutes vos conversations sont chiffrées de bout en bout. Aucun contenu de vos échanges n'est partagé avec des tiers. Vous pouvez effacer votre historique à tout moment depuis les Réglages." />
-        <Card title="Limites d'AVA" text="AVA est une assistante IA et ne remplace pas un avocat. Pour toute situation nécessitant un conseil personnalisé, consultez un professionnel du droit ou contactez une association spécialisée." />
-
-        <Text style={[s.sectionTitle, { marginTop: 20 }]}>VERSION</Text>
-        <Card title="AVA — Version 1.0" text="Application d'assistance juridique IA · Spécialisation violences conjugales · Données hébergées en France · Conformité RGPD." />
-        <View style={{ height: 40 }} />
+      <ScrollView contentContainerStyle={styles.content}>
+        <Text style={styles.sectionTitle}>À propos</Text>
+        {INFO_CARDS.map((card, i) => (
+          <View key={i} style={styles.card}>
+            <Text style={styles.cardIcon}>{card.icon}</Text>
+            <Text style={styles.cardTitle}>{card.title}</Text>
+            <Text style={styles.cardContent}>{card.content}</Text>
+          </View>
+        ))}
+        <Text style={styles.sectionTitle}>Version</Text>
+        <View style={styles.card}>
+          <Text style={styles.cardIcon}>📱</Text>
+          <Text style={styles.cardTitle}>AVA — Version 1.0</Text>
+          <Text style={styles.cardContent}>
+            Données hébergées en France{'\n'}
+            Conformité RGPD{'\n'}
+            Chiffrement bout en bout{'\n'}
+            © 2024 AVA — Tous droits réservés
+          </Text>
+        </View>
       </ScrollView>
-    </View>
+    </SafeAreaView>
   );
 }
 
-const s = StyleSheet.create({
+const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.CREAM },
-  header: { backgroundColor: Colors.WHITE, paddingTop: 16, paddingHorizontal: Spacing.LG, paddingBottom: Spacing.MD, borderBottomWidth: 1, borderBottomColor: Colors.BORDER },
-  title: { fontFamily: 'serif', fontSize: FontSize.XXL, fontWeight: '400', color: Colors.INK },
-  sub: { fontSize: FontSize.SM, color: Colors.MUTED, marginTop: 3 },
-  body: { flex: 1, padding: Spacing.MD },
-  sectionTitle: { fontSize: 10, letterSpacing: 1.5, textTransform: 'uppercase', color: Colors.MUTED, opacity: 0.7, marginBottom: 10, marginTop: 6 },
-  card: { backgroundColor: Colors.WHITE, borderWidth: 1, borderColor: Colors.BORDER, borderRadius: Radius.MD, padding: 15, marginBottom: 8 },
-  cardTitle: { fontSize: 14, fontWeight: '500', color: Colors.INK, marginBottom: 5 },
-  cardText: { fontSize: FontSize.SM, color: Colors.MUTED, lineHeight: 22 },
+  header: { backgroundColor: Colors.WHITE, padding: Spacing.LG, borderBottomWidth: 1, borderBottomColor: Colors.BORDER },
+  headerTitle: { fontSize: FontSize.XL, fontWeight: '700', color: Colors.INK },
+  headerSub: { fontSize: FontSize.SM, color: Colors.MUTED, marginTop: 2 },
+  content: { padding: Spacing.MD, gap: Spacing.MD },
+  sectionTitle: { fontSize: FontSize.LG, fontWeight: '700', color: Colors.INK, marginBottom: Spacing.XS },
+  card: { backgroundColor: Colors.WHITE, borderRadius: BorderRadius.LG, padding: Spacing.MD, borderWidth: 1, borderColor: Colors.BORDER, gap: Spacing.XS },
+  cardIcon: { fontSize: 28 },
+  cardTitle: { fontSize: FontSize.MD, fontWeight: '700', color: Colors.INK },
+  cardContent: { fontSize: FontSize.MD, color: Colors.MUTED, lineHeight: 22 },
 });
