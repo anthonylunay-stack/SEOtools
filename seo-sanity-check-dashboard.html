@@ -54,6 +54,31 @@
     .btn-primary { background: var(--blue); border-color: var(--blue); color: #fff; }
     .btn-primary:hover { background: #3574e0; border-color: #3574e0; }
 
+    /* ── Site switcher ── */
+    .site-switcher { position: relative; margin-left: 10px; }
+    .site-btn {
+      display: flex; align-items: center; gap: 7px;
+      background: rgba(66,133,244,.1); border: 1px solid rgba(66,133,244,.3);
+      color: var(--blue); border-radius: 20px; padding: 5px 13px;
+      font-size: 13px; font-weight: 600; cursor: pointer; transition: background .15s;
+    }
+    .site-btn:hover { background: rgba(66,133,244,.18); }
+    .site-menu {
+      display: none; position: absolute; top: calc(100% + 6px); left: 0;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 10px; padding: 6px; min-width: 160px;
+      box-shadow: 0 8px 24px rgba(0,0,0,.4); z-index: 200;
+    }
+    .site-menu.open { display: flex; flex-direction: column; }
+    .site-option {
+      text-align: left; background: none; border: none; color: var(--text);
+      padding: 8px 12px; border-radius: 7px; font-size: 13px; cursor: pointer; transition: background .15s;
+    }
+    .site-option:hover { background: rgba(255,255,255,.07); }
+    .site-option.active { color: var(--blue); font-weight: 600; }
+    .site-option.disabled { color: var(--muted); cursor: default; }
+    .site-option.disabled:hover { background: none; }
+
     /* ── Main ── */
     main { padding: 22px 28px; max-width: 1500px; margin: 0 auto; }
 
@@ -140,7 +165,17 @@
   <div class="logo">
     <div class="logo-icon">📊</div>
     SEO Sanity Check
-    <span class="logo-sub">SeLoger Neuf</span>
+    <div class="site-switcher" id="siteSwitcher">
+      <button class="site-btn" id="siteBtn" onclick="toggleSiteMenu()">
+        <span id="siteLabel">SeLoger Neuf</span>
+        <svg width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+      </button>
+      <div class="site-menu" id="siteMenu">
+        <button class="site-option active" onclick="selectSite('SeLoger Neuf')">SeLoger Neuf</button>
+        <button class="site-option disabled" onclick="selectSite('SeLoger')">SeLoger</button>
+        <button class="site-option disabled" onclick="selectSite('Belles Demeures')">Belles Demeures</button>
+      </div>
+    </div>
   </div>
   <div class="header-right">
     <div class="status-pill">
@@ -148,7 +183,7 @@
       <span id="statusText">Ready</span>
     </div>
     <div class="run-date" id="runDate">Report date: —</div>
-    <button class="btn" onclick="loadFromN8N()">↺ Refresh webhook</button>
+    <button class="btn btn-primary" onclick="loadFromN8N()">↺ Refresh webhook</button>
   </div>
 </header>
 
@@ -293,7 +328,38 @@
 /* ─────────────────────────────────────────
    CONFIG
 ───────────────────────────────────────── */
-const N8N_WEBHOOK_URL = 'https://aviv.app.n8n.cloud/webhook/seo-sanity-check';
+const SITES = {
+  'SeLoger Neuf':    'https://aviv.app.n8n.cloud/webhook/seo-sanity-check',
+  'SeLoger':         '', // à configurer
+  'Belles Demeures': '', // à configurer
+};
+let activeSite = 'SeLoger Neuf';
+
+function getWebhookUrl() {
+  return SITES[activeSite] || '';
+}
+
+function toggleSiteMenu() {
+  document.getElementById('siteMenu').classList.toggle('open');
+}
+document.addEventListener('click', e => {
+  if (!document.getElementById('siteSwitcher').contains(e.target))
+    document.getElementById('siteMenu').classList.remove('open');
+});
+
+function selectSite(name) {
+  activeSite = name;
+  document.getElementById('siteLabel').textContent = name;
+  document.querySelectorAll('.site-option').forEach(el => {
+    el.classList.toggle('active', el.textContent.trim() === name);
+    el.classList.toggle('disabled', !SITES[el.textContent.trim()]);
+  });
+  document.getElementById('siteMenu').classList.remove('open');
+  applyData(PLACEHOLDER);
+  setStatus('ready', 'Ready');
+  if (getWebhookUrl()) loadFromN8N();
+  else toast('ℹ️ Webhook non configuré pour ' + name);
+}
 
 /* ─────────────────────────────────────────
    REGISTER PLUGINS
@@ -653,10 +719,10 @@ function loadFromPaste() {
    WEBHOOK MODE
 ───────────────────────────────────────── */
 async function loadFromN8N() {
-  const isConfigured = !N8N_WEBHOOK_URL.includes('TON-INSTANCE');
+  const isConfigured = !!getWebhookUrl();
 
   if (!isConfigured) {
-    toast('ℹ️ N8N_WEBHOOK_URL not set — showing placeholder data');
+    toast('ℹ️ Webhook non configuré pour ' + activeSite + ' — données placeholder');
     applyData(PLACEHOLDER);
     setStatus('ok', 'Placeholder');
     document.getElementById('runDate').textContent = 'Report date: placeholder';
@@ -678,7 +744,7 @@ async function loadFromN8N() {
   try {
     let res;
     try {
-      res = await fetch(N8N_WEBHOOK_URL, { signal: AbortSignal.timeout(300000) });
+      res = await fetch(getWebhookUrl(), { signal: AbortSignal.timeout(300000) });
     } catch(netErr) {
       const isCors = netErr instanceof TypeError;
       throw new Error(isCors
