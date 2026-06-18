@@ -606,7 +606,7 @@ async function loadFromN8N() {
         ? (body[0]?.output ?? body[0]?.text)
         : (body?.output ?? body?.text);
       if (candidate) rawText = candidate;
-    }
+    } catch(_) { /* raw text is not JSON — use as-is */ }
 
     const data = parseOutput(rawText);
     if (data.charts.length === 0) {
