@@ -491,18 +491,22 @@ function parseOutput(text) {
     return [];
   }
 
-  /* 1 — with closing tag */
-  const tagMatch = text.match(/\*{0,2}\[CHARTS_JSON\]\*{0,2}([\s\S]*?)\*{0,2}\[\/CHARTS_JSON\]\*{0,2}/);
-  /* 2 — opening tag only (AI omitted closing tag) */
-  const openMatch = !tagMatch && text.match(/\*{0,2}\[CHARTS_JSON\]\*{0,2}\s*([\s\S]+)/);
-  /* 3 — no tags, first JSON array in response */
-  const bareMatch = !tagMatch && !openMatch && text.match(/```(?:json)?\s*([\s\S]+)/);
-
-  const rawChunk = tagMatch  ? tagMatch[1]
-                 : openMatch ? openMatch[1]
-                 : bareMatch ? bareMatch[1]
-                 : text;
-  if (rawChunk) result.charts = tryParseCharts(rawChunk.trim());
+  /* Format v5: compact "chartsJson\n---ANALYSIS---\ntext" from N8N bracket-counting */
+  const delimIdx = text.indexOf('\n---ANALYSIS---\n');
+  if (delimIdx !== -1) {
+    result.charts = tryParseCharts(text.slice(0, delimIdx).trim());
+    text = text.slice(delimIdx + 16); // pass analysis part to section parser below
+  } else {
+    /* Legacy formats */
+    const tagMatch = text.match(/\*{0,2}\[CHARTS_JSON\]\*{0,2}([\s\S]*?)\*{0,2}\[\/CHARTS_JSON\]\*{0,2}/);
+    const openMatch = !tagMatch && text.match(/\*{0,2}\[CHARTS_JSON\]\*{0,2}\s*([\s\S]+)/);
+    const bareMatch = !tagMatch && !openMatch && text.match(/```(?:json)?\s*([\s\S]+)/);
+    const rawChunk = tagMatch  ? tagMatch[1]
+                   : openMatch ? openMatch[1]
+                   : bareMatch ? bareMatch[1]
+                   : text;
+    if (rawChunk) result.charts = tryParseCharts(rawChunk.trim());
+  }
   if (!Array.isArray(result.charts)) result.charts = [];
   result.charts = result.charts.filter(c => c?.chartConfig?.data);
 

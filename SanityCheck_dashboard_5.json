@@ -220,7 +220,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// Read raw AI output and send it as-is to Respond to Webhook\nconst output = $input.first().json.output || '';\nreturn [{ json: { output } }];\n"
+        "jsCode": "const output = $input.first().json.output || '';\n\n// Find [CHARTS_JSON] tag (with optional ** markdown bold)\nconst tagIdx = output.search(/\\*{0,2}\\[CHARTS_JSON\\]\\*{0,2}/);\nif (tagIdx === -1) return [{ json: { output } }];\n\n// Strip tag and optional code fence\nlet after = output.slice(tagIdx).replace(/\\*{0,2}\\[CHARTS_JSON\\]\\*{0,2}/, '').replace(/^[\\s\\n]*```(?:json)?[ \\t]*/m, '').trimStart();\n\n// Extract JSON array via bracket-counting\nconst start = after.indexOf('[');\nif (start === -1) return [{ json: { output } }];\n\nlet depth = 0, end = -1;\nfor (let i = start; i < after.length; i++) {\n  if (after[i] === '[') depth++;\n  else if (after[i] === ']') { depth--; if (depth === 0) { end = i; break; } }\n}\n\nconst chartsJson = end !== -1 ? after.slice(start, end + 1) : after.slice(start);\n\n// Get analysis text after [/CHARTS_JSON] or after the array\nconst closeIdx = output.indexOf('[/CHARTS_JSON]');\nconst analysis = closeIdx !== -1\n  ? output.slice(closeIdx + 14).trim()\n  : (end !== -1 ? after.slice(end + 1).replace(/^[\\s\\n]*```[\\s\\n]*/m, '').trim() : '');\n\n// Compact response: charts JSON + delimiter + analysis\nconst responseText = chartsJson + '\\n---ANALYSIS---\\n' + analysis;\nreturn [{ json: { output: responseText } }];\n"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
