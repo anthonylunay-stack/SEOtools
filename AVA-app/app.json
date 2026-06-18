@@ -1,0 +1,21 @@
+{
+  "expo": {
+    "name": "AVA",
+    "slug": "ava-app",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.ava.avocat",
+      "infoPlist": {
+        "NSFaceIDUsageDescription": "AVA utilise Face ID pour protéger votre confidentialité.",
+        "ITSAppUsesNonExemptEncryption": false
+      }
+    },
+    "android": {
+      "package": "com.ava.avocat"
+    },
+    "plugins": ["expo-font", "expo-local-authentication", "expo-secure-store"]
+  }
+}
