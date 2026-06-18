@@ -5,6 +5,7 @@ import mongoose from 'mongoose';
 import authRouter from './routes/auth';
 import chatRouter from './routes/chat';
 import paymentRouter from './routes/payment';
+import webhookRouter from './routes/webhook';
 
 dotenv.config();
 
@@ -19,14 +20,15 @@ app.get('/', (_req, res) => res.json({ status: 'AVA Backend OK', version: '1.0.0
 app.use('/auth', authRouter);
 app.use('/chat', chatRouter);
 app.use('/payment', paymentRouter);
+app.use('/webhook', webhookRouter);
 
 const MONGODB_URI = process.env.MONGODB_URI || '';
 if (MONGODB_URI) {
   mongoose.connect(MONGODB_URI)
-    .then(() => console.log('MongoDB connecté'))
-    .catch(e => console.error('MongoDB erreur:', e));
+    .then(() => console.log('✅ MongoDB connecté'))
+    .catch(e => console.error('❌ MongoDB erreur:', e));
 } else {
-  console.warn('MONGODB_URI non défini — démarrage sans base de données');
+  console.warn('⚠️  MONGODB_URI non défini — démarrage sans base de données');
 }
 
-app.listen(PORT, () => console.log(`AVA Backend démarré sur le port ${PORT}`));
+app.listen(PORT, () => console.log(`🚀 AVA Backend démarré sur le port ${PORT}`));
