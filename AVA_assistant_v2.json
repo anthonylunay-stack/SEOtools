@@ -1,0 +1,1042 @@
+{
+  "name": "AVA: l'assistant virtuelle de votre avocat",
+  "nodes": [
+    {
+      "parameters": {
+        "dataType": "binary",
+        "options": {}
+      },
+      "id": "5d187dab-58a5-41c4-a09e-3e89ae97fc62",
+      "name": "Default Data Loader",
+      "type": "@n8n/n8n-nodes-langchain.documentDefaultDataLoader",
+      "position": [
+        -416,
+        -1360
+      ],
+      "typeVersion": 1,
+      "alwaysOutputData": false,
+      "executeOnce": false,
+      "retryOnFail": false,
+      "notesInFlow": false
+    },
+    {
+      "parameters": {
+        "chunkSize": 3000,
+        "chunkOverlap": 200,
+        "options": {}
+      },
+      "id": "982f1039-f81b-4491-b2e7-a1b01ff38ef8",
+      "name": "Recursive Character Text Splitter",
+      "type": "@n8n/n8n-nodes-langchain.textSplitterRecursiveCharacterTextSplitter",
+      "position": [
+        -416,
+        -1152
+      ],
+      "typeVersion": 1,
+      "alwaysOutputData": false
+    },
+    {
+      "parameters": {
+        "content": "## Chat with documents\n--> Telegram \n--> AI agent specifique\n--> Pinecone Data\n--> Google drive BDD",
+        "height": 144,
+        "width": 688
+      },
+      "id": "d0445341-340c-480c-887c-f2eff5e1cc31",
+      "name": "Sticky Note2",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -3472,
+        -864
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.text }}",
+        "options": {
+          "systemMessage": "# Rôle\nTu es AVA, l'assistante juridique du cabinet de Maître Lunay, avocate française spécialisée en violences conjugales et intrafamiliales.\nTu réponds directement aux questions des clientes avec clarté et bienveillance.\n\nTon périmètre :\n- Violences conjugales et intrafamiliales\n- Procédures pénales associées\n- Séparation, divorce, procédures devant le Juge aux Affaires Familiales\n- Ordonnances et mesures de protection des victimes\n\n# Contexte client\n- La cliente est déjà cliente du cabinet.\n- Un premier rendez-vous avec l'avocat a eu lieu.\n- Une procédure est en cours ou sur le point d'être engagée.\n\n# Valeurs\nÉcoute · Bienveillance · Clarté · Rigueur\n\n# Style de réponse\n- Répond de façon concise et directe. Maximum 5 à 8 lignes par réponse.\n- Utilise un ton chaleureux et rassurant, pas froid ni bureaucratique.\n- Structure avec des puces uniquement si la réponse comporte plusieurs étapes distinctes.\n- Pas de formules de politesse inutiles en début ou fin de message.\n- Évite les répétitions et les tournures longues.\n\n# Processus obligatoire\n1. Toujours appeler le TOOL pinecone_vector_db AVANT de répondre.\n2. Répondre uniquement avec les données retournées par ce TOOL.\n3. Ne jamais utiliser tes connaissances internes ni inventer d'information.\n\n# Règles de réponse\n- Si le TOOL retourne une information pertinente → répond clairement avec cette information.\n- Si le TOOL ne retourne pas d'information pertinente → réponds : \"Je n'ai pas cette information dans ma base. Pour une réponse précise, je te recommande d'en parler lors de ton prochain échange avec le cabinet.\"\n- Si la question est trop spécifique au dossier personnel → réponds : \"Cette question nécessite une analyse de ton dossier. Je te recommande d'en parler directement avec le cabinet.\"\n- Si la question concerne une décision stratégique → réponds : \"Cette décision relève d'une analyse spécifique de ta situation. Le cabinet pourra te répondre.\"\n- Si la question est hors périmètre → décline poliment en une phrase.\n\n# Interdictions\n- Ne jamais inventer de lois, articles ou jurisprudence.\n- Ne jamais mentionner Pinecone ni la base de données.\n- Ne pas répéter systématiquement que les réponses sont générales.\n- Ne pas rediriger vers un avocat à chaque réponse — seulement quand c'est réellement nécessaire.\n\n# Si la question manque d'informations\nPose une seule question de clarification ciblée avant de répondre."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        -1856,
+        -592
+      ],
+      "id": "e64773b9-bb03-409a-aefc-27d72d2d57db",
+      "name": "AI Agent1"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "gpt-4o-mini"
+        },
+        "responsesApiEnabled": false,
+        "options": {
+          "temperature": 0.3,
+          "maxRetries": 3
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        -1920,
+        -384
+      ],
+      "id": "a7579665-f650-4964-95b2-5ac89f7e9368",
+      "name": "OpenAI Chat Model1",
+      "credentials": {
+        "openAiApi": {
+          "id": "66vFkouId7UlmvTu",
+          "name": "OpenAi"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": "text-embedding-3-large",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.embeddingsOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        -1456,
+        -16
+      ],
+      "id": "79fdd381-127b-4791-882b-0b7ce369ed29",
+      "name": "Embeddings OpenAI1",
+      "credentials": {
+        "openAiApi": {
+          "id": "66vFkouId7UlmvTu",
+          "name": "OpenAi"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "insert",
+        "pineconeIndex": {
+          "__rl": true,
+          "value": "ava",
+          "mode": "list",
+          "cachedResultName": "ava"
+        },
+        "embeddingBatchSize": 100,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStorePinecone",
+      "typeVersion": 1.3,
+      "position": [
+        -672,
+        -1648
+      ],
+      "id": "47a9f4ff-d1d4-4173-8446-25207ab292dc",
+      "name": "Pinecone Vector Store",
+      "notesInFlow": false,
+      "credentials": {
+        "pineconeApi": {
+          "id": "fwE7IUXjjE47tW3l",
+          "name": "PineconeApi API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": "text-embedding-3-large",
+        "options": {
+          "dimensions": 3072
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.embeddingsOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        -672,
+        -1360
+      ],
+      "id": "c7008364-80ed-43a2-8032-98678e802872",
+      "name": "Embeddings OpenAI",
+      "alwaysOutputData": false,
+      "credentials": {
+        "openAiApi": {
+          "id": "66vFkouId7UlmvTu",
+          "name": "OpenAi"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "retrieve-as-tool",
+        "toolDescription": "Récupère l'information la plus juste en fonction de la question posée. Tu peux également combiner plusieurs informations si besoin.  ",
+        "pineconeIndex": {
+          "__rl": true,
+          "value": "ava",
+          "mode": "list",
+          "cachedResultName": "ava"
+        },
+        "topK": 15,
+        "includeDocumentMetadata": false,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStorePinecone",
+      "typeVersion": 1.3,
+      "position": [
+        -1456,
+        -224
+      ],
+      "id": "4e2835ac-908c-4acc-ab6e-756a08c93930",
+      "name": "Pinecone Vector Store1",
+      "credentials": {
+        "pineconeApi": {
+          "id": "fwE7IUXjjE47tW3l",
+          "name": "PineconeApi API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "UPDATE document in Google Drive\n",
+        "height": 80,
+        "width": 288
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -2016,
+        -1856
+      ],
+      "typeVersion": 1,
+      "id": "d6cb6c15-b7b1-49d6-8d2a-0c192b73376f",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "resource": "file",
+        "fileId": "={{ $('Telegram message').item.json.message.voice.file_id }}",
+        "additionalFields": {
+          "mimeType": "={{ $('Telegram message').item.json.message.voice.mime_type }}"
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        -2416,
+        -768
+      ],
+      "id": "65250870-2c28-4ce2-a5ac-967b6ed8fcba",
+      "name": "Get a file",
+      "webhookId": "55119ce3-f24f-4630-9fe7-b05c9a21a9bf",
+      "credentials": {
+        "telegramApi": {
+          "id": "j9Ymkr7OkQPopQm5",
+          "name": "Maitre Lunay"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $('Telegram message').item.json.message.voice.file_id }}",
+                    "rightValue": "",
+                    "operator": {
+                      "type": "string",
+                      "operation": "exists",
+                      "singleValue": true
+                    },
+                    "id": "a3d900b9-d1ba-4964-8626-9fc08e170964"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Audio"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "cdac9a9a-4056-4d7e-810e-59c357fe4a10",
+                    "leftValue": "={{ $('Telegram message').item.json.message.text }}",
+                    "rightValue": "",
+                    "operator": {
+                      "type": "string",
+                      "operation": "exists",
+                      "singleValue": true
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Text"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "a0d2e1ff-950a-4740-b60c-42a2ba5fee04",
+                    "leftValue": "={{ $('Telegram message').item.json.message.photo[1].file_id }}",
+                    "rightValue": "",
+                    "operator": {
+                      "type": "string",
+                      "operation": "exists",
+                      "singleValue": true
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "IMG"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        -2624,
+        -608
+      ],
+      "id": "aa12ca8c-69bd-4d23-873b-18c6ab54444e",
+      "name": "Switch",
+      "executeOnce": false
+    },
+    {
+      "parameters": {
+        "resource": "audio",
+        "operation": "transcribe",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 2.1,
+      "position": [
+        -2112,
+        -768
+      ],
+      "id": "3d486be8-c43b-4e6b-9427-0eb18bff668f",
+      "name": "Transcribe a recording",
+      "credentials": {
+        "openAiApi": {
+          "id": "66vFkouId7UlmvTu",
+          "name": "OpenAi"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "2b27a026-e502-43e6-b42e-0e9f7c1fae8d",
+              "name": "text",
+              "value": "={{ $('Telegram message').item.json.message.text }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -2272,
+        -592
+      ],
+      "id": "ada3f146-68c0-4109-96e9-b11a1ab8c054",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "updates": [
+          "message"
+        ],
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -2912,
+        -592
+      ],
+      "id": "43f38924-0581-495c-ab2a-4ddc2ea00a25",
+      "name": "Telegram message",
+      "webhookId": "d8f424ac-3703-4d7b-8d6a-9d3b8999f583",
+      "credentials": {
+        "telegramApi": {
+          "id": "j9Ymkr7OkQPopQm5",
+          "name": "Maitre Lunay"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram message').item.json.message.chat.id }}",
+        "text": "={{ $json.output }}",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        -1504,
+        -592
+      ],
+      "id": "c0dfc33b-58a7-43d2-8878-db860ccac5e7",
+      "name": "message retour",
+      "webhookId": "4175be47-e346-4bef-9752-ea382938c37d",
+      "credentials": {
+        "telegramApi": {
+          "id": "j9Ymkr7OkQPopQm5",
+          "name": "Maitre Lunay"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "50525c2d-2433-4794-9af6-e3eb33819120",
+                    "leftValue": "={{ $('Search files and folders').item.json.name }}",
+                    "rightValue": ".pdf",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "PDF"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "2b5f3026-0bb6-4baf-94b9-c6111dcfceff",
+                    "leftValue": "={{ $('Search files and folders').item.json.name }}",
+                    "rightValue": "=",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Text"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "f28fda35-e579-47e5-868e-a13385411428",
+                    "leftValue": "={{ $('Search files and folders').item.json.name }}",
+                    "rightValue": ".jpg",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Image"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        -1456,
+        -1664
+      ],
+      "id": "a1306ed1-81d8-47d8-b9b1-37532ec82908",
+      "name": "Switch1"
+    },
+    {
+      "parameters": {
+        "resource": "fileFolder",
+        "returnAll": true,
+        "filter": {
+          "driveId": {
+            "mode": "list",
+            "value": "My Drive"
+          },
+          "folderId": {
+            "__rl": true,
+            "value": "1xIl2YC3csmW9AFCCs2dH2OWESdN_CkeJ",
+            "mode": "list",
+            "cachedResultName": "AVA database",
+            "cachedResultUrl": "https://drive.google.com/drive/folders/1xIl2YC3csmW9AFCCs2dH2OWESdN_CkeJ"
+          }
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        -1904,
+        -1648
+      ],
+      "id": "6a4eabf9-f9d1-4433-8c5f-b809f9633269",
+      "name": "Search files and folders",
+      "alwaysOutputData": false,
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "vQctoV5p2RO4nJzi",
+          "name": "Mydrive"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "2b27a026-e502-43e6-b42e-0e9f7c1fae8d",
+              "name": "text",
+              "value": "={{ $json['0'].content[0].text }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -960,
+        -1376
+      ],
+      "id": "4ac7e6b8-5d6d-4e71-90d1-8f0a2ee72902",
+      "name": "Edit IMG"
+    },
+    {
+      "parameters": {
+        "resource": "image",
+        "operation": "analyze",
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4o",
+          "mode": "list",
+          "cachedResultName": "GPT-4O"
+        },
+        "text": "Analyse cette image, extrait les informations et présente les de façon lisible , sans forme avec un retour à la ligne à chaque élément.",
+        "inputType": "base64",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 2.1,
+      "position": [
+        -1168,
+        -1376
+      ],
+      "id": "58e0c6b5-aa9c-4e61-8dbe-896fdcd41b7f",
+      "name": "Analyze image",
+      "credentials": {
+        "openAiApi": {
+          "id": "66vFkouId7UlmvTu",
+          "name": "OpenAi"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -2128,
+        -1648
+      ],
+      "id": "697f78ce-ed51-4eea-811b-f2085a02fc4d",
+      "name": "When clicking 'Execute workflow'"
+    },
+    {
+      "parameters": {
+        "operation": "pdf",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1.1,
+      "position": [
+        -1168,
+        -1920
+      ],
+      "id": "36438c51-52b0-4a5b-a0a0-16baa633c960",
+      "name": "Extract from PDF"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "9ce749aa-0df7-450a-abde-ea6be2a0750e",
+              "name": "text",
+              "value": "={{ $json.text }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -976,
+        -1920
+      ],
+      "id": "802152f8-82f6-4863-9e8d-861c1b7fb8e0",
+      "name": "Edit pdf"
+    },
+    {
+      "parameters": {
+        "operation": "download",
+        "fileId": {
+          "__rl": true,
+          "value": "={{ $json.id }}",
+          "mode": "id"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        -1696,
+        -1648
+      ],
+      "id": "b15185bb-1cf5-45ba-be36-c5464fb49d8e",
+      "name": "Download file",
+      "alwaysOutputData": false,
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "vQctoV5p2RO4nJzi",
+          "name": "Mydrive"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "image",
+        "operation": "analyze",
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4o",
+          "mode": "list",
+          "cachedResultName": "GPT-4O"
+        },
+        "text": "Analyse cette image, extrait les informations et présente les de façon lisible , sans forme avec un retour à la ligne à chaque élément.",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 2.1,
+      "position": [
+        -2400,
+        -400
+      ],
+      "id": "58ac8a55-cfd0-410e-948f-3fa727213983",
+      "name": "Analyze image2",
+      "credentials": {
+        "openAiApi": {
+          "id": "66vFkouId7UlmvTu",
+          "name": "OpenAi"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "2b27a026-e502-43e6-b42e-0e9f7c1fae8d",
+              "name": "text",
+              "value": "={{ $json['0'].content[0].text }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -2192,
+        -400
+      ],
+      "id": "d3aed39e-071d-4370-91b0-b692c0d6891c",
+      "name": "Edit IMG2"
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $('Telegram message').item.json.message.from.id }}",
+        "contextWindowLength": 20
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        -1760,
+        -304
+      ],
+      "id": "34d33ebc-a678-4a59-9241-71389acd88a5",
+      "name": "Simple Memory"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Default Data Loader": {
+      "ai_document": [
+        [
+          {
+            "node": "Pinecone Vector Store",
+            "type": "ai_document",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Recursive Character Text Splitter": {
+      "ai_textSplitter": [
+        [
+          {
+            "node": "Default Data Loader",
+            "type": "ai_textSplitter",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings OpenAI1": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Pinecone Vector Store1",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pinecone Vector Store": {
+      "main": [
+        []
+      ]
+    },
+    "Embeddings OpenAI": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Pinecone Vector Store",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pinecone Vector Store1": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent1": {
+      "main": [
+        [
+          {
+            "node": "message retour",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get a file": {
+      "main": [
+        [
+          {
+            "node": "Transcribe a recording",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "Get a file",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Analyze image2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Transcribe a recording": {
+      "main": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Telegram message": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch1": {
+      "main": [
+        [
+          {
+            "node": "Extract from PDF",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Pinecone Vector Store",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Analyze image",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search files and folders": {
+      "main": [
+        [
+          {
+            "node": "Download file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit IMG": {
+      "main": [
+        [
+          {
+            "node": "Pinecone Vector Store",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Analyze image": {
+      "main": [
+        [
+          {
+            "node": "Edit IMG",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When clicking 'Execute workflow'": {
+      "main": [
+        [
+          {
+            "node": "Search files and folders",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract from PDF": {
+      "main": [
+        [
+          {
+            "node": "Edit pdf",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit pdf": {
+      "main": [
+        [
+          {
+            "node": "Pinecone Vector Store",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download file": {
+      "main": [
+        [
+          {
+            "node": "Switch1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Analyze image2": {
+      "main": [
+        [
+          {
+            "node": "Edit IMG2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit IMG2": {
+      "main": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false,
+    "timeSavedMode": "fixed",
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "versionId": "2625ad53-cabb-4c71-8ed5-9275099251a0",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "63cfcbdb4b6e3190348b791e15eee18d3bd5ecb40514fea981a08c5e89a07c43"
+  },
+  "id": "1oejw9jUPbrV3b7B",
+  "tags": []
+}
