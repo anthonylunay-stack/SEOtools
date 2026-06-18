@@ -1,155 +1,113 @@
 import React, { useState } from 'react';
 import {
-  View, Text, StyleSheet, TouchableOpacity, TextInput,
-  ScrollView, Alert, KeyboardAvoidingView, Platform,
+  View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Alert, KeyboardAvoidingView, Platform,
 } from 'react-native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { Colors, Spacing, Radius, FontSize } from '../theme';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import AVALogo from '../components/AVALogo';
+import { Colors, Spacing, BorderRadius, FontSize } from '../theme';
 
-type Props = { navigation: NativeStackNavigationProp<any> };
-type Mode = 'login' | 'register';
-
-export default function SignInScreen({ navigation }: Props) {
-  const [mode, setMode] = useState<Mode>('login');
+export default function SignInScreen({ navigation }: any) {
+  const [mode, setMode] = useState<'login' | 'register'>('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [prenom, setPrenom] = useState('');
   const [nom, setNom] = useState('');
   const [tel, setTel] = useState('');
-  const [password2, setPassword2] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
 
-  const ssoLogin = (provider: string) => {
-    Alert.alert(`Connexion ${provider}`, 'Fonctionnalité disponible après configuration des clés OAuth.');
-    setTimeout(() => navigation.navigate('CGU'), 800);
+  const validate = () => {
+    if (mode === 'login') {
+      if (!email || !password) { setError('Veuillez remplir tous les champs.'); return false; }
+    } else {
+      if (!prenom || !nom || !email || !password || !confirmPassword) { setError('Veuillez remplir tous les champs.'); return false; }
+      if (password.length < 8) { setError('Le mot de passe doit contenir au moins 8 caractères.'); return false; }
+      if (password !== confirmPassword) { setError('Les mots de passe ne correspondent pas.'); return false; }
+    }
+    return true;
   };
 
-  const handleLogin = () => {
-    if (!email || !password) { setError('Veuillez remplir tous les champs.'); return; }
+  const handleSubmit = () => {
     setError('');
-    navigation.navigate('CGU');
-  };
-
-  const handleRegister = () => {
-    if (!prenom || !nom || !email || !password) { setError('Veuillez remplir tous les champs obligatoires.'); return; }
-    if (password.length < 8) { setError('Le mot de passe doit contenir au moins 8 caractères.'); return; }
-    if (password !== password2) { setError('Les mots de passe ne correspondent pas.'); return; }
-    setError('');
+    if (!validate()) return;
     navigation.navigate('CGU');
   };
 
   return (
-    <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      <ScrollView style={s.container} keyboardShouldPersistTaps="handled">
-        <View style={s.hero}>
-          <AVALogo size={56} />
-          <Text style={s.heroTitle}>{mode === 'login' ? 'AVA' : 'Créer un compte'}</Text>
-          <Text style={s.heroSub}>{mode === 'login' ? 'Connexion sécurisée' : 'Inscription gratuite'}</Text>
-        </View>
-
-        <View style={s.body}>
-          <TouchableOpacity style={s.ssoBtn} onPress={() => ssoLogin('Apple')}>
-            <Text style={s.ssoBtnText}>🍎  Continuer avec Apple</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={s.ssoBtn} onPress={() => ssoLogin('Google')}>
-            <Text style={s.ssoBtnText}>G  Continuer avec Google</Text>
-          </TouchableOpacity>
-
-          <View style={s.divider}>
-            <View style={s.dividerLine} />
-            <Text style={s.dividerText}>OU</Text>
-            <View style={s.dividerLine} />
+    <SafeAreaView style={styles.container}>
+      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }}>
+        <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+          <View style={styles.header}>
+            <AVALogo size={60} />
+            <Text style={styles.title}>AVA</Text>
+            <Text style={styles.subtitle}>{mode === 'login' ? 'Connexion sécurisée' : 'Créer un compte'}</Text>
           </View>
 
-          {mode === 'register' && (
-            <>
-              <Field label="Prénom" value={prenom} onChange={setPrenom} placeholder="Votre prénom" />
-              <Field label="Nom" value={nom} onChange={setNom} placeholder="Votre nom" />
-            </>
-          )}
-          <Field label="Adresse e-mail" value={email} onChange={setEmail} placeholder="vous@exemple.fr" keyboardType="email-address" />
-          {mode === 'register' && (
-            <Field label="Numéro de téléphone" value={tel} onChange={setTel} placeholder="+33 6 00 00 00 00" keyboardType="phone-pad" />
-          )}
-          <Field label="Mot de passe" value={password} onChange={setPassword} placeholder="••••••••" secure />
-          {mode === 'register' && (
-            <Field label="Confirmer le mot de passe" value={password2} onChange={setPassword2} placeholder="Répétez votre mot de passe" secure />
-          )}
+          <View style={styles.ssoSection}>
+            <TouchableOpacity style={styles.ssoBtn}>
+              <Text style={styles.ssoBtnText}>  Se connecter avec Apple</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={[styles.ssoBtn, { borderColor: Colors.PALE }]}>
+              <Text style={styles.ssoBtnText}>  Se connecter avec Google</Text>
+            </TouchableOpacity>
+          </View>
 
-          {!!error && <Text style={s.error}>{error}</Text>}
+          <View style={styles.divider}>
+            <View style={styles.dividerLine} />
+            <Text style={styles.dividerText}>OU</Text>
+            <View style={styles.dividerLine} />
+          </View>
 
-          <TouchableOpacity style={s.btnRose} onPress={mode === 'login' ? handleLogin : handleRegister}>
-            <Text style={s.btnRoseText}>{mode === 'login' ? 'Se connecter' : 'Créer mon compte'}</Text>
+          <View style={styles.form}>
+            {mode === 'register' && (
+              <>
+                <TextInput style={styles.input} placeholder="Prénom" value={prenom} onChangeText={setPrenom} placeholderTextColor={Colors.MUTED} />
+                <TextInput style={styles.input} placeholder="Nom" value={nom} onChangeText={setNom} placeholderTextColor={Colors.MUTED} />
+              </>
+            )}
+            <TextInput style={styles.input} placeholder="Email" value={email} onChangeText={setEmail} keyboardType="email-address" autoCapitalize="none" placeholderTextColor={Colors.MUTED} />
+            {mode === 'register' && (
+              <TextInput style={styles.input} placeholder="Téléphone" value={tel} onChangeText={setTel} keyboardType="phone-pad" placeholderTextColor={Colors.MUTED} />
+            )}
+            <TextInput style={styles.input} placeholder="Mot de passe" value={password} onChangeText={setPassword} secureTextEntry placeholderTextColor={Colors.MUTED} />
+            {mode === 'register' && (
+              <TextInput style={styles.input} placeholder="Confirmer le mot de passe" value={confirmPassword} onChangeText={setConfirmPassword} secureTextEntry placeholderTextColor={Colors.MUTED} />
+            )}
+          </View>
+
+          {!!error && <Text style={styles.errorText}>{error}</Text>}
+
+          <TouchableOpacity style={styles.btnPrimary} onPress={handleSubmit}>
+            <Text style={styles.btnPrimaryText}>{mode === 'login' ? 'Se connecter' : 'Créer mon compte'}</Text>
           </TouchableOpacity>
 
           <TouchableOpacity onPress={() => { setMode(mode === 'login' ? 'register' : 'login'); setError(''); }}>
-            <Text style={s.switchText}>
-              {mode === 'login' ? "Pas encore de compte ? " : "Déjà un compte ? "}
-              <Text style={s.switchLink}>{mode === 'login' ? "S'inscrire" : "Se connecter"}</Text>
+            <Text style={styles.switchText}>
+              {mode === 'login' ? "Pas encore de compte ? S'inscrire" : 'Déjà un compte ? Se connecter'}
             </Text>
           </TouchableOpacity>
-        </View>
-      </ScrollView>
-    </KeyboardAvoidingView>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }
 
-function Field({ label, value, onChange, placeholder, secure, keyboardType }: any) {
-  return (
-    <View style={f.wrap}>
-      <Text style={f.label}>{label}</Text>
-      <TextInput
-        style={f.input}
-        value={value}
-        onChangeText={onChange}
-        placeholder={placeholder}
-        placeholderTextColor={Colors.MUTED + '88'}
-        secureTextEntry={secure}
-        keyboardType={keyboardType || 'default'}
-        autoCapitalize="none"
-      />
-    </View>
-  );
-}
-
-const f = StyleSheet.create({
-  wrap: { marginBottom: 14 },
-  label: { fontSize: 11, letterSpacing: 1, textTransform: 'uppercase', color: Colors.MUTED, fontWeight: '500', marginBottom: 6 },
-  input: {
-    height: 48, borderWidth: 1, borderColor: Colors.BORDER, borderRadius: Radius.MD,
-    paddingHorizontal: 14, fontSize: FontSize.MD, color: Colors.INK, backgroundColor: Colors.WHITE,
-  },
-});
-
-const s = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.WHITE },
-  hero: {
-    backgroundColor: Colors.ROSE_FAINT,
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(184,92,114,0.12)',
-    paddingTop: 60,
-    paddingBottom: 28,
-    alignItems: 'center',
-    gap: 8,
-  },
-  heroTitle: { fontFamily: 'serif', fontSize: 32, fontWeight: '400', color: Colors.INK, letterSpacing: 2 },
-  heroSub: { fontSize: FontSize.SM, color: Colors.MUTED, fontWeight: '300' },
-  body: { padding: Spacing.LG, gap: 4 },
-  ssoBtn: {
-    height: 52, borderRadius: Radius.MD, borderWidth: 1, borderColor: Colors.BORDER,
-    backgroundColor: Colors.WHITE, alignItems: 'center', justifyContent: 'center', marginBottom: 10,
-  },
-  ssoBtnText: { fontSize: 15, fontWeight: '500', color: Colors.INK },
-  divider: { flexDirection: 'row', alignItems: 'center', gap: 12, marginVertical: 8 },
+const styles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: Colors.ROSE_FAINT },
+  content: { flexGrow: 1, paddingHorizontal: Spacing.LG, paddingVertical: Spacing.LG },
+  header: { alignItems: 'center', marginBottom: Spacing.LG, backgroundColor: Colors.WHITE, borderRadius: BorderRadius.LG, padding: Spacing.LG },
+  title: { fontSize: FontSize.XXL, color: Colors.INK, letterSpacing: 3, marginTop: Spacing.SM },
+  subtitle: { fontSize: FontSize.MD, color: Colors.MUTED, marginTop: Spacing.XS },
+  ssoSection: { gap: Spacing.SM, marginBottom: Spacing.MD },
+  ssoBtn: { borderWidth: 1.5, borderColor: Colors.INK, borderRadius: BorderRadius.MD, paddingVertical: 14, alignItems: 'center', backgroundColor: Colors.WHITE },
+  ssoBtnText: { fontSize: FontSize.MD, fontWeight: '500', color: Colors.INK },
+  divider: { flexDirection: 'row', alignItems: 'center', marginVertical: Spacing.MD, gap: Spacing.MD },
   dividerLine: { flex: 1, height: 1, backgroundColor: Colors.BORDER },
-  dividerText: { fontSize: 11, color: Colors.MUTED, letterSpacing: 1 },
-  error: { fontSize: 12, color: Colors.DANGER, marginBottom: 8 },
-  btnRose: {
-    height: 52, borderRadius: Radius.MD, backgroundColor: Colors.ROSE,
-    alignItems: 'center', justifyContent: 'center', marginTop: 8, marginBottom: 12,
-  },
-  btnRoseText: { color: '#fff', fontSize: 15, fontWeight: '500', letterSpacing: 0.5 },
-  switchText: { textAlign: 'center', fontSize: FontSize.SM, color: Colors.MUTED, marginTop: 4 },
-  switchLink: { color: Colors.ROSE, fontWeight: '500' },
+  dividerText: { fontSize: FontSize.SM, color: Colors.MUTED, fontWeight: '600' },
+  form: { gap: Spacing.SM, marginBottom: Spacing.MD },
+  input: { backgroundColor: Colors.WHITE, borderWidth: 1, borderColor: Colors.BORDER, borderRadius: BorderRadius.MD, paddingHorizontal: Spacing.MD, paddingVertical: 14, fontSize: FontSize.MD, color: Colors.INK },
+  errorText: { color: Colors.DANGER, fontSize: FontSize.SM, marginBottom: Spacing.MD, textAlign: 'center' },
+  btnPrimary: { backgroundColor: Colors.ROSE, borderRadius: BorderRadius.LG, paddingVertical: 16, alignItems: 'center', marginBottom: Spacing.MD },
+  btnPrimaryText: { color: Colors.WHITE, fontSize: FontSize.LG, fontWeight: '600' },
+  switchText: { textAlign: 'center', color: Colors.ROSE, fontSize: FontSize.MD, textDecorationLine: 'underline' },
 });
