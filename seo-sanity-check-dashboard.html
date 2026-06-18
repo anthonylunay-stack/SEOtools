@@ -477,16 +477,18 @@ function parseOutput(text) {
     return [];
   }
 
+  /* 1 — with closing tag */
   const tagMatch = text.match(/\*{0,2}\[CHARTS_JSON\]\*{0,2}([\s\S]*?)\*{0,2}\[\/CHARTS_JSON\]\*{0,2}/);
-  if (tagMatch) {
-    result.charts = tryParseCharts(tagMatch[1].trim());
-  } else {
-    /* fallback: AI omitted wrapper tags — find first JSON array in response */
-    const arrayMatch = text.match(/(```(?:json)?\s*)(\[\s*\{[\s\S]*?\}\s*\])/);
-    if (arrayMatch) {
-      result.charts = tryParseCharts(arrayMatch[2]);
-    }
-  }
+  /* 2 — opening tag only (AI omitted closing tag) */
+  const openMatch = !tagMatch && text.match(/\*{0,2}\[CHARTS_JSON\]\*{0,2}\s*([\s\S]+)/);
+  /* 3 — no tags at all, bare JSON array (with or without code fences) */
+  const bareMatch = !tagMatch && !openMatch && text.match(/(?:```(?:json)?\s*)?([\s\S]*?\[\s*\{[\s\S]*\}\s*\])(?:\s*```)?/);
+
+  const rawChunk = tagMatch  ? tagMatch[1]
+                 : openMatch ? openMatch[1]
+                 : bareMatch ? bareMatch[1]
+                 : null;
+  if (rawChunk) result.charts = tryParseCharts(rawChunk.trim());
   if (!Array.isArray(result.charts)) result.charts = [];
   result.charts = result.charts.filter(c => c?.chartConfig?.data);
 
