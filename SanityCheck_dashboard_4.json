@@ -313,7 +313,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const output = $('AI Agent').first().json.output || '';\nconst payload = JSON.stringify({ output, generatedAt: new Date().toISOString() });\nreturn [{ json: { payload } }];\n"
+        "jsCode": "const output = $('AI Agent').first().json.output || '';\nreturn [{ json: { output } }];\n"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -327,7 +327,7 @@
     {
       "parameters": {
         "respondWith": "text",
-        "responseBody": "={{ $json.payload }}",
+        "responseBody": "={{ $json.output }}",
         "options": {
           "responseHeaders": {
             "entries": [

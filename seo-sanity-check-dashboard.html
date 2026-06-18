@@ -598,14 +598,14 @@ async function loadFromN8N() {
     if (!res.ok) throw new Error('N8N a répondu HTTP ' + res.status + ' — workflow activé ?');
 
     const rawBody = await res.text();
-    let rawText;
+    let rawText = rawBody;
+    /* optional JSON wrapper fallback (legacy payloads) */
     try {
       const body = JSON.parse(rawBody);
-      rawText = Array.isArray(body)
-        ? (body[0]?.output ?? body[0]?.text ?? JSON.stringify(body))
-        : (body?.output ?? body?.text ?? JSON.stringify(body));
-    } catch(e) {
-      rawText = rawBody;
+      const candidate = Array.isArray(body)
+        ? (body[0]?.output ?? body[0]?.text)
+        : (body?.output ?? body?.text);
+      if (candidate) rawText = candidate;
     }
 
     const data = parseOutput(rawText);
