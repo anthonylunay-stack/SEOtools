@@ -126,11 +126,12 @@
 
     /* ── Analysis grid ── */
     .analysis-card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 18px 20px; margin-bottom: 20px; }
-    .analysis-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 14px; }
+    .analysis-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
     @media (max-width: 1100px) { .analysis-grid { grid-template-columns: repeat(2, 1fr); } }
-    .analysis-block { display: flex; flex-direction: column; gap: 8px; }
-    .analysis-block-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .8px; padding-bottom: 7px; border-bottom: 1px solid var(--border); }
-    .analysis-text { font-size: 12px; color: var(--muted); line-height: 1.7; white-space: pre-wrap; }
+    .analysis-block { display: flex; flex-direction: column; gap: 6px; }
+    .analysis-block-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .8px; padding-bottom: 7px; border-bottom: 1px solid var(--border); margin-bottom: 4px; }
+    .analysis-text { font-size: 12px; color: var(--muted); line-height: 1.8; white-space: pre-wrap; }
+    .ana-subsection { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .6px; color: var(--muted); margin-top: 8px; margin-bottom: 2px; opacity: .7; }
 
     /* ── Chart grids ── */
     .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-bottom: 18px; }
@@ -230,26 +231,49 @@
   <p class="section-label">Weekly analysis — AI Agent (GPT-4o)</p>
   <div class="analysis-card">
     <div class="analysis-grid">
+
+      <!-- 1 · demand_global -->
       <div class="analysis-block">
-        <div class="analysis-block-title" style="color:var(--blue)">1 · demand_global</div>
-        <div class="analysis-text" id="ana-demand_global">Waiting for data…</div>
+        <div class="analysis-block-title" style="color:var(--blue)">1 · Demand Global</div>
+        <div class="ana-subsection">📅 Semaine en cours vs semaine précédente</div>
+        <div class="analysis-text" id="ana-dg-week">Waiting for data…</div>
+        <div class="ana-subsection">📆 MoM &amp; YoY</div>
+        <div class="analysis-text" id="ana-dg-mom">Waiting for data…</div>
       </div>
+
+      <!-- 2 · demand_transaction -->
       <div class="analysis-block">
-        <div class="analysis-block-title" style="color:var(--red)">2 · demand_transaction</div>
-        <div class="analysis-text" id="ana-demand_transaction">Waiting for data…</div>
+        <div class="analysis-block-title" style="color:var(--red)">2 · Demand Transaction</div>
+        <div class="ana-subsection">📆 Mois en cours vs N-1 (%)</div>
+        <div class="analysis-text" id="ana-dt-yoy">Waiting for data…</div>
+        <div class="ana-subsection">📅 Semaine en cours vs semaine N-1 (%)</div>
+        <div class="analysis-text" id="ana-dt-week">Waiting for data…</div>
+        <div class="ana-subsection">↑ Hausse &amp; ↓ Baisse</div>
+        <div class="analysis-text" id="ana-dt-trend">Waiting for data…</div>
       </div>
+
+      <!-- 3 · ranking_global_war -->
       <div class="analysis-block">
-        <div class="analysis-block-title" style="color:var(--green)">3 · ranking_global_war</div>
-        <div class="analysis-text" id="ana-ranking_global_war">Waiting for data…</div>
+        <div class="analysis-block-title" style="color:var(--green)">3 · Ranking Global WAR</div>
+        <div class="ana-subsection">🏆 Classement (1er → dernier)</div>
+        <div class="analysis-text" id="ana-rk-rank">Waiting for data…</div>
+        <div class="ana-subsection">📆 Variation vs mois dernier</div>
+        <div class="analysis-text" id="ana-rk-mom">Waiting for data…</div>
+        <div class="ana-subsection">📅 Variation vs semaine précédente</div>
+        <div class="analysis-text" id="ana-rk-week">Waiting for data…</div>
       </div>
+
+      <!-- 4 · demand_asset -->
       <div class="analysis-block">
-        <div class="analysis-block-title" style="color:var(--yellow)">4 · demand_asset</div>
-        <div class="analysis-text" id="ana-demand_asset">Waiting for data…</div>
+        <div class="analysis-block-title" style="color:var(--yellow)">4 · Demand Asset</div>
+        <div class="ana-subsection">📅 Semaine en cours vs semaine précédente (%)</div>
+        <div class="analysis-text" id="ana-da-week">Waiting for data…</div>
+        <div class="ana-subsection">📆 Mois en cours vs mois précédent (%)</div>
+        <div class="analysis-text" id="ana-da-mom">Waiting for data…</div>
+        <div class="ana-subsection">↑ Hausse &amp; ↓ Baisse</div>
+        <div class="analysis-text" id="ana-da-trend">Waiting for data…</div>
       </div>
-      <div class="analysis-block">
-        <div class="analysis-block-title" style="color:var(--purple)">5 · audience</div>
-        <div class="analysis-text" id="ana-audience">Waiting for data…</div>
-      </div>
+
     </div>
   </div>
 
@@ -581,17 +605,42 @@ function parseOutput(text) {
   result.charts = result.charts.filter(c => c?.chartConfig?.data || (c?.s && c?.t && c?.d));
 
   /* — Extract analysis sections — */
-  const sections = [
-    { key: 'demand_global',      re: /##\s*1\.[^\n]*([\s\S]*?)(?=##\s*\d+\.|$)/i },
-    { key: 'demand_transaction', re: /##\s*2\.[^\n]*([\s\S]*?)(?=##\s*\d+\.|$)/i },
-    { key: 'ranking_global_war', re: /##\s*3\.[^\n]*([\s\S]*?)(?=##\s*\d+\.|$)/i },
-    { key: 'demand_asset',       re: /##\s*4\.[^\n]*([\s\S]*?)(?=##\s*\d+\.|$)/i },
-    { key: 'audience',           re: /##\s*5\.[^\n]*([\s\S]*?)(?=##\s*\d+\.|$)/i }
-  ];
-  sections.forEach(({ key, re }) => {
-    const m = text.match(re);
-    if (m) result.analysis[key] = m[1].trim().replace(/\[CHARTS_JSON\][\s\S]*/, '').trim();
-  });
+  function extractSubsection(block, label) {
+    const re = new RegExp('###\\s*' + label + '[^\n]*\n([\\s\\S]*?)(?=###|$)', 'i');
+    const m = block.match(re);
+    return m ? m[1].trim() : null;
+  }
+
+  const sec1 = text.match(/##\s*1\.[^\n]*([\s\S]*?)(?=##\s*\d+\.|$)/i);
+  if (sec1) {
+    const b = sec1[1];
+    result.analysis['dg-week'] = extractSubsection(b, 'Semaine') || b.trim();
+    result.analysis['dg-mom']  = extractSubsection(b, 'MoM|Month') || '';
+  }
+
+  const sec2 = text.match(/##\s*2\.[^\n]*([\s\S]*?)(?=##\s*\d+\.|$)/i);
+  if (sec2) {
+    const b = sec2[1];
+    result.analysis['dt-yoy']   = extractSubsection(b, 'YoY|N-1|ann') || b.trim();
+    result.analysis['dt-week']  = extractSubsection(b, 'Semaine') || '';
+    result.analysis['dt-trend'] = extractSubsection(b, 'Hausse|Baisse|Trend') || '';
+  }
+
+  const sec3 = text.match(/##\s*3\.[^\n]*([\s\S]*?)(?=##\s*\d+\.|$)/i);
+  if (sec3) {
+    const b = sec3[1];
+    result.analysis['rk-rank'] = extractSubsection(b, 'Classement|Rank') || b.trim();
+    result.analysis['rk-mom']  = extractSubsection(b, 'MoM|mois') || '';
+    result.analysis['rk-week'] = extractSubsection(b, 'Semaine') || '';
+  }
+
+  const sec4 = text.match(/##\s*4\.[^\n]*([\s\S]*?)(?=##\s*\d+\.|$)/i);
+  if (sec4) {
+    const b = sec4[1];
+    result.analysis['da-week']  = extractSubsection(b, 'Semaine') || b.trim();
+    result.analysis['da-mom']   = extractSubsection(b, 'MoM|mois') || '';
+    result.analysis['da-trend'] = extractSubsection(b, 'Hausse|Baisse|Trend') || '';
+  }
 
   return result;
 }
@@ -669,6 +718,11 @@ function applyData(data) {
   Object.entries(data.analysis).forEach(([k, v]) => {
     const el = document.getElementById('ana-' + k);
     if (el) el.textContent = v || '—';
+  });
+  /* fallback: if no subsections parsed, fill top-level blocks */
+  ['dg-week','dg-mom','dt-yoy','dt-week','dt-trend','rk-rank','rk-mom','rk-week','da-week','da-mom','da-trend'].forEach(id => {
+    const el = document.getElementById('ana-' + id);
+    if (el && el.textContent === 'Waiting for data…') el.textContent = '—';
   });
   /* charts */
   data.charts.forEach(item => {
