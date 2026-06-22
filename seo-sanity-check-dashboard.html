@@ -606,9 +606,9 @@ function parseOutput(text) {
 
   /* — Extract analysis sections — */
   function extractSubsection(block, label) {
-    const re = new RegExp('###\\s*' + label + '[^\n]*\n([\\s\\S]*?)(?=###|$)', 'i');
-    const m = block.match(re);
-    return m ? m[1].trim() : null;
+    const re = new RegExp('###\\s*(?:' + label + ')[^\n]*\n([\\s\\S]*?)(?=###|$)', 'i');
+    const m = block ? block.match(re) : null;
+    return (m && m[1] != null) ? m[1].trim() : null;
   }
 
   const sec1 = text.match(/##\s*1\.[^\n]*([\s\S]*?)(?=##\s*\d+\.|$)/i);
