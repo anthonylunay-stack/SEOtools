@@ -237,8 +237,6 @@
         <div class="analysis-block-title" style="color:var(--blue)">1 · Demand Global</div>
         <div class="ana-subsection">📅 Semaine en cours vs semaine précédente</div>
         <div class="analysis-text" id="ana-dg-week">Waiting for data…</div>
-        <div class="ana-subsection">📆 MoM &amp; YoY</div>
-        <div class="analysis-text" id="ana-dg-mom">Waiting for data…</div>
       </div>
 
       <!-- 2 · demand_transaction -->
@@ -615,7 +613,6 @@ function parseOutput(text) {
   if (sec1) {
     const b = sec1[1];
     result.analysis['dg-week'] = extractSubsection(b, 'Semaine') || b.trim();
-    result.analysis['dg-mom']  = extractSubsection(b, 'MoM|Month') || '';
   }
 
   const sec2 = text.match(/##\s*2\.[^\n]*([\s\S]*?)(?=##\s*\d+\.|$)/i);
@@ -720,7 +717,7 @@ function applyData(data) {
     if (el) el.textContent = v || '—';
   });
   /* fallback: if no subsections parsed, fill top-level blocks */
-  ['dg-week','dg-mom','dt-yoy','dt-week','dt-trend','rk-rank','rk-mom','rk-week','da-week','da-mom','da-trend'].forEach(id => {
+  ['dg-week','dt-yoy','dt-week','dt-trend','rk-rank','rk-mom','rk-week','da-week','da-mom','da-trend'].forEach(id => {
     const el = document.getElementById('ana-' + id);
     if (el && el.textContent === 'Waiting for data…') el.textContent = '—';
   });
