@@ -7,6 +7,8 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1/dist/chartjs-plugin-annotation.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <style>
     :root {
       --bg:      #0d1117;
@@ -183,6 +185,7 @@
       <span id="statusText">Ready</span>
     </div>
     <div class="run-date" id="runDate">Report date: —</div>
+    <button class="btn" onclick="exportPDF()" id="pdfBtn">⬇ PDF</button>
     <button class="btn btn-primary" onclick="loadFromN8N()">↺ Refresh webhook</button>
   </div>
 </header>
@@ -686,6 +689,39 @@ function setStatus(state, label) {
 /* ─────────────────────────────────────────
    TOAST
 ───────────────────────────────────────── */
+async function exportPDF() {
+  const btn = document.getElementById('pdfBtn');
+  btn.textContent = '⏳ Generating…';
+  btn.disabled = true;
+  try {
+    const { jsPDF } = window.jspdf;
+    const target = document.querySelector('main');
+    const canvas = await html2canvas(target, {
+      scale: 1.5,
+      backgroundColor: '#0d1117',
+      useCORS: true,
+      logging: false
+    });
+    const imgW = 297; // A4 landscape width mm
+    const imgH = (canvas.height * imgW) / canvas.width;
+    const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+    let y = 0;
+    const pageH = 210; // A4 landscape height mm
+    while (y < imgH) {
+      if (y > 0) pdf.addPage();
+      pdf.addImage(canvas, 'PNG', 0, -y, imgW, imgH);
+      y += pageH;
+    }
+    const date = new Date().toISOString().slice(0, 10);
+    pdf.save(`SEO_Sanity_Check_${activeSite.replace(/ /g,'_')}_${date}.pdf`);
+    toast('✅ PDF téléchargé');
+  } catch(e) {
+    toast('❌ Erreur PDF : ' + e.message);
+  }
+  btn.textContent = '⬇ PDF';
+  btn.disabled = false;
+}
+
 function toast(msg, ms = 3000) {
   const el = document.getElementById('toast');
   el.textContent = msg;
