@@ -321,6 +321,15 @@
     return val.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €';
   }
 
+  // Version pour le PDF : jsPDF (Times) ne supporte pas €, on utilise "EUR" à la place
+  function formatEurPDF(val) {
+    const n = val.toFixed(2).replace('.', ',');
+    // Formatage des milliers manuellement
+    const parts = n.split(',');
+    parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+    return parts.join(',') + ' EUR';
+  }
+
   function getData() {
     const month = parseInt(document.getElementById('selMonth').value);
     const year = parseInt(document.getElementById('selYear').value);
@@ -456,23 +465,27 @@
     drawRow('PROPRIÉTAIRE',          'LOCATAIRE',                                   true);
     drawRow('Lunay Anthony',         'Carine Signorelli et Michel Grangenois',       false);
     drawRow('Détail du règlement',   'Montant',                                     false);
-    drawRow('Loyer',                 formatEur(loyer),                              false);
-    drawRow('Charges',               formatEur(charges),                            false);
-    drawRow('Total',                 formatEur(total),                              true);
+    drawRow('Loyer',                 formatEurPDF(loyer),                           false);
+    drawRow('Charges',               formatEurPDF(charges),                         false);
+    drawRow('Total',                 formatEurPDF(total),                           true);
 
     // ── Signature — placée dans le bas de page ─────────────────
-    // Position fixe à ~230 mm du haut (laisse ~67 mm depuis fin tableau ~170)
-    const sigY = 225;
+    const sigY = 220;
 
     doc.setFont('times', 'normal');
     doc.setFontSize(11);
-    text('Le bailleur,',   marginR, sigY,       { align: 'right' });
-    text('Lunay Anthony',  marginR, sigY + lh,  { align: 'right' });
 
-    // Image de signature
+    // Texte "Le bailleur, / Lunay Anthony" à droite
+    text('Le bailleur,',  marginR, sigY,      { align: 'right' });
+    text('Lunay Anthony', marginR, sigY + lh, { align: 'right' });
+
+    // Image de signature en dessous du nom, alignée à droite
     const sigImgEl = document.querySelector('.signature-img');
     if (sigImgEl && sigImgEl.src) {
-      doc.addImage(sigImgEl.src, 'JPEG', marginL, sigY - 4, 60, 24);
+      const sigW = 60;
+      const sigH = 24;
+      const sigX = marginR - sigW; // alignée à droite
+      doc.addImage(sigImgEl.src, 'JPEG', sigX, sigY + lh + 3, sigW, sigH);
     }
 
     // Save
