@@ -397,35 +397,35 @@
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF({ unit: 'mm', format: 'a4' });
 
+    // A4 : 210 x 297 mm
     const { month, year, period, loyer, charges, total } = getData();
 
-    const lh = 6; // line height
-    const marginL = 25;
-    const marginR = 185;
-    let y = 30;
+    const marginL = 20;
+    const marginR = 190;
+    const pageH = 297;
+    const lh = 6;
+    let y = 25;
 
-    // Helper
     function text(str, x, yPos, opts) { doc.text(str, x, yPos, opts || {}); }
-    function line() { y += lh; }
 
+    // ── Adresses ──────────────────────────────────────────────
     doc.setFont('times', 'normal');
     doc.setFontSize(11);
 
-    // Propriétaire adresse (gauche) + Locataire adresse (droite) sur la même ligne
-    text('Lunay Anthony', marginL, y);
-    text('Carine Signorelli et Michel Grangenois', marginR, y, { align: 'right' }); line();
-    text('57 rue de Nantes', marginL, y);
-    text('43 clos des Cascades', marginR, y, { align: 'right' }); line();
-    text('85800 Le Fenouiller', marginL, y);
-    text('93160 Noisy le Grand', marginR, y, { align: 'right' });
+    text('Lunay Anthony',                              marginL,  y);
+    text('Carine Signorelli et Michel Grangenois',     marginR,  y, { align: 'right' }); y += lh;
+    text('57 rue de Nantes',                           marginL,  y);
+    text('43 clos des Cascades',                       marginR,  y, { align: 'right' }); y += lh;
+    text('85800 Le Fenouiller',                        marginL,  y);
+    text('93160 Noisy le Grand',                       marginR,  y, { align: 'right' });
 
-    y += lh * 12; // grand espace entre adresses et titre
+    // ── Titre centré ───────────────────────────────────────────
+    y += 40; // espace généreux adresses → titre
 
-    // Titre
     doc.setFont('times', 'bold');
-    doc.setFontSize(13);
+    doc.setFontSize(14);
     text('QUITTANCE DE LOYER', 105, y, { align: 'center' });
-    y += lh * 2;
+    y += 8;
 
     doc.setFont('times', 'normal');
     doc.setFontSize(11);
@@ -433,51 +433,46 @@
     y += lh;
     text('Adresse : 43 clos des Cascades, 93160 Noisy le Grand', 105, y, { align: 'center' });
 
-    y += lh * 5;
+    // ── Tableau ────────────────────────────────────────────────
+    y += 18;
 
-    // Table
     const col1 = marginL;
     const col2 = 110;
-    const rowH = 9;
-    const tableW = marginR - marginL;
-    const col1W = col2 - col1;
-    const col2W = marginR - col2;
+    const col1W = col2 - col1;       // 90 mm
+    const col2W = marginR - col2;    // 80 mm
+    const rowH  = 10;
 
     function drawRow(left, right, bold) {
-      doc.rect(col1, y - 6, col1W, rowH);
-      doc.rect(col2, y - 6, col2W, rowH);
-      if (bold) doc.setFont('times', 'bold');
-      else doc.setFont('times', 'normal');
-      text(left, col1 + 3, y);
+      doc.setFillColor(bold ? 235 : 255, bold ? 235 : 255, bold ? 235 : 255);
+      doc.rect(col1, y - 7, col1W, rowH, bold ? 'FD' : 'D');
+      doc.rect(col2, y - 7, col2W, rowH, bold ? 'FD' : 'D');
+      doc.setFont('times', bold ? 'bold' : 'normal');
+      doc.setFontSize(11);
+      text(left,  col1 + 3, y);
       text(right, col2 + 3, y);
       y += rowH;
     }
 
-    doc.setFont('times', 'bold');
-    drawRow('PROPRIÉTAIRE', 'LOCATAIRE', true);
-    doc.setFont('times', 'normal');
-    drawRow('Lunay Anthony', 'Carine Signorelli et Michel Grangenois', false);
-    drawRow('Détail du règlement', 'Montant', false);
-    drawRow('Loyer', formatEur(loyer), false);
-    drawRow('Charges', formatEur(charges), false);
-    drawRow('Total', formatEur(total), true);
+    drawRow('PROPRIÉTAIRE',          'LOCATAIRE',                                   true);
+    drawRow('Lunay Anthony',         'Carine Signorelli et Michel Grangenois',       false);
+    drawRow('Détail du règlement',   'Montant',                                     false);
+    drawRow('Loyer',                 formatEur(loyer),                              false);
+    drawRow('Charges',               formatEur(charges),                            false);
+    drawRow('Total',                 formatEur(total),                              true);
 
-    y += lh * 16;
+    // ── Signature — placée dans le bas de page ─────────────────
+    // Position fixe à ~230 mm du haut (laisse ~67 mm depuis fin tableau ~170)
+    const sigY = 225;
 
-    // Signature block (right)
     doc.setFont('times', 'normal');
     doc.setFontSize(11);
-    text('Le bailleur,', marginR, y, { align: 'right' });
-    y += lh;
-    text('Lunay Anthony', marginR, y, { align: 'right' });
-    y += lh * 0.5;
+    text('Le bailleur,',   marginR, sigY,       { align: 'right' });
+    text('Lunay Anthony',  marginR, sigY + lh,  { align: 'right' });
 
-    // Signature — image réelle extraite du PDF original
+    // Image de signature
     const sigImgEl = document.querySelector('.signature-img');
-    const sigDataUrl = sigImgEl ? sigImgEl.src : null;
-    if (sigDataUrl) {
-      // largeur 55mm, hauteur proportionnelle (image ~240x240 px → ratio ~1:1 → 55x22mm environ)
-      doc.addImage(sigDataUrl, 'JPEG', marginL + 2, y, 55, 22);
+    if (sigImgEl && sigImgEl.src) {
+      doc.addImage(sigImgEl.src, 'JPEG', marginL, sigY - 4, 60, 24);
     }
 
     // Save
