@@ -321,13 +321,8 @@
     return val.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €';
   }
 
-  // Version pour le PDF : jsPDF (Times) ne supporte pas €, on utilise "EUR" à la place
   function formatEurPDF(val) {
-    const n = val.toFixed(2).replace('.', ',');
-    // Formatage des milliers manuellement
-    const parts = n.split(',');
-    parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
-    return parts.join(',') + ' EUR';
+    return val.toFixed(2).replace('.', ',') + ' EUR';
   }
 
   function getData() {
