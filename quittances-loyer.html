@@ -278,15 +278,17 @@
     const preview = document.getElementById('preview');
 
     preview.innerHTML = `
-      <div class="preview-addr-block">
-        <p>Lunay Anthony</p>
-        <p>57 rue de Nantes</p>
-        <p>85800 Le Fenouiller</p>
-      </div>
-      <div class="preview-addr-block preview-section-gap">
-        <p>Carine Signorelli et Michel Grangenois</p>
-        <p>43 clos des Cascades</p>
-        <p>93160 Noisy le Grand</p>
+      <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+        <div class="preview-addr-block">
+          <p>Lunay Anthony</p>
+          <p>57 rue de Nantes</p>
+          <p>85800 Le Fenouiller</p>
+        </div>
+        <div class="preview-addr-block" style="text-align:right;">
+          <p>Carine Signorelli et Michel Grangenois</p>
+          <p>43 clos des Cascades</p>
+          <p>93160 Noisy le Grand</p>
+        </div>
       </div>
 
       <div class="preview-title-center">
@@ -360,17 +362,13 @@
     doc.setFont('times', 'normal');
     doc.setFontSize(11);
 
-    // Propriétaire adresse
-    text('Lunay Anthony', marginL, y); line();
-    text('57 rue de Nantes', marginL, y); line();
+    // Propriétaire adresse (gauche) + Locataire adresse (droite) sur la même ligne
+    text('Lunay Anthony', marginL, y);
+    text('Carine Signorelli et Michel Grangenois', marginR, y, { align: 'right' }); line();
+    text('57 rue de Nantes', marginL, y);
+    text('43 clos des Cascades', marginR, y, { align: 'right' }); line();
     text('85800 Le Fenouiller', marginL, y);
-
-    y += lh * 2;
-
-    // Locataire adresse
-    text('Carine Signorelli et Michel Grangenois', marginL, y); line();
-    text('43 clos des Cascades', marginL, y); line();
-    text('93160 Noisy le Grand', marginL, y);
+    text('93160 Noisy le Grand', marginR, y, { align: 'right' });
 
     y += lh * 3;
 
