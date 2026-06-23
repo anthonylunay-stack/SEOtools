@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Quittances de Loyer</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #f0f2f5;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 40px 20px;
+    }
+
+    h1 {
+      font-size: 1.8rem;
+      color: #1a1a2e;
+      margin-bottom: 8px;
+    }
+
+    .subtitle {
+      color: #666;
+      margin-bottom: 36px;
+      font-size: 0.95rem;
+    }
+
+    .dashboard {
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+      padding: 40px;
+      width: 100%;
+      max-width: 860px;
+    }
+
+    .controls {
+      display: flex;
+      gap: 20px;
+      align-items: flex-end;
+      flex-wrap: wrap;
+      margin-bottom: 40px;
+      padding-bottom: 32px;
+      border-bottom: 1px solid #eee;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    label {
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: #555;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    select {
+      padding: 10px 16px;
+      border: 2px solid #e0e0e0;
+      border-radius: 8px;
+      font-size: 1rem;
+      color: #1a1a2e;
+      background: white;
+      cursor: pointer;
+      transition: border-color 0.2s;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23666' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 12px center;
+      padding-right: 36px;
+    }
+
+    select:focus {
+      outline: none;
+      border-color: #4f46e5;
+    }
+
+    .btn-download {
+      padding: 11px 28px;
+      background: #4f46e5;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: background 0.2s, transform 0.1s;
+      white-space: nowrap;
+    }
+
+    .btn-download:hover { background: #4338ca; }
+    .btn-download:active { transform: scale(0.98); }
+
+    .btn-download svg {
+      width: 18px;
+      height: 18px;
+      fill: white;
+    }
+
+    /* Preview */
+    .preview-title {
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: #555;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      margin-bottom: 16px;
+    }
+
+    .receipt-preview {
+      border: 1px solid #ddd;
+      border-radius: 10px;
+      padding: 40px 48px;
+      background: white;
+      font-family: 'Times New Roman', serif;
+      font-size: 13px;
+      color: #111;
+      line-height: 1.5;
+      max-width: 600px;
+      margin: 0 auto;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+    }
+
+    .preview-addr-block { margin-bottom: 8px; }
+    .preview-addr-block p { margin: 0; }
+
+    .preview-section-gap { margin-top: 28px; }
+
+    .preview-title-center {
+      text-align: center;
+      margin-top: 32px;
+      margin-bottom: 4px;
+    }
+
+    .preview-title-center strong {
+      font-size: 15px;
+      font-weight: bold;
+      text-decoration: underline;
+    }
+
+    .preview-subtitle-center {
+      text-align: center;
+      margin-bottom: 24px;
+    }
+
+    table.preview-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 32px;
+    }
+
+    table.preview-table td {
+      border: 1px solid #aaa;
+      padding: 6px 12px;
+      vertical-align: top;
+    }
+
+    table.preview-table tr:first-child td {
+      font-weight: bold;
+      background: #f5f5f5;
+    }
+
+    .preview-signature {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 4px;
+    }
+
+    .preview-signature .sig-label { font-size: 12px; }
+
+    .signature-svg {
+      width: 120px;
+      height: 50px;
+      display: block;
+      margin-right: 30px;
+    }
+  </style>
+</head>
+<body>
+
+<h1>Quittances de Loyer</h1>
+<p class="subtitle">43 clos des Cascades, 93160 Noisy le Grand &mdash; Carine Signorelli et Michel Grangenois</p>
+
+<div class="dashboard">
+  <div class="controls">
+    <div class="field">
+      <label>Mois</label>
+      <select id="selMonth">
+        <option value="1">Janvier</option>
+        <option value="2">Février</option>
+        <option value="3">Mars</option>
+        <option value="4">Avril</option>
+        <option value="5">Mai</option>
+        <option value="6">Juin</option>
+        <option value="7">Juillet</option>
+        <option value="8">Août</option>
+        <option value="9">Septembre</option>
+        <option value="10">Octobre</option>
+        <option value="11">Novembre</option>
+        <option value="12">Décembre</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label>Année</label>
+      <select id="selYear"></select>
+    </div>
+
+    <button class="btn-download" onclick="downloadPDF()">
+      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <path d="M12 16l-5-5 1.41-1.41L11 13.17V4h2v9.17l2.59-2.58L17 11l-5 5zm-7 4v-2h14v2H5z"/>
+      </svg>
+      Télécharger PDF
+    </button>
+  </div>
+
+  <p class="preview-title">Aperçu</p>
+  <div class="receipt-preview" id="preview">
+    <!-- rendered by JS -->
+  </div>
+</div>
+
+<script>
+  const MONTHS_FR = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
+  const MONTHS_ABBR = ['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'];
+
+  function daysInMonth(month, year) {
+    return new Date(year, month, 0).getDate();
+  }
+
+  function pad(n) { return String(n).padStart(2, '0'); }
+
+  function getPeriod(month, year) {
+    const m = pad(month);
+    const last = pad(daysInMonth(month, year));
+    return { start: `01/${m}/${year}`, end: `${last}/${m}/${year}` };
+  }
+
+  // Populate year select (current year ± 5)
+  const selYear = document.getElementById('selYear');
+  const now = new Date();
+  for (let y = now.getFullYear() - 3; y <= now.getFullYear() + 3; y++) {
+    const opt = document.createElement('option');
+    opt.value = y;
+    opt.textContent = y;
+    if (y === now.getFullYear()) opt.selected = true;
+    selYear.appendChild(opt);
+  }
+
+  // Default month to current
+  document.getElementById('selMonth').value = now.getMonth() + 1;
+
+  document.getElementById('selMonth').addEventListener('change', renderPreview);
+  document.getElementById('selYear').addEventListener('change', renderPreview);
+
+  function getData() {
+    const month = parseInt(document.getElementById('selMonth').value);
+    const year = parseInt(document.getElementById('selYear').value);
+    const period = getPeriod(month, year);
+    return { month, year, period };
+  }
+
+  function renderPreview() {
+    const { month, year, period } = getData();
+    const preview = document.getElementById('preview');
+
+    preview.innerHTML = `
+      <div class="preview-addr-block">
+        <p>Lunay Anthony</p>
+        <p>57 rue de Nantes</p>
+        <p>85800 Le Fenouiller</p>
+      </div>
+      <div class="preview-addr-block preview-section-gap">
+        <p>Carine Signorelli et Michel Grangenois</p>
+        <p>43 clos des Cascades</p>
+        <p>93160 Noisy le Grand</p>
+      </div>
+
+      <div class="preview-title-center">
+        <strong>QUITTANCE DE LOYER</strong>
+      </div>
+      <div class="preview-subtitle-center">
+        <span>Période : du ${period.start} au ${period.end}</span><br/>
+        <span>Adresse : 43 clos des Cascades, 93160 Noisy le Grand</span>
+      </div>
+
+      <table class="preview-table">
+        <tr>
+          <td>PROPRIÉTAIRE</td>
+          <td>LOCATAIRE</td>
+        </tr>
+        <tr>
+          <td>Lunay Anthony</td>
+          <td>Carine Signorelli et Michel Grangenois</td>
+        </tr>
+        <tr>
+          <td>Détail du règlement</td>
+          <td>Montant</td>
+        </tr>
+        <tr>
+          <td>Loyer</td>
+          <td>1 240,00 €</td>
+        </tr>
+        <tr>
+          <td>Charges</td>
+          <td>250,00 €</td>
+        </tr>
+        <tr>
+          <td><strong>Total</strong></td>
+          <td><strong>1 490,00 €</strong></td>
+        </tr>
+      </table>
+
+      <div class="preview-signature">
+        <span class="sig-label">Le bailleur,</span>
+        <span class="sig-label">Lunay Anthony</span>
+        <svg class="signature-svg" viewBox="0 0 120 50" xmlns="http://www.w3.org/2000/svg">
+          <path d="M 10 35 C 18 20, 28 15, 35 28 C 40 37, 44 32, 50 26 C 56 20, 60 22, 65 30 C 70 38, 75 32, 85 28 C 92 25, 98 28, 105 30"
+                stroke="#111" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+    `;
+  }
+
+  function downloadPDF() {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+
+    const { month, year, period } = getData();
+
+    const lh = 6; // line height
+    const marginL = 25;
+    const marginR = 185;
+    let y = 25;
+
+    // Helper
+    function text(str, x, yPos, opts) { doc.text(str, x, yPos, opts || {}); }
+    function line() { y += lh; }
+
+    doc.setFont('times', 'normal');
+    doc.setFontSize(11);
+
+    // Propriétaire adresse
+    text('Lunay Anthony', marginL, y); line();
+    text('57 rue de Nantes', marginL, y); line();
+    text('85800 Le Fenouiller', marginL, y);
+
+    y += lh * 2;
+
+    // Locataire adresse
+    text('Carine Signorelli et Michel Grangenois', marginL, y); line();
+    text('43 clos des Cascades', marginL, y); line();
+    text('93160 Noisy le Grand', marginL, y);
+
+    y += lh * 3;
+
+    // Titre
+    doc.setFont('times', 'bold');
+    doc.setFontSize(13);
+    text('QUITTANCE DE LOYER', 105, y, { align: 'center' });
+    y += lh * 1.5;
+
+    doc.setFont('times', 'normal');
+    doc.setFontSize(11);
+    text(`Période : du ${period.start} au ${period.end}`, 105, y, { align: 'center' });
+    y += lh;
+    text('Adresse : 43 clos des Cascades, 93160 Noisy le Grand', 105, y, { align: 'center' });
+
+    y += lh * 2.5;
+
+    // Table
+    const col1 = marginL;
+    const col2 = 110;
+    const rowH = 9;
+    const tableW = marginR - marginL;
+    const col1W = col2 - col1;
+    const col2W = marginR - col2;
+
+    function drawRow(left, right, bold) {
+      doc.rect(col1, y - 6, col1W, rowH);
+      doc.rect(col2, y - 6, col2W, rowH);
+      if (bold) doc.setFont('times', 'bold');
+      else doc.setFont('times', 'normal');
+      text(left, col1 + 3, y);
+      text(right, col2 + 3, y);
+      y += rowH;
+    }
+
+    doc.setFont('times', 'bold');
+    drawRow('PROPRIÉTAIRE', 'LOCATAIRE', true);
+    doc.setFont('times', 'normal');
+    drawRow('Lunay Anthony', 'Carine Signorelli et Michel Grangenois', false);
+    drawRow('Détail du règlement', 'Montant', false);
+    drawRow('Loyer', '1 240,00 €', false);
+    drawRow('Charges', '250,00 €', false);
+    drawRow('Total', '1 490,00 €', true);
+
+    y += lh * 4;
+
+    // Signature block (right)
+    doc.setFont('times', 'normal');
+    doc.setFontSize(11);
+    text('Le bailleur,', marginR, y, { align: 'right' });
+    y += lh;
+    text('Lunay Anthony', marginR, y, { align: 'right' });
+    y += lh * 0.5;
+
+    // Signature SVG path dessinée avec jsPDF
+    // Coordonnées basées sur viewBox 0 0 120 50, remappées vers la page
+    // On place la signature à gauche du bloc "Le bailleur"
+    const sigX = 115; // start x on page
+    const sigY = y + 8;
+    const scaleX = 0.55;
+    const scaleY = 0.55;
+
+    doc.setDrawColor(30, 30, 30);
+    doc.setLineWidth(0.5);
+
+    // Reproduit le path SVG de la signature via des courbes de Bézier
+    // Points du path: M10,35 C18,20 28,15 35,28 C40,37 44,32 50,26 C56,20 60,22 65,30 C70,38 75,32 85,28 C92,25 98,28 105,30
+    const pts = [
+      { type: 'M', x: 10, y: 35 },
+      { type: 'C', x1: 18, y1: 20, x2: 28, y2: 15, x: 35, y: 28 },
+      { type: 'C', x1: 40, y1: 37, x2: 44, y2: 32, x: 50, y: 26 },
+      { type: 'C', x1: 56, y1: 20, x2: 60, y2: 22, x: 65, y: 30 },
+      { type: 'C', x1: 70, y1: 38, x2: 75, y2: 32, x: 85, y: 28 },
+      { type: 'C', x1: 92, y1: 25, x2: 98, y2: 28, x: 105, y: 30 },
+    ];
+
+    // jsPDF doesn't have native bezier path drawing so we approximate with moveTo/curveTo via lines
+    // Use doc.lines() for cubic bezier
+    const sx = sigX - 10 * scaleX;
+    const sy = sigY - 35 * scaleY;
+
+    // Build segments array for doc.lines()
+    const segments = [];
+    for (let i = 1; i < pts.length; i++) {
+      const p = pts[i];
+      segments.push([
+        (p.x1 - pts[i-1].x) * scaleX,
+        (p.y1 - pts[i-1].y) * scaleY,
+        (p.x2 - pts[i-1].x) * scaleX,
+        (p.y2 - pts[i-1].y) * scaleY,
+        (p.x - pts[i-1].x) * scaleX,
+        (p.y - pts[i-1].y) * scaleY,
+      ]);
+    }
+
+    const startX = sx + pts[0].x * scaleX;
+    const startY = sy + pts[0].y * scaleY;
+
+    doc.lines(segments, startX, startY, [1, 1], 'S');
+
+    // Save
+    const monthName = MONTHS_FR[month - 1];
+    doc.save(`quittance_loyer_${monthName}_${year}.pdf`);
+  }
+
+  renderPreview();
+</script>
+</body>
+</html>
