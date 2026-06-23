@@ -216,6 +216,13 @@
       display: block;
       margin-right: 10px;
     }
+
+    .signature-img {
+      width: 160px;
+      height: auto;
+      display: block;
+      margin-right: 10px;
+    }
   </style>
 </head>
 <body>
@@ -381,20 +388,7 @@
       <div class="preview-signature">
         <span class="sig-label">Le bailleur,</span>
         <span class="sig-label">Lunay Anthony</span>
-        <svg class="signature-svg" viewBox="0 0 200 80" xmlns="http://www.w3.org/2000/svg">
-          <!-- grande barre diagonale oblique -->
-          <path d="M 48 6 C 50 14, 52 26, 54 40 C 56 52, 57 60, 58 68"
-                stroke="#111" stroke-width="1.3" fill="none" stroke-linecap="round"/>
-          <!-- trait court en haut à gauche de la diagonale (petit crochet) -->
-          <path d="M 36 18 C 40 14, 46 10, 48 6"
-                stroke="#111" stroke-width="1.3" fill="none" stroke-linecap="round"/>
-          <!-- base cursive : démarre à gauche, grande courbe vers la droite -->
-          <path d="M 38 68 C 50 58, 65 60, 74 64 C 82 67, 86 62, 94 60 C 104 57, 116 60, 130 62 C 142 64, 155 62, 168 61"
-                stroke="#111" stroke-width="1.3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-          <!-- petite bosse / boucle du "n" -->
-          <path d="M 74 64 C 77 57, 83 56, 86 61 C 88 65, 86 68, 83 66"
-                stroke="#111" stroke-width="1.3" fill="none" stroke-linecap="round"/>
-        </svg>
+        <img src="data:image/jpeg;base64,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" class="signature-img" alt="Signature" />
       </div>
     `;
   }
@@ -478,58 +472,13 @@
     text('Lunay Anthony', marginR, y, { align: 'right' });
     y += lh * 0.5;
 
-    // Signature — reproduit le tracé de l'image fournie
-    // viewBox 0 0 200 80, scale vers la page
-    const scaleX = 0.30;
-    const scaleY = 0.30;
-    const sigOriginX = marginL + 5;
-    const sigOriginY = y + 2;
-
-    doc.setDrawColor(30, 30, 30);
-    doc.setLineWidth(0.45);
-
-    function drawCurve(pts, ox, oy) {
-      const seg = [];
-      for (let i = 1; i < pts.length; i++) {
-        const prev = pts[i-1];
-        const p = pts[i];
-        seg.push([
-          (p.x1 - prev.x) * scaleX, (p.y1 - prev.y) * scaleY,
-          (p.x2 - prev.x) * scaleX, (p.y2 - prev.y) * scaleY,
-          (p.x  - prev.x) * scaleX, (p.y  - prev.y) * scaleY,
-        ]);
-      }
-      doc.lines(seg, ox + pts[0].x * scaleX, oy + pts[0].y * scaleY, [1,1], 'S');
+    // Signature — image réelle extraite du PDF original
+    const sigImgEl = document.querySelector('.signature-img');
+    const sigDataUrl = sigImgEl ? sigImgEl.src : null;
+    if (sigDataUrl) {
+      // largeur 55mm, hauteur proportionnelle (image ~240x240 px → ratio ~1:1 → 55x22mm environ)
+      doc.addImage(sigDataUrl, 'JPEG', marginL + 2, y, 55, 22);
     }
-
-    // Grande barre diagonale oblique
-    drawCurve([
-      { x: 48, y: 6 },
-      { x1: 50, y1: 14, x2: 52, y2: 26, x: 54, y: 40 },
-      { x1: 56, y1: 52, x2: 57, y2: 60, x: 58, y: 68 },
-    ], sigOriginX, sigOriginY);
-
-    // Petit crochet en haut de la diagonale
-    drawCurve([
-      { x: 36, y: 18 },
-      { x1: 40, y1: 14, x2: 46, y2: 10, x: 48, y: 6 },
-    ], sigOriginX, sigOriginY);
-
-    // Base cursive
-    drawCurve([
-      { x: 38, y: 68 },
-      { x1: 50, y1: 58, x2: 65, y2: 60, x: 74, y: 64 },
-      { x1: 82, y1: 67, x2: 86, y2: 62, x: 94, y: 60 },
-      { x1: 104, y1: 57, x2: 116, y2: 60, x: 130, y: 62 },
-      { x1: 142, y1: 64, x2: 155, y2: 62, x: 168, y: 61 },
-    ], sigOriginX, sigOriginY);
-
-    // Petite bosse cursive (boucle du "n")
-    drawCurve([
-      { x: 74, y: 64 },
-      { x1: 77, y1: 57, x2: 83, y2: 56, x: 86, y: 61 },
-      { x1: 88, y1: 65, x2: 86, y2: 68, x: 83, y: 66 },
-    ], sigOriginX, sigOriginY);
 
     // Save
     const monthName = MONTHS_FR[month - 1];
