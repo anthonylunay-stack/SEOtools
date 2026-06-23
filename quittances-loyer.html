@@ -278,7 +278,7 @@
     const preview = document.getElementById('preview');
 
     preview.innerHTML = `
-      <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+      <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom: 80px;">
         <div class="preview-addr-block">
           <p>Lunay Anthony</p>
           <p>57 rue de Nantes</p>
@@ -356,7 +356,7 @@
     const lh = 6; // line height
     const marginL = 25;
     const marginR = 185;
-    let y = 25;
+    let y = 30;
 
     // Helper
     function text(str, x, yPos, opts) { doc.text(str, x, yPos, opts || {}); }
@@ -373,13 +373,13 @@
     text('85800 Le Fenouiller', marginL, y);
     text('93160 Noisy le Grand', marginR, y, { align: 'right' });
 
-    y += lh * 3;
+    y += lh * 12; // grand espace entre adresses et titre
 
     // Titre
     doc.setFont('times', 'bold');
     doc.setFontSize(13);
     text('QUITTANCE DE LOYER', 105, y, { align: 'center' });
-    y += lh * 1.5;
+    y += lh * 2;
 
     doc.setFont('times', 'normal');
     doc.setFontSize(11);
@@ -387,7 +387,7 @@
     y += lh;
     text('Adresse : 43 clos des Cascades, 93160 Noisy le Grand', 105, y, { align: 'center' });
 
-    y += lh * 2.5;
+    y += lh * 5;
 
     // Table
     const col1 = marginL;
@@ -416,7 +416,7 @@
     drawRow('Charges', '250,00 €', false);
     drawRow('Total', '1 490,00 €', true);
 
-    y += lh * 4;
+    y += lh * 16;
 
     // Signature block (right)
     doc.setFont('times', 'normal');
