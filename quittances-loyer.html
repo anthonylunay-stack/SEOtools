@@ -747,6 +747,9 @@
       doc.setFontSize(14);
       text('RECAPITULATIF DES PAIEMENTS', 105, y, { align: 'center' }); y += 7;
 
+      doc.setFontSize(12);
+      text('QUITTANCE DE LOYER paye', 105, y, { align: 'center' }); y += 7;
+
       doc.setFont('times', 'normal');
       doc.setFontSize(10);
       text(`Periode : du ${rows[0].period.start} au ${rows[rows.length-1].period.end} (${rows.length} mois)`, 105, y, { align: 'center' });
