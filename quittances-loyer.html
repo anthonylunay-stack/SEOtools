@@ -748,7 +748,7 @@
       text('RECAPITULATIF DES PAIEMENTS', 105, y, { align: 'center' }); y += 7;
 
       doc.setFontSize(12);
-      text('QUITTANCE DE LOYER paye', 105, y, { align: 'center' }); y += 7;
+      text('QUITTANCE DE LOYER', 105, y, { align: 'center' }); y += 7;
 
       doc.setFont('times', 'normal');
       doc.setFontSize(10);
@@ -824,16 +824,6 @@
       }
     });
 
-    // Ligne total
-    y += 2;
-    doc.setFillColor(230, 230, 230);
-    doc.rect(mL, y - 5, mR - mL, rowH, 'FD');
-    doc.setFont('times', 'bold');
-    doc.setFontSize(9);
-    text(`TOTAL (${rows.length} mois)`, cols[0] + 2, y);
-    text(formatEurPDF(totalLoyer),   cols[3] + 2, y);
-    text(formatEurPDF(totalCharges), cols[4] + 2, y);
-    text(formatEurPDF(totalGeneral), cols[5] + 2, y);
 
     // Signature en bas de la dernière page
     drawFooter();
