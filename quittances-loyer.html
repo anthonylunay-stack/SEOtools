@@ -223,6 +223,69 @@
       display: block;
       margin-right: 10px;
     }
+
+    .recap-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 24px;
+    }
+
+    .recap-title {
+      font-size: 1.2rem;
+      color: #1a1a2e;
+      margin-bottom: 4px;
+    }
+
+    .recap-sub {
+      font-size: 0.85rem;
+      color: #888;
+    }
+
+    .btn-recap {
+      background: #0f766e;
+    }
+
+    .btn-recap:hover { background: #0d6560; }
+
+    .recap-preview {
+      font-family: 'Times New Roman', serif;
+      font-size: 13px;
+    }
+
+    .recap-preview table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .recap-preview th {
+      background: #1a1a2e;
+      color: white;
+      padding: 8px 12px;
+      text-align: left;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .recap-preview td {
+      padding: 7px 12px;
+      border-bottom: 1px solid #eee;
+    }
+
+    .recap-preview tr:nth-child(even) td { background: #f9f9f9; }
+
+    .recap-preview .total-row td {
+      font-weight: bold;
+      background: #f0f0f0;
+      border-top: 2px solid #1a1a2e;
+    }
+
+    .recap-preview .recap-meta {
+      margin-bottom: 16px;
+      color: #555;
+      font-size: 12px;
+    }
   </style>
 </head>
 <body>
@@ -282,6 +345,58 @@
   <div class="receipt-preview" id="preview">
     <!-- rendered by JS -->
   </div>
+</div>
+
+<!-- ── Section Récapitulatif ───────────────────────────────── -->
+<div class="dashboard" style="margin-top:24px;">
+  <div class="recap-header">
+    <div>
+      <h2 class="recap-title">Récapitulatif des paiements</h2>
+      <p class="recap-sub">Génère un tableau de tous les loyers versés entre deux dates</p>
+    </div>
+  </div>
+
+  <div class="controls" style="margin-bottom:24px;">
+    <div class="field">
+      <label>Du — mois</label>
+      <select id="recapMonthFrom">
+        <option value="1">Janvier</option><option value="2">Février</option>
+        <option value="3">Mars</option><option value="4">Avril</option>
+        <option value="5">Mai</option><option value="6">Juin</option>
+        <option value="7">Juillet</option><option value="8">Août</option>
+        <option value="9">Septembre</option><option value="10">Octobre</option>
+        <option value="11">Novembre</option><option value="12">Décembre</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>Du — année</label>
+      <select id="recapYearFrom"></select>
+    </div>
+    <div class="field">
+      <label>Au — mois</label>
+      <select id="recapMonthTo">
+        <option value="1">Janvier</option><option value="2">Février</option>
+        <option value="3">Mars</option><option value="4">Avril</option>
+        <option value="5">Mai</option><option value="6">Juin</option>
+        <option value="7">Juillet</option><option value="8">Août</option>
+        <option value="9">Septembre</option><option value="10">Octobre</option>
+        <option value="11">Novembre</option><option value="12">Décembre</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>Au — année</label>
+      <select id="recapYearTo"></select>
+    </div>
+    <button class="btn-download btn-recap" onclick="downloadRecap()">
+      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/>
+      </svg>
+      Exporter le récap PDF
+    </button>
+  </div>
+
+  <!-- Aperçu du récap -->
+  <div id="recapPreview" class="recap-preview"></div>
 </div>
 
 <script>
@@ -489,6 +604,205 @@
   }
 
   renderPreview();
+
+  // ── Récapitulatif ────────────────────────────────────────────
+  const recapYearFrom = document.getElementById('recapYearFrom');
+  const recapYearTo   = document.getElementById('recapYearTo');
+
+  for (let y = now.getFullYear() - 5; y <= now.getFullYear() + 3; y++) {
+    [recapYearFrom, recapYearTo].forEach(sel => {
+      const opt = document.createElement('option');
+      opt.value = y; opt.textContent = y;
+      if (y === now.getFullYear()) opt.selected = true;
+      sel.appendChild(opt);
+    });
+  }
+
+  // Mois courant par défaut : du 1er janvier de l'année en cours au mois actuel
+  document.getElementById('recapMonthFrom').value = 1;
+  document.getElementById('recapMonthTo').value   = now.getMonth() + 1;
+
+  ['recapMonthFrom','recapYearFrom','recapMonthTo','recapYearTo'].forEach(id => {
+    document.getElementById(id).addEventListener('change', renderRecapPreview);
+  });
+
+  function getRecapRows() {
+    const mFrom = parseInt(document.getElementById('recapMonthFrom').value);
+    const yFrom = parseInt(document.getElementById('recapYearFrom').value);
+    const mTo   = parseInt(document.getElementById('recapMonthTo').value);
+    const yTo   = parseInt(document.getElementById('recapYearTo').value);
+    const loyer   = parseFloat(document.getElementById('inputLoyer').value)   || 0;
+    const charges = parseFloat(document.getElementById('inputCharges').value) || 0;
+    const total   = loyer + charges;
+
+    const rows = [];
+    let cur = { m: mFrom, y: yFrom };
+    const end = { m: mTo,   y: yTo   };
+
+    while (cur.y < end.y || (cur.y === end.y && cur.m <= end.m)) {
+      const period = getPeriod(cur.m, cur.y);
+      rows.push({
+        label: `${MONTHS_FR[cur.m - 1]} ${cur.y}`,
+        period,
+        loyer,
+        charges,
+        total,
+      });
+      cur.m++;
+      if (cur.m > 12) { cur.m = 1; cur.y++; }
+    }
+    return rows;
+  }
+
+  function renderRecapPreview() {
+    const rows  = getRecapRows();
+    const loyer   = parseFloat(document.getElementById('inputLoyer').value)   || 0;
+    const charges = parseFloat(document.getElementById('inputCharges').value) || 0;
+
+    if (rows.length === 0) {
+      document.getElementById('recapPreview').innerHTML = '<p style="color:#e33">La date de début doit être antérieure à la date de fin.</p>';
+      return;
+    }
+
+    const totalLoyer   = loyer   * rows.length;
+    const totalCharges = charges * rows.length;
+    const totalGeneral = totalLoyer + totalCharges;
+
+    let html = `
+      <div class="recap-meta">
+        ${rows.length} mois &bull; du ${rows[0].period.start} au ${rows[rows.length-1].period.end}
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>Période</th>
+            <th>Du</th>
+            <th>Au</th>
+            <th>Loyer</th>
+            <th>Charges</th>
+            <th>Total</th>
+          </tr>
+        </thead>
+        <tbody>
+    `;
+    rows.forEach(r => {
+      html += `<tr>
+        <td>${r.label}</td>
+        <td>${r.period.start}</td>
+        <td>${r.period.end}</td>
+        <td>${formatEur(r.loyer)}</td>
+        <td>${formatEur(r.charges)}</td>
+        <td>${formatEur(r.total)}</td>
+      </tr>`;
+    });
+    html += `
+        </tbody>
+        <tfoot>
+          <tr class="total-row">
+            <td colspan="3">TOTAL (${rows.length} mois)</td>
+            <td>${formatEur(totalLoyer)}</td>
+            <td>${formatEur(totalCharges)}</td>
+            <td>${formatEur(totalGeneral)}</td>
+          </tr>
+        </tfoot>
+      </table>
+    `;
+    document.getElementById('recapPreview').innerHTML = html;
+  }
+
+  renderRecapPreview();
+
+  function downloadRecap() {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+    const rows  = getRecapRows();
+    const loyer   = parseFloat(document.getElementById('inputLoyer').value)   || 0;
+    const charges = parseFloat(document.getElementById('inputCharges').value) || 0;
+
+    if (rows.length === 0) return;
+
+    const totalLoyer   = loyer   * rows.length;
+    const totalCharges = charges * rows.length;
+    const totalGeneral = totalLoyer + totalCharges;
+
+    const mL = 15, mR = 195;
+    let y = 20;
+
+    function text(str, x, yy, opts) { doc.text(str, x, yy, opts || {}); }
+
+    // En-tête
+    doc.setFont('times', 'bold');
+    doc.setFontSize(14);
+    text('RECAPITULATIF DES PAIEMENTS', 105, y, { align: 'center' });
+    y += 8;
+
+    doc.setFont('times', 'normal');
+    doc.setFontSize(10);
+    text('Bailleur : Lunay Anthony — 57 rue de Nantes, 85800 Le Fenouiller', 105, y, { align: 'center' });
+    y += 5;
+    text('Locataire : Carine Signorelli et Michel Grangenois — 43 clos des Cascades, 93160 Noisy le Grand', 105, y, { align: 'center' });
+    y += 5;
+    text(`Periode : du ${rows[0].period.start} au ${rows[rows.length-1].period.end}  (${rows.length} mois)`, 105, y, { align: 'center' });
+    y += 10;
+
+    // Colonnes : Période | Du | Au | Loyer | Charges | Total
+    const cols = [mL, 48, 72, 98, 131, 163];
+    const colW = [cols[1]-cols[0], cols[2]-cols[1], cols[3]-cols[2], cols[4]-cols[3], cols[5]-cols[4], mR-cols[5]];
+    const rowH = 8;
+
+    // Header ligne
+    doc.setFillColor(26, 26, 46);
+    doc.rect(mL, y - 5, mR - mL, rowH, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFont('times', 'bold');
+    doc.setFontSize(9);
+    const headers = ['Periode', 'Du', 'Au', 'Loyer', 'Charges', 'Total'];
+    headers.forEach((h, i) => text(h, cols[i] + 2, y));
+    y += rowH;
+
+    doc.setTextColor(0, 0, 0);
+    doc.setFont('times', 'normal');
+    doc.setFontSize(9);
+
+    rows.forEach((r, idx) => {
+      if (idx % 2 === 0) {
+        doc.setFillColor(249, 249, 249);
+        doc.rect(mL, y - 5, mR - mL, rowH, 'F');
+      }
+      doc.setDrawColor(220, 220, 220);
+      doc.rect(mL, y - 5, mR - mL, rowH, 'D');
+      text(r.label,                   cols[0] + 2, y);
+      text(r.period.start,            cols[1] + 2, y);
+      text(r.period.end,              cols[2] + 2, y);
+      text(formatEurPDF(r.loyer),     cols[3] + 2, y);
+      text(formatEurPDF(r.charges),   cols[4] + 2, y);
+      text(formatEurPDF(r.total),     cols[5] + 2, y);
+      y += rowH;
+
+      // Nouvelle page si besoin
+      if (y > 270 && idx < rows.length - 1) {
+        doc.addPage();
+        y = 20;
+      }
+    });
+
+    // Ligne total
+    y += 2;
+    doc.setFillColor(230, 230, 230);
+    doc.rect(mL, y - 5, mR - mL, rowH, 'FD');
+    doc.setFont('times', 'bold');
+    doc.setFontSize(9);
+    text(`TOTAL (${rows.length} mois)`, cols[0] + 2, y);
+    text(formatEurPDF(totalLoyer),   cols[3] + 2, y);
+    text(formatEurPDF(totalCharges), cols[4] + 2, y);
+    text(formatEurPDF(totalGeneral), cols[5] + 2, y);
+
+    const mFrom = document.getElementById('recapMonthFrom').value;
+    const yFrom = document.getElementById('recapYearFrom').value;
+    const mTo   = document.getElementById('recapMonthTo').value;
+    const yTo   = document.getElementById('recapYearTo').value;
+    doc.save(`recap_loyers_${pad(mFrom)}-${yFrom}_${pad(mTo)}-${yTo}.pdf`);
+  }
 </script>
 </body>
 </html>
