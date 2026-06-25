@@ -726,24 +726,46 @@
     const totalGeneral = totalLoyer + totalCharges;
 
     const mL = 15, mR = 195;
+    const pageH = 297;
     let y = 20;
 
     function text(str, x, yy, opts) { doc.text(str, x, yy, opts || {}); }
 
-    // En-tête
-    doc.setFont('times', 'bold');
-    doc.setFontSize(14);
-    text('RECAPITULATIF DES PAIEMENTS', 105, y, { align: 'center' });
-    y += 8;
+    function drawHeader() {
+      // Adresses en haut
+      doc.setFont('times', 'normal');
+      doc.setFontSize(11);
+      text('Lunay Anthony',        mL,  y);
+      text('Carine Signorelli et Michel Grangenois', mR, y, { align: 'right' }); y += 6;
+      text('57 rue de Nantes',     mL,  y);
+      text('43 clos des Cascades', mR,  y, { align: 'right' }); y += 6;
+      text('85800 Le Fenouiller',  mL,  y);
+      text('93160 Noisy le Grand', mR,  y, { align: 'right' }); y += 14;
 
-    doc.setFont('times', 'normal');
-    doc.setFontSize(10);
-    text('Bailleur : Lunay Anthony — 57 rue de Nantes, 85800 Le Fenouiller', 105, y, { align: 'center' });
-    y += 5;
-    text('Locataire : Carine Signorelli et Michel Grangenois — 43 clos des Cascades, 93160 Noisy le Grand', 105, y, { align: 'center' });
-    y += 5;
-    text(`Periode : du ${rows[0].period.start} au ${rows[rows.length-1].period.end}  (${rows.length} mois)`, 105, y, { align: 'center' });
-    y += 10;
+      // Titre
+      doc.setFont('times', 'bold');
+      doc.setFontSize(14);
+      text('RECAPITULATIF DES PAIEMENTS', 105, y, { align: 'center' }); y += 7;
+
+      doc.setFont('times', 'normal');
+      doc.setFontSize(10);
+      text(`Periode : du ${rows[0].period.start} au ${rows[rows.length-1].period.end} (${rows.length} mois)`, 105, y, { align: 'center' });
+      y += 12;
+    }
+
+    function drawFooter() {
+      const fy = 255;
+      doc.setFont('times', 'normal');
+      doc.setFontSize(11);
+      text('Le bailleur,',  mR, fy,     { align: 'right' });
+      text('Lunay Anthony', mR, fy + 6, { align: 'right' });
+      const sigImgEl = document.querySelector('.signature-img');
+      if (sigImgEl && sigImgEl.src) {
+        doc.addImage(sigImgEl.src, 'JPEG', mR - 62, fy + 8, 60, 24);
+      }
+    }
+
+    drawHeader();
 
     // Colonnes : Période | Du | Au | Loyer | Charges | Total
     const cols = [mL, 48, 72, 98, 131, 163];
@@ -779,10 +801,23 @@
       text(formatEurPDF(r.total),     cols[5] + 2, y);
       y += rowH;
 
-      // Nouvelle page si besoin
-      if (y > 270 && idx < rows.length - 1) {
+      // Nouvelle page si besoin (250 = laisse place à la signature en bas)
+      if (y > 248 && idx < rows.length - 1) {
+        drawFooter();
         doc.addPage();
         y = 20;
+        drawHeader();
+        // Redessiner l'en-tête du tableau
+        doc.setFillColor(26, 26, 46);
+        doc.rect(mL, y - 5, mR - mL, rowH, 'F');
+        doc.setTextColor(255, 255, 255);
+        doc.setFont('times', 'bold');
+        doc.setFontSize(9);
+        headers.forEach((h, i) => text(h, cols[i] + 2, y));
+        y += rowH;
+        doc.setTextColor(0, 0, 0);
+        doc.setFont('times', 'normal');
+        doc.setFontSize(9);
       }
     });
 
@@ -796,6 +831,9 @@
     text(formatEurPDF(totalLoyer),   cols[3] + 2, y);
     text(formatEurPDF(totalCharges), cols[4] + 2, y);
     text(formatEurPDF(totalGeneral), cols[5] + 2, y);
+
+    // Signature en bas de la dernière page
+    drawFooter();
 
     const mFrom = document.getElementById('recapMonthFrom').value;
     const yFrom = document.getElementById('recapYearFrom').value;
