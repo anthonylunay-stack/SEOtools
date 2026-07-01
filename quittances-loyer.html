@@ -242,6 +242,26 @@
       color: #888;
     }
 
+    input[type="date"] {
+      padding: 10px 14px;
+      border: 2px solid #e0e0e0;
+      border-radius: 8px;
+      font-size: 1rem;
+      color: #1a1a2e;
+      transition: border-color 0.2s;
+    }
+
+    input[type="date"]:focus {
+      outline: none;
+      border-color: #4f46e5;
+    }
+
+    .btn-attest {
+      background: #7c3aed;
+    }
+
+    .btn-attest:hover { background: #6d28d9; }
+
     .btn-recap {
       background: #0f766e;
     }
@@ -345,6 +365,32 @@
   <div class="receipt-preview" id="preview">
     <!-- rendered by JS -->
   </div>
+</div>
+
+<!-- ── Section Attestation ────────────────────────────────── -->
+<div class="dashboard" style="margin-top:24px;">
+  <div class="recap-header">
+    <div>
+      <h2 class="recap-title">Attestation de loyer à jour</h2>
+      <p class="recap-sub">Certifie que le locataire est à jour de ses paiements à une date donnée</p>
+    </div>
+  </div>
+
+  <div class="controls" style="margin-bottom:24px;">
+    <div class="field">
+      <label>Date d'attestation</label>
+      <input type="date" id="attestDate">
+    </div>
+    <button class="btn-download btn-attest" onclick="downloadAttestation()">
+      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/>
+      </svg>
+      Exporter l'attestation PDF
+    </button>
+  </div>
+
+  <!-- Aperçu attestation -->
+  <div id="attestPreview" class="receipt-preview" style="max-width:600px; margin:0 auto;"></div>
 </div>
 
 <!-- ── Section Récapitulatif ───────────────────────────────── -->
@@ -604,6 +650,153 @@
   }
 
   renderPreview();
+
+  // ── Attestation ──────────────────────────────────────────────
+  // Date par défaut = aujourd'hui
+  const attestDateEl = document.getElementById('attestDate');
+  attestDateEl.value = now.toISOString().split('T')[0];
+  attestDateEl.addEventListener('change', renderAttestPreview);
+
+  function formatDateFR(dateStr) {
+    if (!dateStr) return '';
+    const [y, m, d] = dateStr.split('-');
+    return `${d}/${m}/${y}`;
+  }
+
+  function getAttestData() {
+    const dateStr  = attestDateEl.value;
+    const dateFR   = formatDateFR(dateStr);
+    const loyer    = parseFloat(document.getElementById('inputLoyer').value)   || 0;
+    const charges  = parseFloat(document.getElementById('inputCharges').value) || 0;
+    const total    = loyer + charges;
+    return { dateStr, dateFR, loyer, charges, total };
+  }
+
+  function renderAttestPreview() {
+    const { dateFR, loyer, charges, total } = getAttestData();
+    document.getElementById('attestPreview').innerHTML = `
+      <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:48px;">
+        <div class="preview-addr-block">
+          <p>Lunay Anthony</p>
+          <p>57 rue de Nantes</p>
+          <p>85800 Le Fenouiller</p>
+        </div>
+        <div class="preview-addr-block" style="text-align:right;">
+          <p>Carine Signorelli et Michel Grangenois</p>
+          <p>43 clos des Cascades</p>
+          <p>93160 Noisy le Grand</p>
+        </div>
+      </div>
+
+      <div class="preview-title-center" style="margin-bottom:8px;">
+        <strong>ATTESTATION DE LOYER</strong>
+      </div>
+      <div class="preview-subtitle-center" style="margin-bottom:32px;">
+        <span>À jour au ${dateFR}</span>
+      </div>
+
+      <p style="text-align:justify; line-height:1.8; margin-bottom:24px;">
+        Je soussigné, <strong>Lunay Anthony</strong>, bailleur du logement situé au
+        <strong>43 clos des Cascades, 93160 Noisy le Grand</strong>, atteste que
+        <strong>Carine Signorelli et Michel Grangenois</strong>, locataires dudit logement,
+        sont à jour de leurs paiements de loyer et de charges à la date du <strong>${dateFR}</strong>.
+      </p>
+
+      <p style="line-height:1.8; margin-bottom:32px;">
+        Le loyer mensuel est de <strong>${formatEur(loyer)}</strong>, auquel s'ajoutent des charges de
+        <strong>${formatEur(charges)}</strong>, soit un total mensuel de <strong>${formatEur(total)}</strong>.
+      </p>
+
+      <p style="margin-bottom:48px;">
+        Cette attestation est délivrée à la demande de l'intéressé et pour valoir ce que de droit.
+      </p>
+
+      <div class="preview-signature">
+        <span class="sig-label">Le bailleur,</span>
+        <span class="sig-label">Lunay Anthony</span>
+        <img src="${document.querySelector('.signature-img') ? document.querySelector('.signature-img').src : ''}"
+             class="signature-img" alt="Signature" style="margin-top:4px;" />
+      </div>
+    `;
+  }
+
+  renderAttestPreview();
+
+  function downloadAttestation() {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+    const { dateFR, loyer, charges, total } = getAttestData();
+
+    const mL = 20, mR = 190;
+    let y = 25;
+    const lh = 6;
+
+    function text(str, x, yy, opts) { doc.text(str, x, yy, opts || {}); }
+
+    doc.setFont('times', 'normal');
+    doc.setFontSize(11);
+
+    // Adresses
+    text('Lunay Anthony',                              mL,  y);
+    text('Carine Signorelli et Michel Grangenois',     mR,  y, { align: 'right' }); y += lh;
+    text('57 rue de Nantes',                           mL,  y);
+    text('43 clos des Cascades',                       mR,  y, { align: 'right' }); y += lh;
+    text('85800 Le Fenouiller',                        mL,  y);
+    text('93160 Noisy le Grand',                       mR,  y, { align: 'right' });
+
+    y += 40;
+
+    // Titre
+    doc.setFont('times', 'bold');
+    doc.setFontSize(15);
+    text('ATTESTATION DE LOYER', 105, y, { align: 'center' }); y += 8;
+
+    doc.setFont('times', 'normal');
+    doc.setFontSize(11);
+    text(`A jour au ${dateFR}`, 105, y, { align: 'center' });
+
+    y += 20;
+
+    // Corps du texte — paragraphes justifiés
+    doc.setFontSize(11);
+    const lineW = mR - mL;
+
+    function printJustified(lines) {
+      lines.forEach(l => { text(l, mL, y); y += lh; });
+      y += 4;
+    }
+
+    const para1 = doc.splitTextToSize(
+      `Je soussigne, Lunay Anthony, bailleur du logement situe au 43 clos des Cascades, 93160 Noisy le Grand, atteste que Carine Signorelli et Michel Grangenois, locataires dudit logement, sont a jour de leurs paiements de loyer et de charges a la date du ${dateFR}.`,
+      lineW
+    );
+    printJustified(para1);
+
+    const para2 = doc.splitTextToSize(
+      `Le loyer mensuel est de ${formatEurPDF(loyer)}, auquel s'ajoutent des charges de ${formatEurPDF(charges)}, soit un total mensuel de ${formatEurPDF(total)}.`,
+      lineW
+    );
+    printJustified(para2);
+
+    const para3 = doc.splitTextToSize(
+      `Cette attestation est delivree a la demande de l'interesse et pour valoir ce que de droit.`,
+      lineW
+    );
+    printJustified(para3);
+
+    // Signature en bas
+    const sigY = 230;
+    doc.setFont('times', 'normal');
+    doc.setFontSize(11);
+    text('Le bailleur,',  mR, sigY,      { align: 'right' });
+    text('Lunay Anthony', mR, sigY + lh, { align: 'right' });
+    const sigImgEl = document.querySelector('.signature-img');
+    if (sigImgEl && sigImgEl.src) {
+      doc.addImage(sigImgEl.src, 'JPEG', mR - 62, sigY + lh + 3, 60, 24);
+    }
+
+    doc.save(`attestation_loyer_${attestDateEl.value}.pdf`);
+  }
 
   // ── Récapitulatif ────────────────────────────────────────────
   const recapYearFrom = document.getElementById('recapYearFrom');
