@@ -145,6 +145,9 @@
     .card-title { font-size: 14px; font-weight: 600; margin-bottom: 3px; }
     .card-sub { font-size: 12px; color: var(--muted); }
     .sheet-tag { font-size: 10px; font-weight: 700; padding: 3px 8px; border-radius: 6px; background: rgba(66,133,244,.12); color: var(--blue); border: 1px solid rgba(66,133,244,.22); white-space: nowrap; flex-shrink: 0; }
+    .card-refresh { background: none; border: 1px solid var(--border); color: var(--muted); border-radius: 6px; padding: 3px 8px; font-size: 12px; cursor: pointer; transition: all .2s; flex-shrink: 0; }
+    .card-refresh:hover { border-color: var(--blue); color: var(--blue); }
+    .card-refresh.spinning { animation: spin 1s linear infinite; pointer-events: none; }
     .chart-area { position: relative; }
     .chart-area canvas { display: block; width: 100%; height: 100%; }
     .h-260 { height: 260px; }
@@ -253,7 +256,10 @@
           <div class="card-title">Global Search Demand</div>
           <div class="card-sub">YoY & MoM — current vs previous year</div>
         </div>
-        <span class="sheet-tag">demand_global</span>
+        <div style="display:flex;gap:8px;align-items:center">
+          <button class="card-refresh" id="refresh-demand_global" onclick="refreshCard('demand_global')" title="Rafraîchir">↺</button>
+          <span class="sheet-tag">demand_global</span>
+        </div>
       </div>
       <div class="chart-area h-260" id="wrap-demand_global">
         <div class="chart-placeholder loading"><span class="icon">⟳</span><span>Waiting for N8N…</span></div>
@@ -265,7 +271,10 @@
           <div class="card-title">Transaction Segments</div>
           <div class="card-sub">Grouped bar — search volume by transaction type</div>
         </div>
-        <span class="sheet-tag">demand_transaction</span>
+        <div style="display:flex;gap:8px;align-items:center">
+          <button class="card-refresh" id="refresh-demand_transaction" onclick="refreshCard('demand_transaction')" title="Rafraîchir">↺</button>
+          <span class="sheet-tag">demand_transaction</span>
+        </div>
       </div>
       <div class="chart-area h-260" id="wrap-demand_transaction">
         <div class="chart-placeholder loading"><span class="icon">⟳</span><span>Waiting for N8N…</span></div>
@@ -282,7 +291,10 @@
           <div class="card-title">SEO WAR Ranking</div>
           <div class="card-sub">All competitors — rank lower = better</div>
         </div>
-        <span class="sheet-tag">ranking_global_war</span>
+        <div style="display:flex;gap:8px;align-items:center">
+          <button class="card-refresh" id="refresh-ranking_global_war" onclick="refreshCard('ranking_global_war')" title="Rafraîchir">↺</button>
+          <span class="sheet-tag">ranking_global_war</span>
+        </div>
       </div>
       <div class="chart-area h-300" id="wrap-ranking_global_war">
         <div class="chart-placeholder loading"><span class="icon">⟳</span><span>Waiting for N8N…</span></div>
@@ -294,7 +306,10 @@
           <div class="card-title">Demand by Asset Type</div>
           <div class="card-sub">Stacked bar + total line</div>
         </div>
-        <span class="sheet-tag">demand_asset</span>
+        <div style="display:flex;gap:8px;align-items:center">
+          <button class="card-refresh" id="refresh-demand_asset" onclick="refreshCard('demand_asset')" title="Rafraîchir">↺</button>
+          <span class="sheet-tag">demand_asset</span>
+        </div>
       </div>
       <div class="chart-area h-300" id="wrap-demand_asset">
         <div class="chart-placeholder loading"><span class="icon">⟳</span><span>Waiting for N8N…</span></div>
@@ -306,7 +321,10 @@
           <div class="card-title">Audience Split</div>
           <div class="card-sub">Brand · Non-brand · Anonymous</div>
         </div>
-        <span class="sheet-tag">audience</span>
+        <div style="display:flex;gap:8px;align-items:center">
+          <button class="card-refresh" id="refresh-audience" onclick="refreshCard('audience')" title="Rafraîchir">↺</button>
+          <span class="sheet-tag">audience</span>
+        </div>
       </div>
       <div class="chart-area h-300" id="wrap-audience">
         <div class="chart-placeholder loading"><span class="icon">⟳</span><span>Waiting for N8N…</span></div>
@@ -858,6 +876,60 @@ function showErrorBanner(msg) {
     document.querySelector('main').prepend(banner);
   }
   banner.innerHTML = `<span style="font-size:18px;flex-shrink:0">❌</span><div><strong style="color:#f87171">Erreur webhook N8N</strong><br>${msg}<br><span style="color:#7d8590;font-size:12px;margin-top:4px;display:block">Les données affichées sont des placeholders. Ouvre F12 → Console pour plus de détails.</span></div><button onclick="this.parentElement.remove()" style="margin-left:auto;background:none;border:none;color:#7d8590;cursor:pointer;font-size:16px;flex-shrink:0">✕</button>`;
+}
+
+/* ─────────────────────────────────────────
+   PER-CARD REFRESH
+───────────────────────────────────────── */
+async function refreshCard(sheetName) {
+  const btn = document.getElementById('refresh-' + sheetName);
+  if (btn) btn.classList.add('spinning');
+  const wrap = document.getElementById('wrap-' + sheetName);
+  if (wrap) wrap.innerHTML = '<div class="chart-placeholder loading"><span class="icon">⟳</span><span>Refreshing…</span></div>';
+
+  const webhookUrl = getWebhookUrl();
+  if (!webhookUrl) {
+    toast('ℹ️ Webhook non configuré pour ' + activeSite);
+    if (btn) btn.classList.remove('spinning');
+    return;
+  }
+
+  try {
+    const res = await fetch(webhookUrl, { signal: AbortSignal.timeout(300000) });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const rawBody = await res.text();
+    let rawText = rawBody;
+    try {
+      const body = JSON.parse(rawBody);
+      const candidate = Array.isArray(body) ? (body[0]?.output ?? body[0]?.text) : (body?.output ?? body?.text);
+      if (candidate) rawText = candidate;
+    } catch(_) {}
+
+    const data = parseOutput(rawText);
+    if (data.charts.length === 0) throw new Error('No valid [CHARTS_JSON] in response');
+
+    // Update cache and render only the requested chart + its analysis
+    siteCache[activeSite] = data;
+    const chart = data.charts.find(c => c.s === sheetName || c.sheetName === sheetName);
+    if (chart) renderChart(sheetName, expandMinimalChart(chart));
+    // Refresh matching analysis sections
+    const anaMap = {
+      demand_global:       [['dg-week', 'Semaine']],
+      demand_transaction:  [['dt-yoy','YoY|N-1|ann'],['dt-week','Semaine'],['dt-trend','Hausse|Baisse|Trend']],
+      ranking_global_war:  [['rk-rank','Classement|Rank'],['rk-mom','MoM|mois'],['rk-week','Semaine']],
+      demand_asset:        [['da-week','Semaine'],['da-mom','MoM|mois'],['da-trend','Hausse|Baisse|Trend']],
+      audience:            [],
+    };
+    (anaMap[sheetName] || []).forEach(([id]) => {
+      const el = document.getElementById('ana-' + id);
+      if (el && data.analysis[id]) el.textContent = data.analysis[id];
+    });
+    toast('✅ ' + sheetName + ' mis à jour');
+  } catch(e) {
+    toast('❌ ' + e.message, 4000);
+    if (wrap) wrap.innerHTML = '<div class="chart-placeholder"><span class="icon">⚠</span><span>Erreur</span></div>';
+  }
+  if (btn) btn.classList.remove('spinning');
 }
 
 /* ─────────────────────────────────────────
