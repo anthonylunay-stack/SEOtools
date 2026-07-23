@@ -893,9 +893,10 @@ function showErrorBanner(msg) {
 }
 
 /* ─────────────────────────────────────────
-   INIT
+   INIT — no auto-fetch, user clicks Refresh explicitly
 ───────────────────────────────────────── */
-loadFromN8N();
+applyData(PLACEHOLDER);
+setStatus('ready', 'Ready');
 </script>
 </body>
 </html>
