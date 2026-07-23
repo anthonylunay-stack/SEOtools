@@ -54,6 +54,12 @@
     .btn-primary { background: var(--blue); border-color: var(--blue); color: #fff; }
     .btn-primary:hover { background: #3574e0; border-color: #3574e0; }
 
+    /* ── Site switcher ── */
+    .site-switcher { display: flex; align-items: center; gap: 6px; }
+    .site-btn { background: var(--card); border: 1px solid var(--border); color: var(--muted); padding: 5px 13px; border-radius: 20px; font-size: 11px; font-weight: 600; cursor: pointer; transition: all .2s; }
+    .site-btn:hover { border-color: var(--blue); color: var(--text); }
+    .site-btn.active { background: var(--blue); border-color: var(--blue); color: #fff; }
+
     /* ── Main ── */
     main { padding: 22px 28px; max-width: 1500px; margin: 0 auto; }
 
@@ -143,6 +149,7 @@
     <span class="logo-sub">SeLoger Neuf</span>
   </div>
   <div class="header-right">
+    <div class="site-switcher" id="siteSwitcher"></div>
     <div class="status-pill">
       <span class="dot" id="statusDot"></span>
       <span id="statusText">Ready</span>
@@ -293,7 +300,29 @@
 /* ─────────────────────────────────────────
    CONFIG
 ───────────────────────────────────────── */
-const N8N_WEBHOOK_URL = 'https://aviv.app.n8n.cloud/webhook/seo-sanity-check';
+const SITES = {
+  'SeLoger Neuf':    'https://aviv.app.n8n.cloud/webhook/seo-sanity-check',
+  'SeLoger':         '',
+  'SLBC':            '',
+  'Belles Demeures': '',
+};
+let activeSite = 'SeLoger Neuf';
+
+function getWebhookUrl() { return SITES[activeSite] || ''; }
+
+function renderSiteSwitcher() {
+  const container = document.getElementById('siteSwitcher');
+  container.innerHTML = Object.keys(SITES).map(name =>
+    `<button class="site-btn${name === activeSite ? ' active' : ''}" onclick="switchSite('${name}')">${name}</button>`
+  ).join('');
+}
+
+function switchSite(name) {
+  activeSite = name;
+  document.querySelector('.logo-sub').textContent = name;
+  renderSiteSwitcher();
+  loadFromN8N();
+}
 
 /* ─────────────────────────────────────────
    REGISTER PLUGINS
@@ -560,10 +589,11 @@ function loadFromPaste() {
    WEBHOOK MODE
 ───────────────────────────────────────── */
 async function loadFromN8N() {
-  const isConfigured = !N8N_WEBHOOK_URL.includes('TON-INSTANCE');
+  const webhookUrl = getWebhookUrl();
+  const isConfigured = !!webhookUrl;
 
   if (!isConfigured) {
-    toast('ℹ️ N8N_WEBHOOK_URL not set — showing placeholder data');
+    toast(`ℹ️ No webhook configured for ${activeSite} — showing placeholder data`);
     applyData(PLACEHOLDER);
     setStatus('ok', 'Placeholder');
     document.getElementById('runDate').textContent = 'Report date: placeholder';
@@ -576,7 +606,7 @@ async function loadFromN8N() {
   );
 
   try {
-    const res = await fetch(N8N_WEBHOOK_URL, { signal: AbortSignal.timeout(60000) });
+    const res = await fetch(webhookUrl, { signal: AbortSignal.timeout(60000) });
     if (!res.ok) throw new Error('HTTP ' + res.status);
 
     const body = await res.json();
@@ -603,6 +633,7 @@ async function loadFromN8N() {
 /* ─────────────────────────────────────────
    INIT
 ───────────────────────────────────────── */
+renderSiteSwitcher();
 loadFromN8N();
 </script>
 </body>
