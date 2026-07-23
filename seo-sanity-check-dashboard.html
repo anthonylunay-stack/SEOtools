@@ -361,6 +361,7 @@ const SITES = {
   'Belles Demeures': 'https://aviv.app.n8n.cloud/webhook/35e365a6-2008-4c22-ba00-09e1b71db36f',
 };
 let activeSite = 'SeLoger Neuf';
+const siteCache = {}; // stores parsed data per site independently
 
 function getWebhookUrl() {
   return SITES[activeSite] || '';
@@ -379,13 +380,19 @@ function selectSite(name) {
   document.getElementById('siteLabel').textContent = name;
   document.querySelectorAll('.site-option').forEach(el => {
     el.classList.toggle('active', el.textContent.trim() === name);
+    el.classList.remove('disabled');
     el.classList.toggle('disabled', !SITES[el.textContent.trim()]);
   });
   document.getElementById('siteMenu').classList.remove('open');
-  applyData(PLACEHOLDER);
-  setStatus('ready', 'Ready');
-  if (getWebhookUrl()) loadFromN8N();
-  else toast('ℹ️ Webhook non configuré pour ' + name);
+  // Show cached data if available, otherwise show placeholder (no auto-fetch)
+  if (siteCache[name]) {
+    applyData(siteCache[name]);
+    setStatus('ok', 'Cached');
+  } else {
+    applyData(PLACEHOLDER);
+    setStatus('ready', 'Ready');
+    toast('ℹ️ Cliquez sur Refresh pour charger les données de ' + name);
+  }
 }
 
 /* ─────────────────────────────────────────
@@ -860,10 +867,11 @@ async function loadFromN8N() {
     }
 
     clearInterval(timerInterval);
+    siteCache[activeSite] = data; // cache independently per site
     applyData(data);
     setStatus('ok', 'Live');
     document.getElementById('runDate').textContent = 'Report date: ' + new Date().toLocaleDateString('en-GB', { day:'2-digit', month:'short', year:'numeric' });
-    toast('✅ Dashboard updated from N8N');
+    toast('✅ ' + activeSite + ' — dashboard mis à jour');
 
   } catch(e) {
     clearInterval(timerInterval);
