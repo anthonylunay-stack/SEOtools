@@ -7,6 +7,8 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1/dist/chartjs-plugin-annotation.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <style>
     :root {
       --bg:      #0d1117;
@@ -55,10 +57,29 @@
     .btn-primary:hover { background: #3574e0; border-color: #3574e0; }
 
     /* ── Site switcher ── */
-    .site-switcher { display: flex; align-items: center; gap: 6px; }
-    .site-btn { background: var(--card); border: 1px solid var(--border); color: var(--muted); padding: 5px 13px; border-radius: 20px; font-size: 11px; font-weight: 600; cursor: pointer; transition: all .2s; }
-    .site-btn:hover { border-color: var(--blue); color: var(--text); }
-    .site-btn.active { background: var(--blue); border-color: var(--blue); color: #fff; }
+    .site-switcher { position: relative; margin-left: 10px; }
+    .site-btn {
+      display: flex; align-items: center; gap: 7px;
+      background: rgba(66,133,244,.1); border: 1px solid rgba(66,133,244,.3);
+      color: var(--blue); border-radius: 20px; padding: 5px 13px;
+      font-size: 13px; font-weight: 600; cursor: pointer; transition: background .15s;
+    }
+    .site-btn:hover { background: rgba(66,133,244,.18); }
+    .site-menu {
+      display: none; position: absolute; top: calc(100% + 6px); left: 0;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 10px; padding: 6px; min-width: 160px;
+      box-shadow: 0 8px 24px rgba(0,0,0,.4); z-index: 200;
+    }
+    .site-menu.open { display: flex; flex-direction: column; }
+    .site-option {
+      text-align: left; background: none; border: none; color: var(--text);
+      padding: 8px 12px; border-radius: 7px; font-size: 13px; cursor: pointer; transition: background .15s;
+    }
+    .site-option:hover { background: rgba(255,255,255,.07); }
+    .site-option.active { color: var(--blue); font-weight: 600; }
+    .site-option.disabled { color: var(--muted); cursor: default; }
+    .site-option.disabled:hover { background: none; }
 
     /* ── Main ── */
     main { padding: 22px 28px; max-width: 1500px; margin: 0 auto; }
@@ -105,11 +126,12 @@
 
     /* ── Analysis grid ── */
     .analysis-card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 18px 20px; margin-bottom: 20px; }
-    .analysis-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 14px; }
+    .analysis-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
     @media (max-width: 1100px) { .analysis-grid { grid-template-columns: repeat(2, 1fr); } }
-    .analysis-block { display: flex; flex-direction: column; gap: 8px; }
-    .analysis-block-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .8px; padding-bottom: 7px; border-bottom: 1px solid var(--border); }
-    .analysis-text { font-size: 12px; color: var(--muted); line-height: 1.7; white-space: pre-wrap; }
+    .analysis-block { display: flex; flex-direction: column; gap: 6px; }
+    .analysis-block-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .8px; padding-bottom: 7px; border-bottom: 1px solid var(--border); margin-bottom: 4px; }
+    .analysis-text { font-size: 12px; color: var(--muted); line-height: 1.8; white-space: pre-wrap; }
+    .ana-subsection { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .6px; color: var(--muted); margin-top: 8px; margin-bottom: 2px; opacity: .7; }
 
     /* ── Chart grids ── */
     .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-bottom: 18px; }
@@ -146,16 +168,27 @@
   <div class="logo">
     <div class="logo-icon">📊</div>
     SEO Sanity Check
-    <span class="logo-sub">SeLoger Neuf</span>
+    <div class="site-switcher" id="siteSwitcher">
+      <button class="site-btn" id="siteBtn" onclick="toggleSiteMenu()">
+        <span id="siteLabel">SeLoger Neuf</span>
+        <svg width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+      </button>
+      <div class="site-menu" id="siteMenu">
+        <button class="site-option active" onclick="selectSite('SeLoger Neuf')">SeLoger Neuf</button>
+        <button class="site-option" onclick="selectSite('SeLoger')">SeLoger</button>
+        <button class="site-option" onclick="selectSite('SLBC')">SLBC</button>
+        <button class="site-option" onclick="selectSite('Belles Demeures')">Belles Demeures</button>
+      </div>
+    </div>
   </div>
   <div class="header-right">
-    <div class="site-switcher" id="siteSwitcher"></div>
     <div class="status-pill">
       <span class="dot" id="statusDot"></span>
       <span id="statusText">Ready</span>
     </div>
     <div class="run-date" id="runDate">Report date: —</div>
-    <button class="btn" onclick="loadFromN8N()">↺ Refresh webhook</button>
+    <button class="btn" onclick="exportPDF()" id="pdfBtn">⬇ PDF</button>
+    <button class="btn btn-primary" onclick="loadFromN8N()">↺ Refresh webhook</button>
   </div>
 </header>
 
@@ -199,26 +232,47 @@
   <p class="section-label">Weekly analysis — AI Agent (GPT-4o)</p>
   <div class="analysis-card">
     <div class="analysis-grid">
+
+      <!-- 1 · demand_global -->
       <div class="analysis-block">
-        <div class="analysis-block-title" style="color:var(--blue)">1 · demand_global</div>
-        <div class="analysis-text" id="ana-demand_global">Waiting for data…</div>
+        <div class="analysis-block-title" style="color:var(--blue)">1 · Demand Global</div>
+        <div class="ana-subsection">📅 Semaine en cours vs semaine précédente</div>
+        <div class="analysis-text" id="ana-dg-week">Waiting for data…</div>
       </div>
+
+      <!-- 2 · demand_transaction -->
       <div class="analysis-block">
-        <div class="analysis-block-title" style="color:var(--red)">2 · demand_transaction</div>
-        <div class="analysis-text" id="ana-demand_transaction">Waiting for data…</div>
+        <div class="analysis-block-title" style="color:var(--red)">2 · Demand Transaction</div>
+        <div class="ana-subsection">📆 Mois en cours vs N-1 (%)</div>
+        <div class="analysis-text" id="ana-dt-yoy">Waiting for data…</div>
+        <div class="ana-subsection">📅 Semaine en cours vs semaine N-1 (%)</div>
+        <div class="analysis-text" id="ana-dt-week">Waiting for data…</div>
+        <div class="ana-subsection">↑ Hausse &amp; ↓ Baisse</div>
+        <div class="analysis-text" id="ana-dt-trend">Waiting for data…</div>
       </div>
+
+      <!-- 3 · ranking_global_war -->
       <div class="analysis-block">
-        <div class="analysis-block-title" style="color:var(--green)">3 · ranking_global_war</div>
-        <div class="analysis-text" id="ana-ranking_global_war">Waiting for data…</div>
+        <div class="analysis-block-title" style="color:var(--green)">3 · Ranking Global WAR</div>
+        <div class="ana-subsection">🏆 Classement (1er → dernier)</div>
+        <div class="analysis-text" id="ana-rk-rank">Waiting for data…</div>
+        <div class="ana-subsection">📆 Variation vs mois dernier</div>
+        <div class="analysis-text" id="ana-rk-mom">Waiting for data…</div>
+        <div class="ana-subsection">📅 Variation vs semaine précédente</div>
+        <div class="analysis-text" id="ana-rk-week">Waiting for data…</div>
       </div>
+
+      <!-- 4 · demand_asset -->
       <div class="analysis-block">
-        <div class="analysis-block-title" style="color:var(--yellow)">4 · demand_asset</div>
-        <div class="analysis-text" id="ana-demand_asset">Waiting for data…</div>
+        <div class="analysis-block-title" style="color:var(--yellow)">4 · Demand Asset</div>
+        <div class="ana-subsection">📅 Semaine en cours vs semaine précédente (%)</div>
+        <div class="analysis-text" id="ana-da-week">Waiting for data…</div>
+        <div class="ana-subsection">📆 Mois en cours vs mois précédent (%)</div>
+        <div class="analysis-text" id="ana-da-mom">Waiting for data…</div>
+        <div class="ana-subsection">↑ Hausse &amp; ↓ Baisse</div>
+        <div class="analysis-text" id="ana-da-trend">Waiting for data…</div>
       </div>
-      <div class="analysis-block">
-        <div class="analysis-block-title" style="color:var(--purple)">5 · audience</div>
-        <div class="analysis-text" id="ana-audience">Waiting for data…</div>
-      </div>
+
     </div>
   </div>
 
@@ -308,20 +362,30 @@ const SITES = {
 };
 let activeSite = 'SeLoger Neuf';
 
-function getWebhookUrl() { return SITES[activeSite] || ''; }
-
-function renderSiteSwitcher() {
-  const container = document.getElementById('siteSwitcher');
-  container.innerHTML = Object.keys(SITES).map(name =>
-    `<button class="site-btn${name === activeSite ? ' active' : ''}" onclick="switchSite('${name}')">${name}</button>`
-  ).join('');
+function getWebhookUrl() {
+  return SITES[activeSite] || '';
 }
 
-function switchSite(name) {
+function toggleSiteMenu() {
+  document.getElementById('siteMenu').classList.toggle('open');
+}
+document.addEventListener('click', e => {
+  if (!document.getElementById('siteSwitcher').contains(e.target))
+    document.getElementById('siteMenu').classList.remove('open');
+});
+
+function selectSite(name) {
   activeSite = name;
-  document.querySelector('.logo-sub').textContent = name;
-  renderSiteSwitcher();
-  loadFromN8N();
+  document.getElementById('siteLabel').textContent = name;
+  document.querySelectorAll('.site-option').forEach(el => {
+    el.classList.toggle('active', el.textContent.trim() === name);
+    el.classList.toggle('disabled', !SITES[el.textContent.trim()]);
+  });
+  document.getElementById('siteMenu').classList.remove('open');
+  applyData(PLACEHOLDER);
+  setStatus('ready', 'Ready');
+  if (getWebhookUrl()) loadFromN8N();
+  else toast('ℹ️ Webhook non configuré pour ' + name);
 }
 
 /* ─────────────────────────────────────────
@@ -496,40 +560,153 @@ function renderChart(sheetName, config) {
 function parseOutput(text) {
   const result = { charts: [], analysis: {} };
 
-  /* — Extract [CHARTS_JSON] block (mirrors N8N Code node) — */
-  const jsonMatch = text.match(/\[CHARTS_JSON\]([\s\S]*?)\[\/CHARTS_JSON\]/);
-  if (jsonMatch) {
-    let raw = jsonMatch[1].trim()
-      .replace(/^```(?:json)?\s*/i, '')
-      .replace(/\s*```$/, '')
-      .trim();
-    try {
-      result.charts = JSON.parse(raw);
-    } catch {
-      /* trailing-comma repair (same as N8N node) */
-      const repaired = raw.replace(/,\s*([\]\}])/g, '$1');
-      try { result.charts = JSON.parse(repaired); } catch(e2) {
-        toast('⚠️ JSON parse error: ' + e2.message, 5000);
-      }
+  /* — Extract [CHARTS_JSON] block — */
+
+  /* Use bracket-counting to extract a complete JSON array from a string */
+  function extractArray(str) {
+    str = str.replace(/^```(?:json)?\s*/im, '').trim();
+    const start = str.indexOf('[');
+    if (start === -1) return null;
+    let depth = 0;
+    for (let i = start; i < str.length; i++) {
+      if (str[i] === '[') depth++;
+      else if (str[i] === ']') { depth--; if (depth === 0) return str.slice(start, i + 1); }
     }
-    if (!Array.isArray(result.charts)) result.charts = [];
-    result.charts = result.charts.filter(c => c?.chartConfig?.data);
+    return str.slice(start); // unclosed — return anyway for repair attempt
   }
 
+  function tryParseCharts(raw) {
+    const candidate = extractArray(raw) || raw;
+    try { return JSON.parse(candidate); } catch {}
+    try { return JSON.parse(candidate.replace(/,\s*([\]\}])/g, '$1')); } catch(e) {
+      toast('⚠️ JSON parse error: ' + e.message, 5000);
+    }
+    return [];
+  }
+
+  /* Format v5: compact "chartsJson\n---ANALYSIS---\ntext" from N8N bracket-counting */
+  const delimIdx = text.indexOf('\n---ANALYSIS---\n');
+  if (delimIdx !== -1) {
+    result.charts = tryParseCharts(text.slice(0, delimIdx).trim());
+    text = text.slice(delimIdx + 16); // pass analysis part to section parser below
+  } else {
+    /* Legacy formats */
+    const tagMatch = text.match(/\*{0,2}\[CHARTS_JSON\]\*{0,2}([\s\S]*?)\*{0,2}\[\/CHARTS_JSON\]\*{0,2}/);
+    const openMatch = !tagMatch && text.match(/\*{0,2}\[CHARTS_JSON\]\*{0,2}\s*([\s\S]+)/);
+    const bareMatch = !tagMatch && !openMatch && text.match(/```(?:json)?\s*([\s\S]+)/);
+    const rawChunk = tagMatch  ? tagMatch[1]
+                   : openMatch ? openMatch[1]
+                   : bareMatch ? bareMatch[1]
+                   : text;
+    if (rawChunk) result.charts = tryParseCharts(rawChunk.trim());
+  }
+  if (!Array.isArray(result.charts)) result.charts = [];
+  // Accept both legacy format (chartConfig.data) and minimal format (s + t + d)
+  result.charts = result.charts.filter(c => c?.chartConfig?.data || (c?.s && c?.t && c?.d));
+
   /* — Extract analysis sections — */
-  const sections = [
-    { key: 'demand_global',      re: /##\s*1\.[^\n]*([\s\S]*?)(?=##\s*\d+\.|$)/i },
-    { key: 'demand_transaction', re: /##\s*2\.[^\n]*([\s\S]*?)(?=##\s*\d+\.|$)/i },
-    { key: 'ranking_global_war', re: /##\s*3\.[^\n]*([\s\S]*?)(?=##\s*\d+\.|$)/i },
-    { key: 'demand_asset',       re: /##\s*4\.[^\n]*([\s\S]*?)(?=##\s*\d+\.|$)/i },
-    { key: 'audience',           re: /##\s*5\.[^\n]*([\s\S]*?)(?=##\s*\d+\.|$)/i }
-  ];
-  sections.forEach(({ key, re }) => {
-    const m = text.match(re);
-    if (m) result.analysis[key] = m[1].trim().replace(/\[CHARTS_JSON\][\s\S]*/, '').trim();
-  });
+  function extractSubsection(block, label) {
+    const re = new RegExp('###\\s*(?:' + label + ')[^\n]*\n([\\s\\S]*?)(?=###|$)', 'i');
+    const m = block ? block.match(re) : null;
+    return (m && m[1] != null) ? m[1].trim() : null;
+  }
+
+  const sec1 = text.match(/##\s*1\.[^\n]*([\s\S]*?)(?=##\s*\d+\.|$)/i);
+  if (sec1) {
+    const b = sec1[1];
+    result.analysis['dg-week'] = extractSubsection(b, 'Semaine') || b.trim();
+  }
+
+  const sec2 = text.match(/##\s*2\.[^\n]*([\s\S]*?)(?=##\s*\d+\.|$)/i);
+  if (sec2) {
+    const b = sec2[1];
+    result.analysis['dt-yoy']   = extractSubsection(b, 'YoY|N-1|ann') || b.trim();
+    result.analysis['dt-week']  = extractSubsection(b, 'Semaine') || '';
+    result.analysis['dt-trend'] = extractSubsection(b, 'Hausse|Baisse|Trend') || '';
+  }
+
+  const sec3 = text.match(/##\s*3\.[^\n]*([\s\S]*?)(?=##\s*\d+\.|$)/i);
+  if (sec3) {
+    const b = sec3[1];
+    result.analysis['rk-rank'] = extractSubsection(b, 'Classement|Rank') || b.trim();
+    result.analysis['rk-mom']  = extractSubsection(b, 'MoM|mois') || '';
+    result.analysis['rk-week'] = extractSubsection(b, 'Semaine') || '';
+  }
+
+  const sec4 = text.match(/##\s*4\.[^\n]*([\s\S]*?)(?=##\s*\d+\.|$)/i);
+  if (sec4) {
+    const b = sec4[1];
+    result.analysis['da-week']  = extractSubsection(b, 'Semaine') || b.trim();
+    result.analysis['da-mom']   = extractSubsection(b, 'MoM|mois') || '';
+    result.analysis['da-trend'] = extractSubsection(b, 'Hausse|Baisse|Trend') || '';
+  }
 
   return result;
+}
+
+/* ─────────────────────────────────────────
+   EXPAND MINIMAL CHART FORMAT → Chart.js config
+───────────────────────────────────────── */
+function expandMinimalChart(item) {
+  const colors6 = ['#4285F4','#EA4335','#FBBC05','#34A853','#FF6D00','#7B1FA2'];
+  const baseOpts = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      title: { display: true, text: item.title || item.s, font: { size: 16, weight: 'bold' }, padding: { bottom: 10 } },
+      legend: { display: true, position: 'bottom', labels: { padding: 16, font: { size: 12 } } }
+    },
+    layout: { padding: { top: 10, right: 24, bottom: 10, left: 10 } }
+  };
+
+  if (item.t === 'line') {
+    const datasets = (item.d || []).map((ds, i) => ({
+      label: ds.n,
+      data: ds.v,
+      borderColor: ds.c || colors6[i],
+      backgroundColor: (ds.c || colors6[i]) + '22',
+      borderWidth: ds.bw || 2,
+      borderDash: ds.dash ? [6,3] : [],
+      pointRadius: 3,
+      tension: 0.3,
+      fill: false
+    }));
+    const plugins = { ...baseOpts.plugins };
+    if (item.avg) {
+      plugins.annotation = { annotations: { avgLine: { type: 'line', yMin: item.avg, yMax: item.avg, borderColor: '#FBBC05', borderWidth: 1, borderDash: [4,4], label: { content: 'Avg', display: true, position: 'end', font: { size: 10 } } } } };
+    }
+    const yScale = item.yrev
+      ? { reverse: true }
+      : { beginAtZero: false };
+    return { type: 'line', data: { labels: item.l, datasets }, options: { ...baseOpts, plugins, scales: { x: { grid: { display: false } }, y: yScale } } };
+  }
+
+  if (item.t === 'bar') {
+    const datasets = (item.d || []).map((ds, i) => ({
+      label: ds.n,
+      data: ds.v,
+      backgroundColor: ds.c || colors6[i]
+    }));
+    return { type: 'bar', data: { labels: item.l, datasets }, options: { ...baseOpts, scales: { x: { grid: { display: false } }, y: { beginAtZero: true } } } };
+  }
+
+  if (item.t === 'barstack') {
+    const datasets = (item.d || []).map((ds, i) => ({
+      label: ds.n,
+      data: ds.v,
+      backgroundColor: ds.c || colors6[i],
+      stack: 'stack0'
+    }));
+    return { type: 'bar', data: { labels: item.l, datasets }, options: { ...baseOpts, scales: { x: { grid: { display: false }, stacked: true }, y: { stacked: true, beginAtZero: true } } } };
+  }
+
+  if (item.t === 'doughnut') {
+    const ds = item.d && item.d[0] ? item.d[0] : { v: [] };
+    return { type: 'doughnut', data: { labels: item.l, datasets: [{ data: ds.v, backgroundColor: ['#4285F4','#34A853','#FBBC05','#FF6D00','#7B1FA2','#EA4335'].slice(0, ds.v.length) }] }, options: { ...baseOpts, cutout: '60%', plugins: { ...baseOpts.plugins } } };
+  }
+
+  // fallback: assume it's already a full Chart.js config
+  return item.chartConfig || item;
 }
 
 /* ─────────────────────────────────────────
@@ -541,8 +718,17 @@ function applyData(data) {
     const el = document.getElementById('ana-' + k);
     if (el) el.textContent = v || '—';
   });
+  /* fallback: if no subsections parsed, fill top-level blocks */
+  ['dg-week','dt-yoy','dt-week','dt-trend','rk-rank','rk-mom','rk-week','da-week','da-mom','da-trend'].forEach(id => {
+    const el = document.getElementById('ana-' + id);
+    if (el && el.textContent === 'Waiting for data…') el.textContent = '—';
+  });
   /* charts */
-  data.charts.forEach(({ sheetName, chartConfig }) => renderChart(sheetName, chartConfig));
+  data.charts.forEach(item => {
+    const sheetName = item.sheetName || item.s;
+    const cfg = item.chartConfig ? item.chartConfig : expandMinimalChart(item);
+    renderChart(sheetName, cfg);
+  });
 }
 
 /* ─────────────────────────────────────────
@@ -556,6 +742,39 @@ function setStatus(state, label) {
 /* ─────────────────────────────────────────
    TOAST
 ───────────────────────────────────────── */
+async function exportPDF() {
+  const btn = document.getElementById('pdfBtn');
+  btn.textContent = '⏳ Generating…';
+  btn.disabled = true;
+  try {
+    const { jsPDF } = window.jspdf;
+    const target = document.querySelector('main');
+    const canvas = await html2canvas(target, {
+      scale: 1.5,
+      backgroundColor: '#0d1117',
+      useCORS: true,
+      logging: false
+    });
+    const imgW = 297; // A4 landscape width mm
+    const imgH = (canvas.height * imgW) / canvas.width;
+    const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+    let y = 0;
+    const pageH = 210; // A4 landscape height mm
+    while (y < imgH) {
+      if (y > 0) pdf.addPage();
+      pdf.addImage(canvas, 'PNG', 0, -y, imgW, imgH);
+      y += pageH;
+    }
+    const date = new Date().toISOString().slice(0, 10);
+    pdf.save(`SEO_Sanity_Check_${activeSite.replace(/ /g,'_')}_${date}.pdf`);
+    toast('✅ PDF téléchargé');
+  } catch(e) {
+    toast('❌ Erreur PDF : ' + e.message);
+  }
+  btn.textContent = '⬇ PDF';
+  btn.disabled = false;
+}
+
 function toast(msg, ms = 3000) {
   const el = document.getElementById('toast');
   el.textContent = msg;
@@ -589,51 +808,85 @@ function loadFromPaste() {
    WEBHOOK MODE
 ───────────────────────────────────────── */
 async function loadFromN8N() {
-  const webhookUrl = getWebhookUrl();
-  const isConfigured = !!webhookUrl;
+  const isConfigured = !!getWebhookUrl();
 
   if (!isConfigured) {
-    toast(`ℹ️ No webhook configured for ${activeSite} — showing placeholder data`);
+    toast('ℹ️ Webhook non configuré pour ' + activeSite + ' — données placeholder');
     applyData(PLACEHOLDER);
     setStatus('ok', 'Placeholder');
     document.getElementById('runDate').textContent = 'Report date: placeholder';
     return;
   }
 
-  setStatus('loading', 'Fetching…');
+  setStatus('loading', 'Running AI Agent…');
   document.querySelectorAll('[id^="wrap-"]').forEach(el =>
-    el.innerHTML = '<div class="chart-placeholder loading"><span class="icon">⟳</span><span>Loading…</span></div>'
+    el.innerHTML = '<div class="chart-placeholder loading"><span class="icon">⟳</span><span>AI Agent running — may take 2-3 min…</span></div>'
   );
+  /* live elapsed timer */
+  const startTs = Date.now();
+  const timerEl = document.getElementById('runDate');
+  const timerInterval = setInterval(() => {
+    const s = Math.floor((Date.now() - startTs) / 1000);
+    timerEl.textContent = `Running… ${s}s / ~120s`;
+  }, 1000);
 
   try {
-    const res = await fetch(webhookUrl, { signal: AbortSignal.timeout(60000) });
-    if (!res.ok) throw new Error('HTTP ' + res.status);
+    let res;
+    try {
+      res = await fetch(getWebhookUrl(), { signal: AbortSignal.timeout(300000) });
+    } catch(netErr) {
+      const isCors = netErr instanceof TypeError;
+      throw new Error(isCors
+        ? 'CORS / réseau — vérifie que le workflow est activé et que le nœud "Respond to Webhook" est présent (header Access-Control-Allow-Origin: *)'
+        : 'Réseau : ' + netErr.message);
+    }
+    if (!res.ok) throw new Error('N8N a répondu HTTP ' + res.status + ' — workflow activé ?');
 
-    const body = await res.json();
-    /* N8N Edit Fields1 node outputs { output: "..." } */
-    const rawText = Array.isArray(body)
-      ? (body[0]?.output ?? body[0]?.text ?? JSON.stringify(body))
-      : (body?.output ?? body?.text ?? JSON.stringify(body));
+    const rawBody = await res.text();
+    let rawText = rawBody;
+    /* optional JSON wrapper fallback (legacy payloads) */
+    try {
+      const body = JSON.parse(rawBody);
+      const candidate = Array.isArray(body)
+        ? (body[0]?.output ?? body[0]?.text)
+        : (body?.output ?? body?.text);
+      if (candidate) rawText = candidate;
+    } catch(_) { /* raw text is not JSON — use as-is */ }
 
     const data = parseOutput(rawText);
-    if (data.charts.length === 0) throw new Error('No valid [CHARTS_JSON] in response');
+    if (data.charts.length === 0) {
+      const preview = rawText.slice(0, 400).replace(/</g, '&lt;');
+      throw new Error(`No valid [CHARTS_JSON] in response.<br><br><strong>Réponse reçue (400 premiers caractères) :</strong><br><code style="font-size:11px;word-break:break-all;white-space:pre-wrap">${preview}</code>`);
+    }
 
+    clearInterval(timerInterval);
     applyData(data);
     setStatus('ok', 'Live');
     document.getElementById('runDate').textContent = 'Report date: ' + new Date().toLocaleDateString('en-GB', { day:'2-digit', month:'short', year:'numeric' });
     toast('✅ Dashboard updated from N8N');
 
   } catch(e) {
+    clearInterval(timerInterval);
     setStatus('error', 'Error');
-    toast('❌ ' + e.message, 5000);
+    showErrorBanner(e.message);
     applyData(PLACEHOLDER);
   }
+}
+
+function showErrorBanner(msg) {
+  let banner = document.getElementById('errorBanner');
+  if (!banner) {
+    banner = document.createElement('div');
+    banner.id = 'errorBanner';
+    banner.style.cssText = 'background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.35);border-radius:10px;padding:12px 18px;font-size:13px;color:#fca5a5;margin-bottom:16px;display:flex;align-items:flex-start;gap:10px;';
+    document.querySelector('main').prepend(banner);
+  }
+  banner.innerHTML = `<span style="font-size:18px;flex-shrink:0">❌</span><div><strong style="color:#f87171">Erreur webhook N8N</strong><br>${msg}<br><span style="color:#7d8590;font-size:12px;margin-top:4px;display:block">Les données affichées sont des placeholders. Ouvre F12 → Console pour plus de détails.</span></div><button onclick="this.parentElement.remove()" style="margin-left:auto;background:none;border:none;color:#7d8590;cursor:pointer;font-size:16px;flex-shrink:0">✕</button>`;
 }
 
 /* ─────────────────────────────────────────
    INIT
 ───────────────────────────────────────── */
-renderSiteSwitcher();
 loadFromN8N();
 </script>
 </body>
