@@ -195,38 +195,6 @@
 <main>
 
   <!-- ══ Import bar ══ -->
-  <div class="import-bar">
-    <div class="import-bar-top">
-      <div class="import-info">
-        ⚡ <span>
-          <strong>2 input modes:</strong>
-          set <code>N8N_WEBHOOK_URL</code> for live fetch, or paste the AI Agent output below.
-          The dashboard parses <code>[CHARTS_JSON]</code> + analysis sections automatically.
-        </span>
-      </div>
-      <div class="import-actions">
-        <button class="btn" onclick="togglePaste()">📋 Paste N8N output</button>
-        <button class="btn btn-primary" onclick="loadFromN8N()">↺ Fetch from webhook</button>
-      </div>
-    </div>
-    <div class="import-body" id="importBody">
-      <textarea class="paste-area" id="pasteArea" rows="6"
-        placeholder="Paste the full AI Agent output here (analysis text + [CHARTS_JSON]...[/CHARTS_JSON] block)…"></textarea>
-      <div style="display:flex;gap:8px;align-items:center">
-        <button class="btn btn-primary" onclick="loadFromPaste()">Load pasted output</button>
-        <span class="paste-hint">The agent runs every Monday at 8 AM via N8N Schedule trigger.</span>
-      </div>
-    </div>
-  </div>
-
-  <!-- ══ Drive strip ══ -->
-  <div class="drive-strip">
-    📁 Charts &amp; analysis are also saved to Google Drive →
-    <a href="https://drive.google.com/drive/folders/15-4YK35IWCcJXaQ4LzywC7fKrY4u5vcX" target="_blank">
-      Sanity check SLN
-    </a>
-    &nbsp;·&nbsp; Analysis doc: <code style="background:rgba(255,255,255,.05);padding:1px 5px;border-radius:4px;font-size:11px">Sanity_check_YYYY-MM-DD.doc</code>
-  </div>
 
   <!-- ══ Analysis ══ -->
   <p class="section-label">Weekly analysis — AI Agent (GPT-4o)</p>
