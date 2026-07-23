@@ -735,14 +735,9 @@ async function exportPDF() {
     });
     const imgW = 297; // A4 landscape width mm
     const imgH = (canvas.height * imgW) / canvas.width;
-    const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
-    let y = 0;
-    const pageH = 210; // A4 landscape height mm
-    while (y < imgH) {
-      if (y > 0) pdf.addPage();
-      pdf.addImage(canvas, 'PNG', 0, -y, imgW, imgH);
-      y += pageH;
-    }
+    // Single page sized exactly to content — no empty second page
+    const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: [imgW, imgH] });
+    pdf.addImage(canvas, 'PNG', 0, 0, imgW, imgH);
     const date = new Date().toISOString().slice(0, 10);
     pdf.save(`SEO_Sanity_Check_${activeSite.replace(/ /g,'_')}_${date}.pdf`);
     toast('✅ PDF téléchargé');
