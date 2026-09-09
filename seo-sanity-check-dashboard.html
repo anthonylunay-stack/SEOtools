@@ -355,11 +355,16 @@ function selectSite(name) {
     el.classList.toggle('disabled', !SITES[el.textContent.trim()]);
   });
   document.getElementById('siteMenu').classList.remove('open');
-  // Show cached data if available, otherwise show placeholder (no auto-fetch)
+  // Show cached data if available, otherwise clear and show placeholder (no auto-fetch)
   if (siteCache[name]) {
     applyData(siteCache[name]);
     setStatus('ok', 'Cached');
   } else {
+    // Clear all analysis elements so previous site's data doesn't bleed through
+    ['dg-week','dt-yoy','dt-week','dt-trend','rk-rank','rk-mom','rk-week','da-week','da-mom','da-trend'].forEach(id => {
+      const el = document.getElementById('ana-' + id);
+      if (el) el.textContent = 'Waiting for data…';
+    });
     applyData(PLACEHOLDER);
     setStatus('ready', 'Ready');
     toast('ℹ️ Cliquez sur Refresh pour charger les données de ' + name);
