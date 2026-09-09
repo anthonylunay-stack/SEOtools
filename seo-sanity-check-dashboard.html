@@ -562,10 +562,17 @@ function parseOutput(text) {
     return [];
   }
 
+  /* Strip [CHARTS_JSON] / [/CHARTS_JSON] wrapper tags if present */
+  function stripChartsTags(s) {
+    return s.replace(/\*{0,2}\[CHARTS_JSON\]\*{0,2}/g, '')
+            .replace(/\*{0,2}\[\/CHARTS_JSON\]\*{0,2}/g, '')
+            .trim();
+  }
+
   /* Format v5: compact "chartsJson\n---ANALYSIS---\ntext" from N8N bracket-counting */
   const delimIdx = text.indexOf('\n---ANALYSIS---\n');
   if (delimIdx !== -1) {
-    result.charts = tryParseCharts(text.slice(0, delimIdx).trim());
+    result.charts = tryParseCharts(stripChartsTags(text.slice(0, delimIdx).trim()));
     text = text.slice(delimIdx + 16); // pass analysis part to section parser below
   } else {
     /* Legacy formats */
