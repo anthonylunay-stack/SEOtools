@@ -579,11 +579,11 @@ function parseOutput(text) {
     const tagMatch = text.match(/\*{0,2}\[CHARTS_JSON\]\*{0,2}([\s\S]*?)\*{0,2}\[\/CHARTS_JSON\]\*{0,2}/);
     const openMatch = !tagMatch && text.match(/\*{0,2}\[CHARTS_JSON\]\*{0,2}\s*([\s\S]+)/);
     const bareMatch = !tagMatch && !openMatch && text.match(/```(?:json)?\s*([\s\S]+)/);
-    const rawChunk = tagMatch  ? tagMatch[1]
+    const rawChunk = tagMatch  ? (tagMatch[1].trim() || stripChartsTags(tagMatch[0]))
                    : openMatch ? openMatch[1]
                    : bareMatch ? bareMatch[1]
                    : text;
-    if (rawChunk) result.charts = tryParseCharts(rawChunk.trim());
+    if (rawChunk) result.charts = tryParseCharts(stripChartsTags(rawChunk.trim()));
   }
   if (!Array.isArray(result.charts)) result.charts = [];
   // Accept both legacy format (chartConfig.data) and minimal format (s + t + d)
