@@ -1,0 +1,398 @@
+{
+  "name": "SanityCheck dashboard SLBC",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "Workflow SLBC"
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        12992,
+        11072
+      ],
+      "typeVersion": 1,
+      "id": "bee6ac1c-c111-488d-a5ad-5c029803b1b2",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1iHpl_zLjCYbLZVJ4LYtemVY69WReuuvMN6AKJdGRZwQ",
+          "mode": "list",
+          "cachedResultName": "[AVIVAIPROJ] SLBC Data",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1iHpl_zLjCYbLZVJ4LYtemVY69WReuuvMN6AKJdGRZwQ/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 99822678,
+          "mode": "list",
+          "cachedResultName": "demand_global",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1iHpl_zLjCYbLZVJ4LYtemVY69WReuuvMN6AKJdGRZwQ/edit#gid=99822678"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheetsTool",
+      "typeVersion": 4.7,
+      "position": [
+        13264,
+        11696
+      ],
+      "id": "4d570d19-ea6f-474d-8c3b-053e223d19f2",
+      "name": "Tool_demand_global",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "sKJo0cSICgmr4UFl",
+          "name": "Google Sheets account 11"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1iHpl_zLjCYbLZVJ4LYtemVY69WReuuvMN6AKJdGRZwQ",
+          "mode": "list",
+          "cachedResultName": "[AVIVAIPROJ] SLBC Data",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1iHpl_zLjCYbLZVJ4LYtemVY69WReuuvMN6AKJdGRZwQ/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1156101077,
+          "mode": "list",
+          "cachedResultName": "demand_transaction",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1iHpl_zLjCYbLZVJ4LYtemVY69WReuuvMN6AKJdGRZwQ/edit#gid=1156101077"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheetsTool",
+      "typeVersion": 4.7,
+      "position": [
+        13440,
+        11696
+      ],
+      "id": "b4963002-ef05-445b-9d40-9e93615bd396",
+      "name": "Tool_demand_transaction",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "sKJo0cSICgmr4UFl",
+          "name": "Google Sheets account 11"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1iHpl_zLjCYbLZVJ4LYtemVY69WReuuvMN6AKJdGRZwQ",
+          "mode": "list",
+          "cachedResultName": "[AVIVAIPROJ] SLBC Data",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1iHpl_zLjCYbLZVJ4LYtemVY69WReuuvMN6AKJdGRZwQ/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1639565729,
+          "mode": "list",
+          "cachedResultName": "demand_asset",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1iHpl_zLjCYbLZVJ4LYtemVY69WReuuvMN6AKJdGRZwQ/edit#gid=1639565729"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheetsTool",
+      "typeVersion": 4.7,
+      "position": [
+        13632,
+        11696
+      ],
+      "id": "c3f35d8a-57af-4bf7-a369-4af741d72994",
+      "name": "Tool_demand_asset",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "sKJo0cSICgmr4UFl",
+          "name": "Google Sheets account 11"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1iHpl_zLjCYbLZVJ4LYtemVY69WReuuvMN6AKJdGRZwQ",
+          "mode": "list",
+          "cachedResultName": "[AVIVAIPROJ] SLBC Data",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1iHpl_zLjCYbLZVJ4LYtemVY69WReuuvMN6AKJdGRZwQ/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1642901137,
+          "mode": "list",
+          "cachedResultName": "ranking_global_war",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1iHpl_zLjCYbLZVJ4LYtemVY69WReuuvMN6AKJdGRZwQ/edit#gid=1642901137"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheetsTool",
+      "typeVersion": 4.7,
+      "position": [
+        13808,
+        11696
+      ],
+      "id": "1f4b8e5d-1a00-4bd8-aa2b-d3595f4c92b9",
+      "name": "Tool_ranking_global_war",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "sKJo0cSICgmr4UFl",
+          "name": "Google Sheets account 11"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1iHpl_zLjCYbLZVJ4LYtemVY69WReuuvMN6AKJdGRZwQ",
+          "mode": "list",
+          "cachedResultName": "[AVIVAIPROJ] SLBC Data",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1iHpl_zLjCYbLZVJ4LYtemVY69WReuuvMN6AKJdGRZwQ/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 2090889669,
+          "mode": "list",
+          "cachedResultName": "audience",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1iHpl_zLjCYbLZVJ4LYtemVY69WReuuvMN6AKJdGRZwQ/edit#gid=2090889669"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheetsTool",
+      "typeVersion": 4.7,
+      "position": [
+        13968,
+        11696
+      ],
+      "id": "c2326afb-521c-459b-9359-d1093950fbb5",
+      "name": "Tool_audience",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "sKJo0cSICgmr4UFl",
+          "name": "Google Sheets account 11"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "path": "16e67875-8d1f-4298-ab23-4c083806512a",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        13024,
+        11376
+      ],
+      "id": "93e5344d-ce1c-41dd-8553-097d8f4d7dc3",
+      "name": "Webhook Dashboard",
+      "webhookId": "16e67875-8d1f-4298-ab23-4c083806512a"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-4o",
+          "mode": "list",
+          "cachedResultName": "gpt-4o"
+        },
+        "responsesApiEnabled": false,
+        "options": {
+          "maxTokens": 16384
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        13376,
+        11408
+      ],
+      "id": "e2ac34f4-b545-47f7-a582-75b3431405b6",
+      "name": "OpenAI Chat",
+      "credentials": {
+        "openAiApi": {
+          "id": "apnKNfuPRPt3265G",
+          "name": "OpenAI account 6"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "You are an SEO analyst for the French residential new-build market.\nReport date: {{ $now.format('DD/MM/YYYY') }}\n\nSTEP 1 — Fetch ALL data from every tool first:\n- Tool_demand_global: date, volume\n- Tool_demand_transaction: date, segment.transaction, volume\n- Tool_demand_asset: date, segment.asset, volume\n- Tool_ranking_global_war: date, url_hostname, rank_organic_war\n- Tool_audience: date, type, clicks\n\nSTEP 2 — Output ONLY this compact JSON (no markdown, no explanation before it):\n\n[CHARTS_JSON]\n[\n  {\"s\":\"demand_global\",\"t\":\"line\",\"l\":[...last 13 month labels as \"MMM YYYY\"],\"d\":[{\"n\":\"Current year\",\"v\":[...13 numbers],\"c\":\"#4285F4\"},{\"n\":\"Previous year\",\"v\":[...13 numbers],\"c\":\"#EA4335\",\"dash\":true}],\"avg\":AVERAGE_12M_NUMBER,\"title\":\"Global Demand — YoY: X% | MoM: X%\"},\n  {\"s\":\"demand_transaction\",\"t\":\"bar\",\"l\":[...last 12 months],\"d\":[{\"n\":\"SEGMENT_NAME\",\"v\":[...12 numbers],\"c\":\"#4285F4\"},...],\"title\":\"Transaction Segments — Best: NAME | Declining: NAME\"},\n  {\"s\":\"ranking_global_war\",\"t\":\"line\",\"l\":[...last 12 months],\"d\":[{\"n\":\"HOSTNAME\",\"v\":[...12 ranks],\"c\":\"#4285F4\",\"bw\":4},{\"n\":\"HOSTNAME2\",\"v\":[...],\"c\":\"#EA4335\"},...],\"title\":\"SEO WAR — SLBC: #RANK | TREND\",\"yrev\":true},\n  {\"s\":\"demand_asset\",\"t\":\"barstack\",\"l\":[...last 12 months],\"d\":[{\"n\":\"ASSET_TYPE\",\"v\":[...12 numbers],\"c\":\"#4285F4\"},...],\"title\":\"Demand by Asset — Top: NAME | Declining: NAME\"},\n  {\"s\":\"audience\",\"t\":\"doughnut\",\"l\":[\"Brand\",\"Non-brand\",\"Anonymous\"],\"d\":[{\"n\":\"clicks\",\"v\":[BRAND_TOTAL,NONBRAND_TOTAL,ANON_TOTAL]}],\"title\":\"Audience Split — Brand: X% | Non-brand: Y%\"}\n]\n[/CHARTS_JSON]\n\nSTEP 3 — After the JSON block, write the analysis using EXACTLY these ### headers. IMPORTANT: replace every bullet with REAL computed values from the data — NEVER copy instruction text, always write actual numbers and names.\n\n## 1. demand_global — Market trend\n### Semaine\n- Semaine en cours (dernière semaine disponible) vs semaine précédente : [volume absolu semaine N] vs [volume semaine N-1] → [+/-X%]\n- Tendance : [hausse / baisse / stable]\n\n## 2. demand_transaction — By segment\n### YoY\n- [Segment 1] : [valeur mois en cours] vs [même mois N-1] → [+/-X%]\n- [Segment 2] : ... (répéter pour chaque segment)\n### Semaine\n- [Segment 1] : [valeur semaine N] vs [semaine N-1] → [+/-X%]\n- [Segment 2] : ... (répéter pour chaque segment)\n### Trend\n- Segments en hausse ↑ : [liste des segments avec % positif]\n- Segments en baisse ↓ : [liste des segments avec % négatif]\n\n## 3. ranking_global_war\n### Classement\n- 1. [hostname] — rang actuel : [rank]\n- 2. [hostname] — rang actuel : [rank]\n- ... (tous les sites du dernier mois disponible, classés du meilleur rang au moins bon)\n### MoM\n- [hostname] : rang [mois précédent] → rang [mois en cours] ([+/-X positions])\n- ... (répéter pour chaque site)\n### Semaine\n- [hostname] : rang [semaine N-1] → rang [semaine en cours] ([+/-X positions])\n- ... (répéter pour chaque site)\n\n## 4. demand_asset\n### Semaine\n- [Asset 1] : [valeur semaine N] vs [semaine N-1] → [+/-X%]\n- [Asset 2] : ... (répéter pour chaque segment)\n### MoM\n- [Asset 1] : [valeur mois en cours] vs [mois précédent] → [+/-X%]\n- [Asset 2] : ... (répéter pour chaque segment)\n### Trend\n- Segments en hausse ↑ : [liste]\n- Segments en baisse ↓ : [liste]",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        13488,
+        11264
+      ],
+      "id": "15b8e2c4-06e5-4d0d-aa51-faea9da92704",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "jsCode": "try {\n  const item = $input.first();\n  const output = (item && item.json && item.json.output) ? String(item.json.output) : '';\n\n  if (!output) return [{ json: { output: 'ERROR: AI Agent returned no output' } }];\n\n  // Find [CHARTS_JSON] tag (with optional ** bold markers)\n  const tagIdx = output.search(/\\*{0,2}\\[CHARTS_JSON\\]\\*{0,2}/);\n\n  // If no tag found, try bracket-counting on raw output as fallback\n  if (tagIdx === -1) {\n    const start = output.indexOf('[');\n    if (start !== -1) {\n      let depth = 0, end = -1;\n      for (let i = start; i < output.length; i++) {\n        if (output[i] === '[') depth++;\n        else if (output[i] === ']') { depth--; if (depth === 0) { end = i; break; } }\n      }\n      if (end !== -1) {\n        try {\n          const parsed = JSON.parse(output.slice(start, end + 1));\n          const chartsJson = JSON.stringify(parsed);\n          const analysis = output.slice(end + 1).trim();\n          return [{ json: { output: '[CHARTS_JSON]' + chartsJson + '[/CHARTS_JSON]\\n---ANALYSIS---\\n' + analysis } }];\n        } catch(_) {}\n      }\n    }\n    return [{ json: { output } }];\n  }\n\n  // Get text after tag\n  const after = output.slice(tagIdx).replace(/\\*{0,2}\\[CHARTS_JSON\\]\\*{0,2}/, '').trimStart();\n\n  // Extract JSON array via bracket-counting\n  const start = after.indexOf('[');\n  if (start === -1) return [{ json: { output } }];\n\n  let depth = 0, end = -1;\n  for (let i = start; i < after.length; i++) {\n    if (after[i] === '[') depth++;\n    else if (after[i] === ']') { depth--; if (depth === 0) { end = i; break; } }\n  }\n\n  const rawChartsJson = end !== -1 ? after.slice(start, end + 1) : after.slice(start);\n\n  let chartsJson;\n  try {\n    chartsJson = JSON.stringify(JSON.parse(rawChartsJson));\n  } catch(_) {\n    chartsJson = rawChartsJson;\n  }\n\n  const closeIdx = output.indexOf('[/CHARTS_JSON]');\n  const analysis = closeIdx !== -1 ? output.slice(closeIdx + 14).trim() : '';\n\n  return [{ json: { output: '[CHARTS_JSON]' + chartsJson + '[/CHARTS_JSON]\\n---ANALYSIS---\\n' + analysis } }];\n} catch(e) {\n  return [{ json: { output: 'ERROR: ' + e.message } }];\n}\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        13856,
+        11264
+      ],
+      "id": "fdf7debf-f44f-41c0-9db5-f6b2cd60572b",
+      "name": "Build Webhook Response"
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "={{ $json.output }}",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Access-Control-Allow-Origin",
+                "value": "*"
+              },
+              {
+                "name": "Content-Type",
+                "value": "text/plain; charset=utf-8"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        14064,
+        11264
+      ],
+      "id": "bc52ce46-9a20-4248-bff4-0653e11f8a8a",
+      "name": "Respond to Webhook"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Tool_demand_global": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tool_demand_transaction": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tool_demand_asset": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tool_ranking_global_war": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tool_audience": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook Dashboard": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Build Webhook Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Webhook Response": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "d7c61470-2dc8-4031-ac59-60eeecf8cff4",
+  "meta": {
+    "instanceId": "0d2cc35bf4173ba6547bf653679ba4873189b39fa696743a086f77f7a38c2420"
+  },
+  "nodeGroups": [],
+  "id": "XSkIQwspXVMMGhWK",
+  "tags": []
+}
