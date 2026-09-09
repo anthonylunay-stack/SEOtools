@@ -543,7 +543,16 @@ function parseOutput(text) {
   /* Use bracket-counting to extract a complete JSON array from a string */
   function extractArray(str) {
     str = str.replace(/^```(?:json)?\s*/im, '').trim();
-    const start = str.indexOf('[');
+    const firstBracket = str.indexOf('[');
+    const firstBrace   = str.indexOf('{');
+    // If response is newline-separated objects without outer array, wrap them
+    if (firstBrace !== -1 && (firstBracket === -1 || firstBrace < firstBracket)) {
+      const nonJsonIdx = str.search(/\n---/);
+      const objPart = nonJsonIdx !== -1 ? str.slice(0, nonJsonIdx) : str;
+      const joined = '[' + objPart.trim().replace(/\}\s*\n[\s\n]*\{/g, '},{') + ']';
+      return joined;
+    }
+    const start = firstBracket;
     if (start === -1) return null;
     let depth = 0;
     for (let i = start; i < str.length; i++) {
