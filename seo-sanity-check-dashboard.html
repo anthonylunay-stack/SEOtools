@@ -555,8 +555,12 @@ function parseOutput(text) {
 
   function tryParseCharts(raw) {
     const candidate = extractArray(raw) || raw;
-    try { return JSON.parse(candidate); } catch {}
+    console.log('[parseOutput] tryParseCharts candidate (first 200):', candidate.slice(0,200));
+    try { return JSON.parse(candidate); } catch(e1) {
+      console.warn('[parseOutput] JSON.parse failed:', e1.message, '— trying repair…');
+    }
     try { return JSON.parse(candidate.replace(/,\s*([\]\}])/g, '$1')); } catch(e) {
+      console.error('[parseOutput] repaired JSON.parse failed:', e.message);
       toast('⚠️ JSON parse error: ' + e.message, 5000);
     }
     return [];
@@ -570,10 +574,15 @@ function parseOutput(text) {
   }
 
   /* Format v5: compact "chartsJson\n---ANALYSIS---\ntext" from N8N bracket-counting */
-  const delimIdx = text.indexOf('\n---ANALYSIS---\n');
+  console.log('[parseOutput] raw text (first 300):', text.slice(0,300));
+  const delimIdx = text.search(/\n?---ANALYSIS---\n?/);
   if (delimIdx !== -1) {
-    result.charts = tryParseCharts(stripChartsTags(text.slice(0, delimIdx).trim()));
-    text = text.slice(delimIdx + 16); // pass analysis part to section parser below
+    const delimEnd = text.indexOf('\n', delimIdx + 1);
+    const afterDelim = text.indexOf('\n', delimEnd + 1);
+    const chartsRaw = stripChartsTags(text.slice(0, delimIdx).trim());
+    console.log('[parseOutput] delimIdx path, chartsRaw (first 200):', chartsRaw.slice(0,200));
+    result.charts = tryParseCharts(chartsRaw);
+    text = text.slice(text.indexOf('\n', delimIdx) + 1);
   } else {
     /* Legacy formats */
     const tagMatch = text.match(/\*{0,2}\[CHARTS_JSON\]\*{0,2}([\s\S]*?)\*{0,2}\[\/CHARTS_JSON\]\*{0,2}/);
