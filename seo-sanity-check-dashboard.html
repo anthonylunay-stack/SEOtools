@@ -835,8 +835,8 @@ async function loadFromN8N() {
 
     const data = parseOutput(rawText);
     if (data.charts.length === 0) {
-      const preview = rawText.slice(0, 400).replace(/</g, '&lt;');
-      throw new Error(`No valid [CHARTS_JSON] in response.<br><br><strong>Réponse reçue (400 premiers caractères) :</strong><br><code style="font-size:11px;word-break:break-all;white-space:pre-wrap">${preview}</code>`);
+      const preview = rawText.slice(0, 800).replace(/</g, '&lt;');
+      throw new Error(`No valid [CHARTS_JSON] in response.<br><br><strong>Réponse reçue (800 premiers caractères) :</strong><br><code style="font-size:11px;word-break:break-all;white-space:pre-wrap">${preview}</code><br><br><em>Conseil : vérifiez que le workflow N8N SLBC_3 est bien réimporté et activé.</em>`);
     }
 
     clearInterval(timerInterval);
