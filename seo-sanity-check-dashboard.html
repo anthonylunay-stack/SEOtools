@@ -24,6 +24,14 @@
       --purple:  #9C27B0;
       --orange:  #FF6D00;
     }
+    html.light {
+      --bg:      #f6f8fa;
+      --surface: #ffffff;
+      --card:    #f0f2f5;
+      --border:  #d0d7de;
+      --text:    #1f2328;
+      --muted:   #57606a;
+    }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { background: var(--bg); color: var(--text); font-family: -apple-system, 'Segoe UI', sans-serif; min-height: 100vh; }
 
@@ -190,6 +198,7 @@
       <span id="statusText">Ready</span>
     </div>
     <div class="run-date" id="runDate">Dernier refresh : —</div>
+    <button class="btn" id="themeBtn" onclick="toggleTheme()" title="Basculer mode clair/sombre">🌙</button>
     <button class="btn" onclick="exportPDF()" id="pdfBtn">⬇ PDF</button>
     <button class="btn btn-primary" onclick="loadFromN8N()">↺ Refresh data</button>
   </div>
@@ -345,6 +354,43 @@ document.addEventListener('click', e => {
   if (!document.getElementById('siteSwitcher').contains(e.target))
     document.getElementById('siteMenu').classList.remove('open');
 });
+
+/* ─────────────────────────────────────────
+   THEME TOGGLE
+───────────────────────────────────────── */
+function toggleTheme() {
+  const isLight = document.documentElement.classList.toggle('light');
+  document.getElementById('themeBtn').textContent = isLight ? '🌑' : '🌙';
+  localStorage.setItem('seo-theme', isLight ? 'light' : 'dark');
+  // Re-render all charts with updated colors
+  Object.keys(charts).forEach(k => {
+    const inst = charts[k];
+    if (!inst) return;
+    const textColor = isLight ? '#1f2328' : '#e6edf3';
+    const gridColor = isLight ? 'rgba(0,0,0,.08)' : 'rgba(255,255,255,.06)';
+    if (inst.options.plugins?.title) inst.options.plugins.title.color = textColor;
+    if (inst.options.plugins?.legend?.labels) inst.options.plugins.legend.labels.color = textColor;
+    if (inst.options.scales) {
+      Object.values(inst.options.scales).forEach(sc => {
+        if (sc.ticks) sc.ticks.color = textColor;
+        if (sc.title) sc.title.color = textColor;
+        if (sc.grid) sc.grid.color = gridColor;
+      });
+    }
+    inst.update();
+  });
+}
+// Restore saved theme on load
+(function() {
+  const saved = localStorage.getItem('seo-theme');
+  if (saved === 'light') {
+    document.documentElement.classList.add('light');
+    document.addEventListener('DOMContentLoaded', () => {
+      const btn = document.getElementById('themeBtn');
+      if (btn) btn.textContent = '🌑';
+    });
+  }
+})();
 
 function selectSite(name) {
   activeSite = name;
