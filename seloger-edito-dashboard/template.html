@@ -500,11 +500,14 @@ const ui = { site: null, tab: "tags", letter: null, sortTags: { k: "name", d: "a
 try { const t = store.get("edito.tab"); if (t) ui.tab = t; } catch {}
 const hashTab = location.hash.replace("#", ""); if (["tags","cats","sim"].includes(hashTab)) ui.tab = hashTab;
 
-function load(raw, real, from) {
+const fmtDT = d => { const x = new Date(d); return isNaN(x) ? "" : `${x.toLocaleDateString("fr-FR")} à ${x.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}`; };
+function load(raw, real, from, at) {
   ALL = normalize(raw); isReal = real;
   const src = $("#source");
-  src.textContent = real ? `Flux importé${from ? " · " + from : ""}` : "Données d'exemple (collecte partielle)";
-  src.title = src.textContent; src.classList.toggle("real", real);
+  const when = fmtDT(at);
+  src.textContent = real ? (when ? `Flux importé le ${when}` : "Flux importé") : "Données d'exemple (collecte partielle)";
+  src.title = [from && `Source : ${from}`, raw?.generated_at && `Flux généré le ${fmtDT(raw.generated_at)}`].filter(Boolean).join(" · ") || src.textContent;
+  src.classList.toggle("real", real);
   const saved = store.get("edito.site");
   ui.site = ALL.sites.find(x => x.host === ui.site)?.host || ALL.sites.find(x => x.host === saved)?.host || ALL.sites[0]?.host || DEFAULT_HOST;
   renderSites(); selectSite(ui.site);
@@ -763,7 +766,8 @@ function importText(text, from) {
   let raw; try { raw = JSON.parse(String(text).replace(/^﻿/, "")); } catch (e) { msg("JSON invalide : " + e.message + ". Vérifiez les virgules et les guillemets.", false); return false; }
   const n = normalize(raw);
   if (!n.tags && !n.cats) { msg("Aucun tag ni catégorie reconnu. Il faut au moins un champ url (ou name) par élément.", false); return false; }
-  load(raw, true, from); store.set("edito.json", text); store.set("edito.from", from || ""); lastText = text;
+  const at = new Date().toISOString();
+  load(raw, true, from, at); store.set("edito.json", text); store.set("edito.from", from || ""); store.set("edito.at", at); lastText = text;
   msg(`${n.tags} tags et ${n.cats} catégories chargés${n.articles ? ` depuis ${n.articles} articles` : ""}${n.sites.length > 1 ? `, sur ${n.sites.length} sites` : ""}.`, true);
   showShare(); return true;
 }
@@ -800,7 +804,7 @@ $("#btnUrl").onclick = async () => {
     hint.hidden = false;
   } finally { btn.disabled = false; btn.textContent = "Charger le lien"; }
 };
-$("#btnReset").onclick = () => { store.set("edito.json", null); store.set("edito.from", null); lastText = null; $("#btnShare").hidden = true; load(BASEDATA, BASEREAL, BASEFROM); msg(BASEREAL ? "Flux enregistré rechargé." : "Données d'exemple rechargées.", true); };
+$("#btnReset").onclick = () => { store.set("edito.json", null); store.set("edito.from", null); store.set("edito.at", null); lastText = null; $("#btnShare").hidden = true; load(BASEDATA, BASEREAL, BASEFROM, BASEAT); msg(BASEREAL ? "Flux enregistré rechargé." : "Données d'exemple rechargées.", true); };
 
 /* Enregistrer le flux dans l'artefact, pour tous les lecteurs */
 let artifactApi = null;
@@ -825,18 +829,20 @@ $("#btnShare").onclick = async () => {
 
 /* ---------- Démarrage ---------- */
 let SEED = {}; try { SEED = JSON.parse($("#seed").textContent); } catch {}
-let BASEDATA = SEED, BASEREAL = !!SEED.__real, BASEFROM = SEED.__real ? (SEED.generated_at ? `flux du ${new Date(SEED.generated_at).toLocaleDateString("fr-FR")}` : "flux intégré") : "";
+let BASEAT = SEED.__imported_at || SEED.generated_at || null;
+let BASEDATA = SEED, BASEREAL = !!SEED.__real, BASEFROM = SEED.__real ? "flux intégré au dashboard" : "";
 function boot() {
   const saved = store.get("edito.json");
-  if (saved) { try { lastText = saved; load(JSON.parse(saved), true, store.get("edito.from")); showShare(); return; } catch {} }
-  load(BASEDATA, BASEREAL, BASEFROM);
+  if (saved) { try { lastText = saved; load(JSON.parse(saved), true, store.get("edito.from"), store.get("edito.at")); showShare(); return; } catch {} }
+  load(BASEDATA, BASEREAL, BASEFROM, BASEAT);
 }
 boot();
 fetch("data/flux.json", { cache: "no-store" }).then(r => r.ok ? r.json() : null).then(j => {
   if (!j || !j.data) return;
   BASEDATA = j.data; BASEREAL = true;
   BASEFROM = `${j.source || "flux"} · enregistré le ${new Date(j.savedAt).toLocaleDateString("fr-FR")}`;
-  if (!store.get("edito.json")) load(BASEDATA, true, BASEFROM);
+  BASEAT = j.savedAt;
+  if (!store.get("edito.json")) load(BASEDATA, true, BASEFROM, BASEAT);
 }).catch(() => {});
 })();
 </script>

@@ -7,6 +7,7 @@ Usage :
     python3 build.py chemin/vers/flux.json
     python3 build.py --seed                            # utilise data/seed.json (exemple)
 """
+import datetime
 import json
 import pathlib
 import sys
@@ -34,8 +35,9 @@ def main():
     data, real = load(src)
     if real and isinstance(data, dict):
         data["__real"] = True
+        data["__imported_at"] = datetime.datetime.now(datetime.timezone.utc).isoformat()
     elif real:
-        data = {"items": data, "__real": True}
+        data = {"items": data, "__real": True, "__imported_at": datetime.datetime.now(datetime.timezone.utc).isoformat()}
     payload = json.dumps(data, ensure_ascii=False).replace("</", "<\\/")
     html = (HERE / "template.html").read_text("utf-8").replace("/*__SEED__*/", payload, 1)
     out = HERE / "index.html"
