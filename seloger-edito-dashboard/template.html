@@ -223,7 +223,8 @@ details > summary { cursor: pointer; font-weight: 600 }
   <nav class="tabs" role="tablist">
     <button class="tab" role="tab" id="tab-tags" data-tab="tags">Mapping des tags <span class="n" id="n-tags"></span></button>
     <button class="tab" role="tab" id="tab-cats" data-tab="cats">Mapping des catégories <span class="n" id="n-cats"></span></button>
-    <button class="tab" role="tab" id="tab-sim" data-tab="sim">Tags et catégories similaires <span class="n" id="n-sim"></span></button>
+    <button class="tab" role="tab" id="tab-sim" data-tab="sim">Similaires <span class="n" id="n-sim"></span></button>
+    <button class="tab" role="tab" id="tab-arts" data-tab="arts">Par article <span class="n" id="n-arts"></span></button>
     <button class="tab" role="tab" id="tab-uncat" data-tab="uncat">Articles sans catégorie <span class="n" id="n-uncat"></span></button>
   </nav>
 
@@ -259,6 +260,23 @@ details > summary { cursor: pointer; font-weight: 600 }
     <div class="tablebox" id="catTableBox" hidden><table id="tCats"><thead><tr>
       <th data-k="name">Catégorie</th><th data-k="path">Chemin</th><th data-k="parentName">Rubrique parente</th><th data-k="depth">Niveau</th><th data-k="count">Articles</th><th data-k="url">URL</th>
     </tr></thead><tbody></tbody></table></div>
+  </section>
+
+  <section class="panel" id="p-arts" hidden>
+    <div class="toolbar" id="aTools">
+      <input type="search" id="qArts" placeholder="Rechercher un article, un tag…">
+      <select id="aCat" aria-label="Rubrique"></select>
+      <select id="aState" aria-label="Filtre">
+        <option value="">Tous les articles</option><option value="notag">Sans tag</option><option value="nocat">Sans catégorie</option><option value="many">Plus de 8 tags</option>
+      </select>
+      <button id="copyArts">Copier en CSV</button>
+    </div>
+    <div class="keys" id="aSum"></div>
+    <div class="tablebox" id="aTableBox"><table id="tArts"><thead><tr>
+      <th data-k="title">Article</th><th data-k="catName">Rubrique</th><th data-k="subName">Sous-catégorie</th><th data-k="nTags">Tags</th><th data-k="date">Date</th>
+    </tr></thead><tbody></tbody></table></div>
+    <div class="row" id="aMoreRow" hidden><button id="aMore">Afficher 500 articles de plus</button></div>
+    <div class="empty" id="aEmpty" hidden></div>
   </section>
 
   <section class="panel" id="p-uncat" hidden>
@@ -342,7 +360,7 @@ const SITEK = ["site","nom_du_site","site_name","domain","domaine","host","websi
 
 function normalize(raw) {
   const stores = new Map();
-  const S = h => { h = h || DEFAULT_HOST; if (!stores.has(h)) stores.set(h, { tags: new Map(), cats: new Map(), articles: 0, declared: null, uncategorized: null, uncat: [] }); return stores.get(h); };
+  const S = h => { h = h || DEFAULT_HOST; if (!stores.has(h)) stores.set(h, { tags: new Map(), cats: new Map(), articles: 0, declared: null, uncategorized: null, uncat: [], list: [] }); return stores.get(h); };
   const addTag = (site, t) => {
     const { tags } = S(site); const base = "https://" + (site || DEFAULT_HOST);
     const key = (t.slug || t.name || "").toLowerCase(); if (!key) return;
@@ -366,23 +384,35 @@ function normalize(raw) {
     if (c.parent && !path.includes("/")) prev.parentHint = c.parent;
     cats.set(path, prev); return prev;
   };
+  const CATF = ["categorie","catégorie","category","rubrique","section"], SUBF = ["sous_categorie","sous-categorie","sousCategorie","subcategory","sub_category","sous_rubrique"];
+  const lbl = v => typeof v === "string" ? v : (v && typeof v === "object" ? pick(v, NAME) : "") || "";
   const addArticle = (a, site) => {
     site = hostOf(a.url) || site;
     const p = toPath(a.url || ""); const segs = p.split("/").filter(Boolean);
-    const catPath = a.category_path || (a.category ? null : segs.slice(0, Math.min(2, Math.max(0, segs.length-1))).join("/"));
-    const catName = a.category && typeof a.category === "string" ? a.category : null;
-    const cp = catPath || (catName ? slugify(catName) : "");
-    if (cp) { const c = addCat(site, { path: cp, name: catName && !catPath ? catName : null }); c.count = (c.count ?? 0) + 1;
-      if (cp.includes("/")) addCat(site, { path: cp.split("/")[0] }); }
-    const tl = a.tags || a.tag || a.keywords || [];
+    let catL = lbl(pick(a, CATF)), subL = lbl(pick(a, SUBF));
+    if (!subL && /\s[›>\/]\s/.test(catL)) [catL, subL] = catL.split(/\s[›>\/]\s/).map(x => x.trim());
+    let cp = a.category_path || "";
+    if (!cp && catL) cp = subL ? `${slugify(catL)}/${slugify(subL)}` : slugify(catL);
+    if (!cp && !catL && !("category" in a) && !CATF.some(k => k in a)) cp = segs.slice(0, Math.min(2, Math.max(0, segs.length - 1))).join("/");
+    if (cp) {
+      const top = cp.split("/")[0];
+      const leaf = addCat(site, { path: cp, name: subL || (cp.includes("/") ? null : catL) || null }); leaf.acount = (leaf.acount || 0) + 1;
+      if (cp.includes("/")) { const r = addCat(site, { path: top, name: catL || null }); r.acount = (r.acount || 0) + 1; }
+    }
+    const tl = a.tags || a.tag || a.keywords || a.etiquettes || [];
+    const tagNames = [];
     (Array.isArray(tl) ? tl : String(tl).split(/[,;|]/)).forEach(t => {
       const o = typeof t === "string" ? (t.includes("/") ? { url: t } : { name: t.trim() }) : t;
+      if (!o) return;
       const url = pick(o, URLK); const nm = pick(o, NAME);
       const slug = o.slug || (url ? classify(toPath(url), "tag").slug : slugify(nm));
-      const tg = addTag(hostOf(url) || site, { name: nm, slug, url, cats: cp ? [cp] : [] }); if (tg) tg.count = (tg.count ?? 0) + 1;
+      const tg = addTag(hostOf(url) || site, { name: nm, slug, url, cats: cp ? [cp] : [] });
+      if (tg) { tg.acount = (tg.acount || 0) + 1; tagNames.push(tg.name); }
     });
-    S(site).articles++;
-    if (!cp) S(site).uncat.push(uncatItem(a));
+    const st = S(site); st.articles++;
+    const it = uncatItem(a); it.tags = tagNames; it.cat = cp; it.catL = catL; it.subL = subL;
+    st.list.push(it);
+    if (!cp) st.uncat.push(it);
   };
   const uncatItem = a => typeof a === "string" ? { title: "", url: a, date: "", tags: [] } : {
     title: pick(a, ["title","titre","name","label","h1"]) || "", url: pick(a, URLK) || "",
@@ -438,16 +468,18 @@ function normalize(raw) {
   };
   walk(raw, null, null);
 
-  const sites = [...stores.entries()].map(([host, { tags, cats, articles, declared, uncategorized, uncat }]) => {
+  const sites = [...stores.entries()].map(([host, { tags, cats, articles, declared, uncategorized, uncat, list }]) => {
     const base = "https://" + host;
     [...cats.keys()].forEach(p => { const s = p.split("/"); for (let i = 1; i < s.length; i++) { const pp = s.slice(0, i).join("/"); if (!cats.has(pp)) addCat(host, { path: pp }); } });
+    cats.forEach(c => { if (c.count == null && c.acount) c.count = c.acount; });
+    tags.forEach(t => { if (t.count == null && t.acount) t.count = t.acount; });
     const catList = [...cats.values()].map(c => {
       const segs = c.path.split("/"); const pp = segs.slice(0, -1).join("/");
       if (!c.url) c.url = segs.length === 1 ? `${base}/rubrique/${c.path}` : `${base}/${c.path}`;
       return { ...c, depth: segs.length, parent: pp, parentName: pp ? (cats.get(pp)?.name || pp) : (c.parentHint || "—") };
     });
-    return { host, tags: [...tags.values()].map(t => ({ ...t, cats: [...t.cats] })), cats: catList, articles, declared, uncategorized: uncategorized ?? (uncat.length || null), uncat };
-  }).filter(x => x.tags.length || x.cats.length || x.uncat.length)
+    return { host, tags: [...tags.values()].map(t => ({ ...t, cats: [...t.cats] })), cats: catList, articles, declared: declared ?? (list.length || null), uncategorized: uncategorized ?? (list.length ? uncat.length : null), uncat, list: list.map(x => ({ ...x, catName: x.catL || cats.get(x.cat.split("/")[0])?.name || "", subName: x.subL || (x.cat.includes("/") ? cats.get(x.cat)?.name : "") || "" })) };
+  }).filter(x => x.tags.length || x.cats.length || x.list.length || x.uncat.length)
     .sort((a, b) => (b.tags.length + b.cats.length) - (a.tags.length + a.cats.length));
   return { sites, tags: sites.reduce((n, x) => n + x.tags.length, 0), cats: sites.reduce((n, x) => n + x.cats.length, 0), articles: sites.reduce((n, x) => n + x.articles, 0) };
 }
@@ -521,9 +553,9 @@ function computeSimilar(D, thr, scope) {
 
 /* ---------- État & rendu ---------- */
 let ALL, D, SIM, isReal = false;
-const ui = { site: null, tab: "tags", letter: null, sortTags: { k: "name", d: "asc" }, sortCats: { k: "path", d: "asc" } };
+const ui = { site: null, aLimit: 500, sortArts: { k: "date", d: "desc" }, tab: "tags", letter: null, sortTags: { k: "name", d: "asc" }, sortCats: { k: "path", d: "asc" } };
 try { const t = store.get("edito.tab"); if (t) ui.tab = t; } catch {}
-const hashTab = location.hash.replace("#", ""); if (["tags","cats","sim","uncat"].includes(hashTab)) ui.tab = hashTab;
+const hashTab = location.hash.replace("#", ""); if (["tags","cats","sim","arts","uncat"].includes(hashTab)) ui.tab = hashTab;
 
 const fmtDT = d => { const x = new Date(d); return isNaN(x) ? "" : `${x.toLocaleDateString("fr-FR")} à ${x.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}`; };
 function load(raw, real, from, at) {
@@ -750,6 +782,50 @@ document.addEventListener("mousemove", e => {
 });
 let rz; addEventListener("resize", () => { clearTimeout(rz); rz = setTimeout(() => ui.tab === "cats" && renderCats(), 150); });
 
+/* ---------- Tags et catégories par article ---------- */
+function filteredArts() {
+  const q = slugify($("#qArts").value).replace(/-/g, " "), c = $("#aCat").value, st = $("#aState").value;
+  return D.list.filter(a => (!c || a.cat === c || a.cat.startsWith(c + "/")) &&
+    (st !== "notag" || !a.tags.length) && (st !== "nocat" || !a.cat) && (st !== "many" || a.tags.length > 8) &&
+    (!q || slugify(`${a.title} ${a.url} ${a.catName} ${a.subName} ${a.tags.join(" ")}`).replace(/-/g, " ").includes(q)));
+}
+function renderArts(reset) {
+  const L = D.list || []; $("#n-arts").textContent = L.length || "—";
+  const has = L.length > 0;
+  ["#aTools", "#aSum", "#aTableBox"].forEach(id => $(id).hidden = !has); $("#aEmpty").hidden = has;
+  if (!has) {
+    $("#aMoreRow").hidden = true;
+    $("#aEmpty").innerHTML = `Le flux actuel donne les volumes par tag et par catégorie, mais pas la liste des articles.<br>
+      Pour voir ici les tags et la catégorie de chaque article, ajoutez dans chaque site un tableau <span class="mono">articles</span> :<br>
+      <span class="mono">"articles": [{"title": "…", "url": "…", "date": "2026-09-30", "categorie": "Conseils d'experts", "sous_categorie": "Louer", "tags": ["louer", "bail de location"]}]</span>`;
+    return;
+  }
+  if (reset) {
+    ui.aLimit = 500;
+    const cur = $("#aCat").value;
+    const roots = D.cats.filter(c => c.depth === 1).sort((a, b) => a.name.localeCompare(b.name, "fr"));
+    $("#aCat").innerHTML = `<option value="">Toutes les rubriques</option>` + roots.map(r => `<option value="${esc(r.path)}">${esc(r.name)}</option>` +
+      D.cats.filter(c => c.parent === r.path).sort((a, b) => a.name.localeCompare(b.name, "fr")).map(c => `<option value="${esc(c.path)}">— ${esc(c.name)}</option>`).join("")).join("");
+    $("#aCat").value = [...$("#aCat").options].some(o => o.value === cur) ? cur : "";
+  }
+  const rows = sortRows(filteredArts().map(a => (a.nTags = a.tags.length, a)), ui.sortArts);
+  markSort($("#tArts"), ui.sortArts);
+  const noTag = L.filter(a => !a.tags.length).length, avg = L.reduce((s, a) => s + a.tags.length, 0) / L.length;
+  $("#aSum").innerHTML = `<span><b>${fmt(rows.length)}</b> article${rows.length > 1 ? "s" : ""} affiché${rows.length > 1 ? "s" : ""} sur ${fmt(L.length)}</span><span>${avg.toLocaleString("fr-FR", { maximumFractionDigits: 1 })} tags en moyenne par article</span><span>${fmt(noTag)} sans tag</span><span>${fmt(L.filter(a => !a.cat).length)} sans catégorie</span>`;
+  $("#tArts tbody").innerHTML = rows.slice(0, ui.aLimit).map(a => `<tr>
+    <td>${a.url ? `<a href="${esc(a.url)}" target="_blank" rel="noopener"><b>${esc(a.title || toPath(a.url))}</b></a>` : `<b>${esc(a.title || "—")}</b>`}</td>
+    <td>${a.catName ? `<span class="chip cat">${esc(a.catName)}</span>` : '<span class="chip warn">sans catégorie</span>'}</td>
+    <td>${a.subName ? esc(a.subName) : '<span class="muted">—</span>'}</td>
+    <td>${a.tags.length ? a.tags.map(t => `<span class="chip tag">${esc(t)}</span>`).join("") : '<span class="chip warn">aucun tag</span>'}</td>
+    <td class="mono">${esc(a.date ? String(a.date).slice(0, 10) : "—")}</td></tr>`).join("") || `<tr><td colspan="5" class="muted">Aucun article ne correspond à ces filtres.</td></tr>`;
+  $("#aMoreRow").hidden = rows.length <= ui.aLimit;
+}
+$("#qArts").oninput = () => { ui.aLimit = 500; renderArts(); };
+$("#aCat").onchange = $("#aState").onchange = () => { ui.aLimit = 500; renderArts(); };
+$("#aMore").onclick = () => { ui.aLimit += 500; renderArts(); };
+$("#tArts thead").onclick = e => { const th = e.target.closest("th"); if (!th) return; const s = ui.sortArts; s.d = s.k === th.dataset.k && s.d === "asc" ? "desc" : "asc"; s.k = th.dataset.k; renderArts(); };
+$("#copyArts").onclick = e => copy(csv([["titre","url","date","rubrique","sous_categorie","nb_tags","tags"], ...filteredArts().map(a => [a.title, a.url, a.date, a.catName, a.subName, a.tags.length, a.tags.join(" | ")])]), e.target);
+
 /* ---------- Articles sans catégorie ---------- */
 const ucCount = x => x.uncategorized ?? x.uncat.length;
 function filteredUncat() { const q = slugify($("#qUncat").value).replace(/-/g, " "); return D.uncat.filter(a => !q || slugify(`${a.title} ${a.url} ${a.tags.join(" ")}`).replace(/-/g, " ").includes(q)); }
@@ -782,10 +858,10 @@ $("#copyUncat").onclick = e => copy(csv([["titre","url","date","tags"], ...filte
 function setTab(t) {
   ui.tab = t; store.set("edito.tab", t);
   document.querySelectorAll(".tab").forEach(b => b.setAttribute("aria-selected", b.dataset.tab === t));
-  $("#p-tags").hidden = t !== "tags"; $("#p-cats").hidden = t !== "cats"; $("#p-sim").hidden = t !== "sim"; $("#p-uncat").hidden = t !== "uncat";
+  $("#p-tags").hidden = t !== "tags"; $("#p-cats").hidden = t !== "cats"; $("#p-sim").hidden = t !== "sim"; $("#p-uncat").hidden = t !== "uncat"; $("#p-arts").hidden = t !== "arts";
   if (t === "cats") renderCats();
 }
-function renderAll() { renderKpis(); renderTags(); renderCats(); renderSim(); renderUncat(); setTab(ui.tab); }
+function renderAll() { renderKpis(); renderTags(); renderCats(); renderSim(); renderUncat(); renderArts(true); setTab(ui.tab); }
 
 /* ---------- Copier en CSV ---------- */
 const csv = rows => rows.map(r => r.map(v => { v = String(v ?? ""); return /[",;\n]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v; }).join(";")).join("\n");
