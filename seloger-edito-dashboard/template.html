@@ -296,7 +296,7 @@ const store = { get(k){ try { return localStorage.getItem(k) } catch { return nu
 const pick = (o, keys) => { for (const k of keys) if (o[k] != null && o[k] !== "") return o[k]; };
 const NAME = ["name","label","title","tag","nom","libelle","libellé","titre","category","categorie","catégorie"];
 const URLK = ["url","link","href","loc","permalink","uri","path"];
-const CNT  = ["count","nb","total","articles","nb_articles","nbArticles","article_count","posts","value"];
+const CNT  = ["count","articles_count","nb","total","articles","nb_articles","nbArticles","article_count","posts","value"];
 const deslug = s => decodeURIComponent(s || "").replace(/[-_]+/g, " ").replace(/\s+/g, " ").trim();
 const cap = s => s ? s.charAt(0).toUpperCase() + s.slice(1) : s;
 
@@ -323,11 +323,11 @@ const DEFAULT_HOST = "edito.seloger.com";
 const isHostKey = k => /^(https?:\/\/)?(www\.)?[a-z0-9-]+(\.[a-z0-9-]+)+\/?$/i.test(k) && !/\.(json|csv|xml|html?)$/i.test(k);
 const cleanHost = h => String(h || "").trim().replace(/^https?:\/\//i, "").replace(/^www\./i, "").replace(/\/.*$/, "").toLowerCase();
 const hostOf = u => /^https?:\/\//i.test(u || "") ? (() => { try { return cleanHost(new URL(u).host); } catch { return ""; } })() : "";
-const SITEK = ["site","domain","domaine","host","website","site_url","siteUrl","source_site"];
+const SITEK = ["site","nom_du_site","site_name","domain","domaine","host","website","site_url","siteUrl","source_site"];
 
 function normalize(raw) {
   const stores = new Map();
-  const S = h => { h = h || DEFAULT_HOST; if (!stores.has(h)) stores.set(h, { tags: new Map(), cats: new Map(), articles: 0 }); return stores.get(h); };
+  const S = h => { h = h || DEFAULT_HOST; if (!stores.has(h)) stores.set(h, { tags: new Map(), cats: new Map(), articles: 0, declared: null, uncategorized: null }); return stores.get(h); };
   const addTag = (site, t) => {
     const { tags } = S(site); const base = "https://" + (site || DEFAULT_HOST);
     const key = (t.slug || t.name || "").toLowerCase(); if (!key) return;
@@ -390,6 +390,8 @@ function normalize(raw) {
       else addTag(st, { name, slug: item.slug || slugify(name), count });
     } else {
       // conteneur : { site, tags: [...], categories: [...] }
+      if (site && typeof item.articles_count === "number") S(site).declared = item.articles_count;
+      if (site && typeof item.articles_sans_categorie === "number") S(site).uncategorized = item.articles_sans_categorie;
       return walk(item, h, site);
     }
     const kids = item.children || item.subcategories || item.sous_categories;
@@ -415,7 +417,7 @@ function normalize(raw) {
   };
   walk(raw, null, null);
 
-  const sites = [...stores.entries()].map(([host, { tags, cats, articles }]) => {
+  const sites = [...stores.entries()].map(([host, { tags, cats, articles, declared, uncategorized }]) => {
     const base = "https://" + host;
     [...cats.keys()].forEach(p => { const s = p.split("/"); for (let i = 1; i < s.length; i++) { const pp = s.slice(0, i).join("/"); if (!cats.has(pp)) addCat(host, { path: pp }); } });
     const catList = [...cats.values()].map(c => {
@@ -423,7 +425,7 @@ function normalize(raw) {
       if (!c.url) c.url = segs.length === 1 ? `${base}/rubrique/${c.path}` : `${base}/${c.path}`;
       return { ...c, depth: segs.length, parent: pp, parentName: pp ? (cats.get(pp)?.name || pp) : (c.parentHint || "—") };
     });
-    return { host, tags: [...tags.values()].map(t => ({ ...t, cats: [...t.cats] })), cats: catList, articles };
+    return { host, tags: [...tags.values()].map(t => ({ ...t, cats: [...t.cats] })), cats: catList, articles, declared, uncategorized };
   }).filter(x => x.tags.length || x.cats.length)
     .sort((a, b) => (b.tags.length + b.cats.length) - (a.tags.length + a.cats.length));
   return { sites, tags: sites.reduce((n, x) => n + x.tags.length, 0), cats: sites.reduce((n, x) => n + x.cats.length, 0), articles: sites.reduce((n, x) => n + x.articles, 0) };
@@ -431,7 +433,7 @@ function normalize(raw) {
 function slugify(s) { return String(s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") }
 
 /* ---------- Similarité ---------- */
-const STOP = new Set("de du des la le les l d un une en et a au aux pour par sur dans avec sans ou vs".split(" "));
+const STOP = new Set("de du des la le les l d un une en et a au aux pour par sur dans avec sans ou vs immobilier immobiliere immobilieres immobiliers immo".split(" "));
 const IRREG = { travaux: "travail", baux: "bail", journaux: "journal", locaux: "local", taux: "taux", prix: "prix", impots: "impot", frais: "frais", fois: "fois", pays: "pays", gens: "gens", jus: "jus", bois: "bois", paris: "paris", repas: "repas", dos: "dos", mois: "mois", cas: "cas", poids: "poids", choix: "choix", corps: "corps", voix: "voix", nuisances: "nuisance" };
 function stem(w) {
   if (IRREG[w]) return IRREG[w];
@@ -473,7 +475,7 @@ function computeSimilar(D, thr, scope) {
         const sa = new Set(A.tok), sb = new Set(B.tok);
         const [small, big] = sa.size <= sb.size ? [sa, sb] : [sb, sa];
         const inc = [...small].every(w => big.has(w));
-        if (inc && small.size >= 1 && (small.size >= 2 || [...small][0].length >= 5) && big.size - small.size <= 1) { type = "Variante"; score = Math.max(score, .8); }
+        if (inc && small.size >= 2 && big.size - small.size <= 1) { type = "Variante"; score = Math.max(score, .8); }
         else if (score * 100 >= thr) type = "Proche";
       }
       if (type) pairs.push({ a, b, type, score });
@@ -519,7 +521,7 @@ function selectSite(host) {
 }
 function renderSites() {
   $("#sites").innerHTML = ALL.sites.map(x => `<button class="site" data-h="${esc(x.host)}" aria-pressed="false" title="${esc(x.host)}">
-    <span class="sn">${esc(x.host)}</span><span class="sc">${x.tags.length} tag${x.tags.length > 1 ? "s" : ""} · ${x.cats.length} cat.</span></button>`).join("");
+    <span class="sn">${esc(x.host)}</span><span class="sc">${x.declared != null ? fmt(x.declared) + " art. · " : ""}${x.tags.length} tag${x.tags.length > 1 ? "s" : ""} · ${x.cats.length} cat.</span></button>`).join("");
 }
 $("#sites").onclick = e => { const b = e.target.closest(".site"); if (b) selectSite(b.dataset.h); };
 function recompute() { SIM = computeSimilar(D, +$("#thr").value, $("#simScope").value); D.tags.forEach((t, i) => t.simN = SIM.simCount.get(i) || 0); }
@@ -531,6 +533,7 @@ function renderKpis() {
   const mixed = SIM.groups.filter(g => g.mixed).length;
   const noCount = D.tags.filter(t => t.count == null).length;
   $("#kpis").innerHTML = [
+    ...(D.declared != null ? [[D.declared, "articles", D.uncategorized ? `dont ${fmt(D.uncategorized)} sans catégorie` : "tous catégorisés"]] : []),
     [D.tags.length, "tags", noCount && noCount < D.tags.length ? `${noCount} sans volume d'articles` : (D.tags.some(t => t.count != null) ? "avec volume d'articles" : "volume non fourni")],
     [rub, "rubriques", `${sub} sous-catégories`],
     [SIM.groups.length, "groupes similaires", `${SIM.groups.reduce((s, g) => s + g.members.length, 0)} libellés concernés`],
@@ -588,12 +591,12 @@ function renderCats() {
     return;
   }
   const show = new Set(rows.map(c => c.path)); rows.forEach(c => c.parent && show.add(c.path.split("/")[0]));
-  const tot = r => (r.count || 0) + D.cats.filter(c => c.parent === r.path).reduce((s, c) => s + (c.count || 0), 0);
+  const tot = r => r.count ?? D.cats.filter(c => c.parent === r.path).reduce((s, c) => s + (c.count || 0), 0);
   const roots = D.cats.filter(c => c.depth === 1 && show.has(c.path)).sort((a, b) => tot(b) - tot(a) || a.name.localeCompare(b.name, "fr"));
   const childrenOf = p => D.cats.filter(c => c.parent === p && (show.has(c.path) || !$("#qCats").value)).sort((a, b) => (b.count ?? 0) - (a.count ?? 0) || a.name.localeCompare(b.name, "fr"));
   const maxC = Math.max(1, ...D.cats.filter(c => c.depth > 1).map(c => c.count || 0));
   $("#catTree").innerHTML = roots.length ? roots.map(r => {
-    const kids = childrenOf(r.path); const total = kids.reduce((s, k) => s + (k.count || 0), 0) || r.count;
+    const kids = childrenOf(r.path); const total = tot(r);
     const sub = p => childrenOf(p).map(g => `<li style="padding-left:14px"><a href="${esc(g.url)}" target="_blank" rel="noopener">↳ ${esc(g.name)}</a><span class="mono muted">${g.count ?? ""}</span></li>`).join("");
     return `<article class="node"><header><h3><a href="${esc(r.url)}" target="_blank" rel="noopener">${esc(r.name)}</a></h3><span class="mono muted">${total ? total.toLocaleString("fr-FR") + " art." : ""}</span></header>
       <div class="mono muted">/${esc(r.path)} · ${kids.length} sous-catégorie${kids.length > 1 ? "s" : ""}</div>
@@ -687,7 +690,7 @@ function renderCatViz(rows) {
     const kv = kids.map(k => ({ c: k, v: vol(k) + D.cats.filter(g => g.path.startsWith(k.path + "/")).reduce((s, g) => s + vol(g), 0) }));
     const own = hasCount ? (r.count || 0) - kv.reduce((s, k) => s + k.v, 0) : 0;
     const items = [...kv.filter(k => k.v > 0)];
-    if (own > 0 || !items.length) items.push({ c: r, v: Math.max(own, hasCount ? (r.count || 0) : 1), self: true });
+    if (own > 0 || !items.length) items.push({ c: r, v: own > 0 ? own : (hasCount ? (r.count || 0) : 1), self: true });
     return { r, items, total: items.reduce((s, i) => s + i.v, 0), nKids: kids.length };
   }).filter(g => g.total > 0).sort((a, b) => b.total - a.total);
 
@@ -704,9 +707,9 @@ function renderCatViz(rows) {
     squarify(G.items.sort((a, b) => b.v - a.v), 0, top, G.w - 4, G.h - 4 - top).forEach(c => {
       const pct = hasCount ? 14 + 86 * Math.sqrt(c.v / maxV) : 40;
       const fg = pct > 55 ? "var(--surface)" : "var(--fg)";
-      const label = c.self ? `${c.c.name} (rubrique)` : c.c.name;
+      const label = c.self ? "Sans sous-catégorie" : c.c.name;
       html += `<a class="tm-c" href="${esc(c.c.url)}" target="_blank" rel="noopener" style="left:${c.x}px;top:${c.y}px;width:${c.w}px;height:${c.h}px;background:color-mix(in oklab, var(--accent) ${pct.toFixed(0)}%, var(--surface));color:${fg}"
-        data-tip="${esc(`${G.r.name} › ${c.self ? "articles de la rubrique" : c.c.name}${hasCount ? ` · ${fmt(c.v)} articles` : ""}`)}">${c.w > 46 && c.h > 18 ? `<span>${esc(label)}</span>${hasCount && c.h > 32 ? `<span style="opacity:.8">${fmt(c.v)}</span>` : ""}` : ""}</a>`;
+        data-tip="${esc(`${G.r.name} › ${c.self ? "articles rattachés à la rubrique seule" : c.c.name}${hasCount ? ` · ${fmt(c.v)} articles` : ""}`)}">${c.w > 46 && c.h > 18 ? `<span>${esc(label)}</span>${hasCount && c.h > 32 ? `<span style="opacity:.8">${fmt(c.v)}</span>` : ""}` : ""}</a>`;
     });
     html += `</div>`;
   });
@@ -826,7 +829,7 @@ $("#btnShare").onclick = async () => {
 
 /* ---------- Démarrage ---------- */
 let SEED = {}; try { SEED = JSON.parse($("#seed").textContent); } catch {}
-let BASEDATA = SEED, BASEREAL = !!SEED.__real, BASEFROM = SEED.__real ? "flux intégré" : "";
+let BASEDATA = SEED, BASEREAL = !!SEED.__real, BASEFROM = SEED.__real ? (SEED.generated_at ? `flux du ${new Date(SEED.generated_at).toLocaleDateString("fr-FR")}` : "flux intégré") : "";
 function boot() {
   const saved = store.get("edito.json");
   if (saved) { try { lastText = saved; load(JSON.parse(saved), true, store.get("edito.from")); showShare(); return; } catch {} }
