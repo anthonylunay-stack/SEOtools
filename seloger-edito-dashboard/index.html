@@ -57,12 +57,8 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
 
 .import { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 16px; display: grid; gap: 10px }
 .import .ch { display: flex; justify-content: space-between; gap: 8px; align-items: center }
-.sites { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px }
-.site { display: grid; gap: 0; text-align: left; padding: 6px 12px; border-radius: 8px; line-height: 1.25 }
-.site .sn { font-weight: 600; font-size: .86rem }
-.site .sc { font: .72rem var(--f-mono); color: var(--muted) }
-.site[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--surface) }
-.site[aria-pressed="true"] .sc { color: var(--surface); opacity: .85 }
+.sites { display: block; margin-bottom: 10px; max-width: 100%; font: 600 .9rem var(--f-body); color: var(--fg); background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 7px 32px 7px 10px; cursor: pointer }
+.sites:hover { border-color: var(--accent) }
 header.top > div:first-child { min-width: 0 }
 .hright { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: flex-end; min-width: 0; max-width: 100% }
 .import.pop { position: absolute; z-index: 30; top: calc(100% + 8px); right: 0; width: min(400px, 100%); padding: 12px; gap: 8px; box-shadow: 0 10px 30px rgb(0 0 0 / .16) }
@@ -182,7 +178,7 @@ details > summary { cursor: pointer; font-weight: 600 }
 <div class="wrap">
   <header class="top">
     <div>
-      <nav class="sites" id="sites" aria-label="Sites du flux"></nav>
+      <select class="sites" id="sites" aria-label="Site"></select>
       <h1>TAGs et Rubriques EDITO</h1>
     </div>
     <div class="hright">
@@ -516,14 +512,14 @@ function load(raw, real, from) {
 function selectSite(host) {
   ui.site = host; store.set("edito.site", host);
   D = ALL.sites.find(x => x.host === host) || { host, tags: [], cats: [], articles: 0 };
-  document.querySelectorAll(".site").forEach(b => b.setAttribute("aria-pressed", b.dataset.h === host));
+  $("#sites").value = host;
   ui.letter = null; recompute(); renderAll();
 }
 function renderSites() {
-  $("#sites").innerHTML = ALL.sites.map(x => `<button class="site" data-h="${esc(x.host)}" aria-pressed="false" title="${esc(x.host)}">
-    <span class="sn">${esc(x.host)}</span><span class="sc">${x.declared != null ? fmt(x.declared) + " art. · " : ""}${x.tags.length} tag${x.tags.length > 1 ? "s" : ""} · ${x.cats.length} cat.</span></button>`).join("");
+  $("#sites").innerHTML = ALL.sites.map(x => `<option value="${esc(x.host)}">${esc(x.host)}</option>`).join("");
+  $("#sites").value = ui.site;
 }
-$("#sites").onclick = e => { const b = e.target.closest(".site"); if (b) selectSite(b.dataset.h); };
+$("#sites").onchange = e => selectSite(e.target.value);
 function recompute() { SIM = computeSimilar(D, +$("#thr").value, $("#simScope").value); D.tags.forEach((t, i) => t.simN = SIM.simCount.get(i) || 0); }
 
 function renderKpis() {
