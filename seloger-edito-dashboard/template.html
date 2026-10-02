@@ -157,7 +157,6 @@ details > summary { cursor: pointer; font-weight: 600 }
 .hbar .tr i { display: block; height: 14px; max-height: 14px; border-radius: 0 4px 4px 0; background: var(--accent); min-width: 2px }
 .hbar .tr i.flag { background: var(--warn) }
 .hbar .v { text-align: right; font: .78rem var(--f-mono); font-variant-numeric: tabular-nums; color: var(--muted) }
-.families { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; max-height: 760px; overflow: auto; padding-right: 2px }
 .fam { border: 1px solid var(--line); border-radius: 6px; padding: 8px 10px; display: grid; gap: 6px; align-content: start; background: var(--bg) }
 .fam h4 { margin: 0; font: 600 .85rem var(--f-body); display: flex; justify-content: space-between; gap: 6px }
 .fam .cloud { display: flex; flex-wrap: wrap; gap: 3px 4px; align-items: baseline }
@@ -166,6 +165,7 @@ details > summary { cursor: pointer; font-weight: 600 }
 .keys { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: .78rem; color: var(--muted); align-items: center }
 .sw { display: inline-block; width: 10px; height: 10px; border-radius: 2px; vertical-align: -1px; margin-right: 4px }
 .treemap { position: relative; width: 100%; height: 620px; border-radius: 6px; overflow: hidden; background: var(--surface) }
+.treemap.tall { height: 720px }
 .tm-g { position: absolute; border: 2px solid var(--surface); }
 .tm-g > .tm-t { position: absolute; left: 0; right: 0; top: 0; height: 22px; padding: 2px 6px; font: 600 .75rem var(--f-body); color: var(--fg); background: var(--sunken); overflow: hidden; white-space: nowrap; text-overflow: ellipsis; z-index: 1 }
 .tm-c { position: absolute; border: 1px solid var(--surface); padding: 3px 5px; font-size: .72rem; line-height: 1.2; overflow: hidden; cursor: pointer; text-decoration: none }
@@ -233,7 +233,9 @@ details > summary { cursor: pointer; font-weight: 600 }
       <button id="copyTags">Copier en CSV</button>
     </div>
     <div class="viz wide">
-      <div class="card"><div class="ch"><h3>Familles de tags</h3><span class="keys"><span>tags regroupés par mot racine commun · taille selon le volume d'articles</span><span><i class="sw" style="background:var(--warn)"></i>tag avec libellés similaires</span></span></div><div class="families" id="families"></div></div>
+      <div class="card"><div class="ch"><h3>Familles de tags</h3><span class="keys"><span>moins</span><span class="ramp"></span><span>plus d'articles</span></span></div>
+        <div class="treemap tall" id="tagmap" role="img" aria-label="Carte proportionnelle des familles de tags"></div>
+        <span class="muted" id="tagmapNote" style="font-size:.78rem"></span></div>
     </div>
     <div class="letters" id="letters"></div>
     <div class="tablebox"><table id="tTags"><thead><tr>
@@ -699,11 +701,25 @@ function tagFamilies(list) {
 function renderTagViz(list) {
   const hasCount = list.some(t => t.count != null);
   const fams = tagFamilies(list);
-  const maxC = Math.max(1, ...list.map(t => t.count || 0));
-  $("#families").innerHTML = fams.length ? fams.map(f => `<div class="fam"><h4><span>${esc(cap(f.root))}</span><span class="mono muted">${f.tags.length}${f.vol ? ` · ${fmt(f.vol)} art.` : ""}</span></h4>
-    <div class="cloud">${f.tags.sort((a, b) => (b.count || 0) - (a.count || 0)).map(t => `<a href="${esc(t.url)}" target="_blank" rel="noopener" class="${t.simN ? "sim" : ""}" style="font-size:${hasCount ? (0.72 + 0.5 * Math.sqrt((t.count || 0) / maxC)).toFixed(2) : 0.8}rem"
-      data-tip="${esc(`${t.name}${t.count != null ? ` · ${fmt(t.count)} articles` : ""}${t.simN ? ` · ${t.simN} similaire(s)` : ""}`)}">${esc(t.name)}</a>`).join("")}</div></div>`).join("")
-    : `<div class="muted">Aucun tag pour ce filtre.</div>`;
+  const box = $("#tagmap"); const W = box.clientWidth || 1100, H = box.clientHeight || 720;
+  const val = t => hasCount ? (t.count || 0) : 1;
+  const groups = fams.map(f => ({ f, items: f.tags.map(t => ({ t, v: val(t) })).filter(i => i.v > 0) })).map(g => ({ ...g, v: g.items.reduce((s, i) => s + i.v, 0) })).filter(g => g.v > 0);
+  const maxV = Math.max(1, ...groups.flatMap(g => g.items.map(i => i.v)));
+  let html = "";
+  squarify(groups.sort((a, b) => b.v - a.v), 0, 0, W, H).forEach(G => {
+    const gname = cap(G.f.root);
+    html += `<div class="tm-g" style="left:${G.x}px;top:${G.y}px;width:${G.w}px;height:${G.h}px"><div class="tm-t" data-tip="${esc(`${gname} · ${G.f.tags.length} tags${hasCount ? ` · ${fmt(G.v)} articles` : ""}`)}">${esc(gname)}</div>`;
+    const top = G.h > 40 ? 22 : 0;
+    squarify(G.items.sort((a, b) => b.v - a.v), 0, top, G.w - 4, G.h - 4 - top).forEach(c => {
+      const pct = hasCount ? 14 + 86 * Math.sqrt(c.v / maxV) : 40;
+      const fg = pct > 55 ? "var(--surface)" : "var(--fg)";
+      html += `<a class="tm-c${c.t.simN ? " sim" : ""}" href="${esc(c.t.url)}" target="_blank" rel="noopener" style="left:${c.x}px;top:${c.y}px;width:${c.w}px;height:${c.h}px;background:color-mix(in oklab, var(--accent) ${pct.toFixed(0)}%, var(--surface));color:${fg}"
+        data-tip="${esc(`${gname} › ${c.t.name}${hasCount ? ` · ${fmt(c.v)} articles` : ""}${c.t.simN ? ` · ${c.t.simN} libellé(s) similaire(s)` : ""}`)}">${c.w > 46 && c.h > 18 ? `<span>${esc(c.t.name)}</span>${hasCount && c.h > 32 ? `<span style="opacity:.8">${fmt(c.v)}</span>` : ""}` : ""}</a>`;
+    });
+    html += `</div>`;
+  });
+  box.innerHTML = html || `<div class="empty">Aucun tag pour ce filtre.</div>`;
+  $("#tagmapNote").textContent = hasCount ? "Surface et teinte proportionnelles au nombre d'articles. Les tags sont regroupés par mot racine commun. Cliquez une case pour ouvrir la page du tag." : "Volume d'articles non fourni : chaque tag a la même surface.";
 }
 
 function squarify(items, x, y, w, h) {
@@ -760,7 +776,7 @@ document.addEventListener("mousemove", e => {
   const x = Math.min(e.clientX + 14, innerWidth - tip.offsetWidth - 8), y = e.clientY + 16 + tip.offsetHeight > innerHeight ? e.clientY - tip.offsetHeight - 10 : e.clientY + 16;
   tip.style.left = x + "px"; tip.style.top = y + "px";
 });
-let rz; addEventListener("resize", () => { clearTimeout(rz); rz = setTimeout(() => ui.tab === "cats" && renderCats(), 150); });
+let rz; addEventListener("resize", () => { clearTimeout(rz); rz = setTimeout(() => ui.tab === "cats" ? renderCats() : ui.tab === "tags" && renderTags(), 150); });
 
 /* ---------- Tags et catégories par article ---------- */
 function filteredArts() {
@@ -835,6 +851,7 @@ function setTab(t) {
   document.querySelectorAll(".tab").forEach(b => b.setAttribute("aria-selected", b.dataset.tab === t));
   $("#p-tags").hidden = t !== "tags"; $("#p-cats").hidden = t !== "cats"; $("#p-sim").hidden = t !== "sim"; $("#p-uncat").hidden = t !== "uncat"; $("#p-arts").hidden = t !== "arts";
   if (t === "cats") renderCats();
+  if (t === "tags") renderTags();
 }
 function renderAll() { renderKpis(); renderTags(); renderCats(); renderSim(); renderUncat(); renderArts(true); setTab(ui.tab); }
 
