@@ -157,7 +157,7 @@ details > summary { cursor: pointer; font-weight: 600 }
 .hbar .tr i { display: block; height: 14px; max-height: 14px; border-radius: 0 4px 4px 0; background: var(--accent); min-width: 2px }
 .hbar .tr i.flag { background: var(--warn) }
 .hbar .v { text-align: right; font: .78rem var(--f-mono); font-variant-numeric: tabular-nums; color: var(--muted) }
-.families { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; max-height: 520px; overflow: auto; padding-right: 2px }
+.families { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; max-height: 760px; overflow: auto; padding-right: 2px }
 .fam { border: 1px solid var(--line); border-radius: 6px; padding: 8px 10px; display: grid; gap: 6px; align-content: start; background: var(--bg) }
 .fam h4 { margin: 0; font: 600 .85rem var(--f-body); display: flex; justify-content: space-between; gap: 6px }
 .fam .cloud { display: flex; flex-wrap: wrap; gap: 3px 4px; align-items: baseline }
@@ -232,10 +232,8 @@ details > summary { cursor: pointer; font-weight: 600 }
       <input type="search" id="qTags" placeholder="Rechercher un tag, un slug, une URL…">
       <button id="copyTags">Copier en CSV</button>
     </div>
-    <div class="viz">
-      <div class="card"><div class="ch"><h3 id="tagBarsTitle">Top tags</h3><span class="muted" id="tagBarsSub"></span></div><div class="hbars" id="tagBars"></div>
-        <div class="keys"><span><i class="sw" style="background:var(--accent)"></i>tag</span><span><i class="sw" style="background:var(--warn)"></i>tag avec libellés similaires</span></div></div>
-      <div class="card"><div class="ch"><h3>Familles de tags</h3><span class="muted">tags regroupés par mot racine commun</span></div><div class="families" id="families"></div></div>
+    <div class="viz wide">
+      <div class="card"><div class="ch"><h3>Familles de tags</h3><span class="keys"><span>tags regroupés par mot racine commun · taille selon le volume d'articles</span><span><i class="sw" style="background:var(--warn)"></i>tag avec libellés similaires</span></span></div><div class="families" id="families"></div></div>
     </div>
     <div class="letters" id="letters"></div>
     <div class="tablebox"><table id="tTags"><thead><tr>
@@ -701,18 +699,6 @@ function tagFamilies(list) {
 function renderTagViz(list) {
   const hasCount = list.some(t => t.count != null);
   const fams = tagFamilies(list);
-  if (hasCount) {
-    $("#tagBarsTitle").textContent = "Top 20 tags par volume d'articles";
-    $("#tagBarsSub").textContent = `${list.filter(t => t.count != null).length} tags avec volume`;
-    hbars($("#tagBars"), [...list].filter(t => t.count != null).sort((a, b) => b.count - a.count).slice(0, 20)
-      .map(t => ({ label: t.name, v: t.count, flag: t.simN > 0, q: t.name, tip: `${t.name} : ${fmt(t.count)} articles${t.simN ? ` · ${t.simN} libellé(s) similaire(s)` : ""}` })),
-      r => { $("#qTags").value = r.q; renderTags(); });
-  } else {
-    $("#tagBarsTitle").textContent = "Familles de tags les plus fournies";
-    $("#tagBarsSub").textContent = "volume d'articles non fourni : nombre de tags";
-    hbars($("#tagBars"), fams.filter(f => !f.other).slice(0, 20).map(f => ({ label: f.root, v: f.tags.length, flag: f.tags.some(t => t.simN > 0), q: f.root,
-      tip: `Famille « ${f.root} » : ${f.tags.length} tags` })), r => { $("#qTags").value = r.q; renderTags(); });
-  }
   const maxC = Math.max(1, ...list.map(t => t.count || 0));
   $("#families").innerHTML = fams.length ? fams.map(f => `<div class="fam"><h4><span>${esc(cap(f.root))}</span><span class="mono muted">${f.tags.length}${f.vol ? ` · ${fmt(f.vol)} art.` : ""}</span></h4>
     <div class="cloud">${f.tags.sort((a, b) => (b.count || 0) - (a.count || 0)).map(t => `<a href="${esc(t.url)}" target="_blank" rel="noopener" class="${t.simN ? "sim" : ""}" style="font-size:${hasCount ? (0.72 + 0.5 * Math.sqrt((t.count || 0) / maxC)).toFixed(2) : 0.8}rem"
