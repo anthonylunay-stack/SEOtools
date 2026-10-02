@@ -166,7 +166,7 @@ details > summary { cursor: pointer; font-weight: 600 }
 .fam .cloud a.sim { background: var(--warn-soft); color: var(--warn); box-shadow: inset 0 0 0 1px var(--warn) }
 .keys { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: .78rem; color: var(--muted); align-items: center }
 .sw { display: inline-block; width: 10px; height: 10px; border-radius: 2px; vertical-align: -1px; margin-right: 4px }
-.treemap { position: relative; width: 100%; height: 440px; border-radius: 6px; overflow: hidden; background: var(--surface) }
+.treemap { position: relative; width: 100%; height: 620px; border-radius: 6px; overflow: hidden; background: var(--surface) }
 .tm-g { position: absolute; border: 2px solid var(--surface); }
 .tm-g > .tm-t { position: absolute; left: 0; right: 0; top: 0; height: 22px; padding: 2px 6px; font: 600 .75rem var(--f-body); color: var(--fg); background: var(--sunken); overflow: hidden; white-space: nowrap; text-overflow: ellipsis; z-index: 1 }
 .tm-c { position: absolute; border: 1px solid var(--surface); padding: 3px 5px; font-size: .72rem; line-height: 1.2; overflow: hidden; cursor: pointer; text-decoration: none }
@@ -174,7 +174,7 @@ details > summary { cursor: pointer; font-weight: 600 }
 .tm-c:hover { outline: 2px solid var(--fg); outline-offset: -2px; z-index: 2 }
 .ramp { display: inline-flex; height: 10px; width: 120px; border-radius: 2px; background: linear-gradient(90deg, color-mix(in oklab, var(--accent) 12%, var(--surface)), var(--accent)) }
 #tip { position: fixed; z-index: 50; pointer-events: none; background: var(--fg); color: var(--bg); font-size: .78rem; padding: 6px 9px; border-radius: 6px; max-width: 280px; box-shadow: 0 4px 14px rgb(0 0 0 / .18) }
-@media (max-width: 860px) { .viz { grid-template-columns: 1fr } .treemap { height: 520px } }
+@media (max-width: 860px) { .viz { grid-template-columns: 1fr } .treemap { height: 560px } }
 @media (prefers-reduced-motion: no-preference) { .tab, button { transition: color .15s, border-color .15s, background .15s } }
 @media (max-width: 560px) { h1 { font-size: 1.5rem } .wrap { padding-inline: 16px } }
 </style>
@@ -250,8 +250,7 @@ details > summary { cursor: pointer; font-weight: 600 }
       <select id="catView"><option value="tree">Vue arborescence</option><option value="table">Vue tableau</option></select>
       <button id="copyCats">Copier en CSV</button>
     </div>
-    <div class="viz">
-      <div class="card"><div class="ch"><h3>Volume par rubrique</h3><span class="muted" id="rubBarsSub"></span></div><div class="hbars" id="rubBars"></div></div>
+    <div class="viz wide">
       <div class="card"><div class="ch"><h3>Carte des catégories</h3><span class="keys"><span>moins</span><span class="ramp"></span><span>plus d'articles</span></span></div>
         <div class="treemap" id="treemap" role="img" aria-label="Carte proportionnelle des rubriques et sous-catégories"></div>
         <span class="muted" id="tmNote" style="font-size:.78rem"></span></div>
@@ -750,9 +749,6 @@ function renderCatViz(rows) {
     return { r, items, total: items.reduce((s, i) => s + i.v, 0), nKids: kids.length };
   }).filter(g => g.total > 0).sort((a, b) => b.total - a.total);
 
-  $("#rubBarsSub").textContent = hasCount ? "articles (rubrique + sous-catégories)" : "nombre de sous-catégories";
-  hbars($("#rubBars"), roots.map(g => ({ label: g.r.name, v: hasCount ? g.total : g.nKids, q: g.r.name,
-    tip: `${g.r.name} : ${hasCount ? fmt(g.total) + " articles · " : ""}${g.nKids} sous-catégorie(s)` })), r => { $("#qCats").value = r.q; renderCats(); });
 
   const box = $("#treemap"); const W = box.clientWidth || 700, H = box.clientHeight || 440;
   const maxV = Math.max(1, ...roots.flatMap(g => g.items.map(i => i.v)));
