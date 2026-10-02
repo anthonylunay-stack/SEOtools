@@ -145,7 +145,6 @@ details > summary { cursor: pointer; font-weight: 600 }
 .ucbig { display: flex; flex-wrap: wrap; gap: 4px 12px; align-items: baseline }
 .ucbig b { font: 700 2rem/1.1 var(--f-display); font-variant-numeric: tabular-nums }
 .ucbar { height: 8px; border-radius: 4px } .ucbar i { background: var(--warn) }
-#ucBars .hbar .tr i.flag { background: var(--accent) } #ucBars .hbar .tr i { background: var(--warn) }
 .viz { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: 24px }
 .viz.wide { grid-template-columns: 1fr }
 .card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 18px 20px; display: grid; gap: 14px; align-content: start; min-width: 0 }
@@ -279,12 +278,11 @@ details > summary { cursor: pointer; font-weight: 600 }
   </section>
 
   <section class="panel" id="p-uncat" hidden>
-    <div class="viz">
+    <div class="viz wide">
       <div class="card"><div class="ch"><h3>Sur ce site</h3><span class="muted" id="ucSite"></span></div>
         <div class="ucbig"><b id="ucN"></b><span id="ucPct" class="muted"></span></div>
         <div class="bar ucbar"><i id="ucBar"></i></div>
         <p class="muted" id="ucNote" style="margin:0"></p></div>
-      <div class="card"><div class="ch"><h3>Comparaison entre sites</h3><span class="muted">nombre d'articles · survol : part du site</span></div><div class="hbars" id="ucBars"></div></div>
     </div>
     <div class="toolbar" id="ucTools"><input type="search" id="qUncat" placeholder="Rechercher un article…"><button id="copyUncat">Copier en CSV</button></div>
     <div class="tablebox" id="ucTableBox"><table id="tUncat"><thead><tr><th>Article</th><th>URL</th><th>Date</th><th>Tags</th></tr></thead><tbody></tbody></table></div>
@@ -834,11 +832,6 @@ function renderUncat() {
   $("#ucPct").textContent = pct != null ? `${pct.toLocaleString("fr-FR", { maximumFractionDigits: 1 })} % des ${fmt(tot)} articles` : "";
   $("#ucBar").style.width = pct != null ? Math.max(pct, n ? 0.5 : 0).toFixed(2) + "%" : "0";
   $("#ucNote").textContent = n ? "Ces articles n'apparaissent dans aucune rubrique : ils ne bénéficient pas du maillage des pages catégories." : "Tous les articles de ce site sont rattachés à une catégorie.";
-  const rows = ALL.sites.filter(x => ucCount(x) != null).map(x => {
-    const c = ucCount(x), p = x.declared ? 100 * c / x.declared : null;
-    return { label: x.host, v: c, host: x.host, flag: x.host === D.host, tip: `${x.host} : ${fmt(c)} sans catégorie${p != null ? ` sur ${fmt(x.declared)} (${p.toLocaleString("fr-FR", { maximumFractionDigits: 1 })} %)` : ""}` };
-  }).sort((a, b) => b.v - a.v);
-  hbars($("#ucBars"), rows, r => { selectSite(r.host); setTab("uncat"); });
   const has = D.uncat.length > 0;
   $("#ucTools").hidden = !has; $("#ucTableBox").hidden = !has; $("#ucEmpty").hidden = has;
   if (has) {
