@@ -34,7 +34,7 @@
 * { box-sizing: border-box }
 [hidden] { display: none !important }
 body { background: var(--bg); color: var(--fg); font: 14px/1.5 var(--f-body); }
-.wrap { max-width: 1240px; margin: 0 auto; padding-inline: 20px; padding-block: 24px 64px; display: grid; gap: 20px }
+.wrap { max-width: 1240px; margin: 0 auto; padding-inline: 20px; padding-block: 24px 64px; display: grid; gap: 32px }
 h1, h2, h3 { font-family: var(--f-display); text-wrap: balance; margin: 0; line-height: 1.15 }
 h1 { font-size: 1.9rem; font-weight: 700; letter-spacing: -.01em }
 h2 { font-size: 1.25rem; font-weight: 700 }
@@ -95,7 +95,7 @@ button.link { border: 0; background: none; padding: 4px 0; color: var(--muted); 
 .tab[aria-selected="true"] { color: var(--fg); border-bottom-color: var(--accent) }
 .tab .n { font: 500 .75rem var(--f-mono); background: var(--sunken); color: var(--muted); padding: 1px 6px; border-radius: 999px; margin-left: 6px }
 
-.panel { display: grid; gap: 14px }
+.panel { display: grid; gap: 24px }
 .toolbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center }
 .toolbar input[type=search], .toolbar select { font: inherit; padding: 7px 10px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); color: var(--fg) }
 .toolbar input[type=search] { flex: 1 1 240px; min-width: 0 }
@@ -120,7 +120,7 @@ td a { word-break: break-all }
 .flag { color: var(--crit); font-weight: 600 }
 .more { color: var(--muted); font-size: .82rem }
 
-.tree { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 12px; align-items: start }
+.tree { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; align-items: start }
 .node { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 14px; display: grid; gap: 8px; min-width: 0 }
 .node header { display: flex; justify-content: space-between; gap: 8px; align-items: baseline }
 .node ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px }
@@ -129,7 +129,7 @@ td a { word-break: break-all }
 .bar { display: block; margin-top: 3px; height: 4px; border-radius: 2px; background: var(--sunken); overflow: hidden }
 .bar i { display: block; height: 100%; background: var(--accent) }
 
-.groups { display: grid; gap: 10px }
+.groups { display: grid; gap: 16px }
 .group { background: var(--surface); border: 1px solid var(--line); border-left: 3px solid var(--warn); border-radius: var(--r); padding: 12px 14px; display: grid; gap: 8px }
 .group.crit { border-left-color: var(--crit) }
 .group.mixed { border-left-color: var(--accent) }
@@ -142,9 +142,9 @@ td a { word-break: break-all }
 .empty { padding: 28px; text-align: center; color: var(--muted); background: var(--surface); border: 1px dashed var(--line); border-radius: var(--r) }
 input[type=range] { accent-color: var(--accent) }
 details > summary { cursor: pointer; font-weight: 600 }
-.viz { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: 12px }
+.viz { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: 24px }
 .viz.wide { grid-template-columns: 1fr }
-.card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 14px 16px; display: grid; gap: 10px; align-content: start; min-width: 0 }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 18px 20px; display: grid; gap: 14px; align-content: start; min-width: 0 }
 .card .ch { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 12px; align-items: baseline }
 .hbars { display: grid; gap: 4px }
 .hbar { display: grid; grid-template-columns: minmax(90px, 34%) minmax(0, 1fr) 3.5em; gap: 8px; align-items: center; font-size: .82rem; padding: 2px 0; border-radius: 4px; cursor: pointer; background: none; border: 0; text-align: left; color: var(--fg); width: 100% }
@@ -154,7 +154,7 @@ details > summary { cursor: pointer; font-weight: 600 }
 .hbar .tr i { display: block; height: 14px; max-height: 14px; border-radius: 0 4px 4px 0; background: var(--accent); min-width: 2px }
 .hbar .tr i.flag { background: var(--warn) }
 .hbar .v { text-align: right; font: .78rem var(--f-mono); font-variant-numeric: tabular-nums; color: var(--muted) }
-.families { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 8px; max-height: 520px; overflow: auto; padding-right: 2px }
+.families { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; max-height: 520px; overflow: auto; padding-right: 2px }
 .fam { border: 1px solid var(--line); border-radius: 6px; padding: 8px 10px; display: grid; gap: 6px; align-content: start; background: var(--bg) }
 .fam h4 { margin: 0; font: 600 .85rem var(--f-body); display: flex; justify-content: space-between; gap: 6px }
 .fam .cloud { display: flex; flex-wrap: wrap; gap: 3px 4px; align-items: baseline }
