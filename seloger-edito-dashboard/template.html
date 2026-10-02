@@ -46,7 +46,7 @@ a { color: var(--accent) }
 
 header.top { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 12px 24px }
 header.top .sub { color: var(--muted); max-width: 62ch; margin-top: 4px }
-.source { display: inline-flex; align-items: center; gap: 8px; padding: 4px 10px; border-radius: 999px; font-size: .8rem; font-weight: 500; background: var(--warn-soft); color: var(--warn) }
+.source { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: inline-flex; align-items: center; gap: 8px; padding: 4px 10px; border-radius: 999px; font-size: .8rem; font-weight: 500; background: var(--warn-soft); color: var(--warn) }
 .source.real { background: var(--ok-soft); color: var(--ok) }
 .source::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor }
 
@@ -56,9 +56,19 @@ button.primary { background: var(--accent); border-color: var(--accent); color: 
 button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible, summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px }
 
 .import { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 16px; display: grid; gap: 10px }
+.import .ch { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 12px; align-items: baseline }
+.imodes { display: flex; flex-wrap: wrap; gap: 4px; background: var(--sunken); padding: 3px; border-radius: 8px; width: fit-content; max-width: 100% }
+.imode { border: 0; background: none; padding: 6px 12px; color: var(--muted); font-weight: 600 }
+.imode[aria-selected="true"] { background: var(--surface); color: var(--fg); box-shadow: 0 1px 2px rgb(0 0 0 / .08) }
+.drop { display: grid; gap: 2px; justify-items: center; padding: 22px 14px; cursor: pointer; text-align: center; color: var(--fg) }
+.drop input { position: absolute; width: 1px; height: 1px; opacity: 0 }
+.drop:focus-within { outline: 2px solid var(--accent); outline-offset: 2px }
+#urlIn { flex: 1 1 280px; min-width: 0; font: .88rem var(--f-mono); padding: 8px 10px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); color: var(--fg) }
+.hint { background: var(--warn-soft); color: var(--fg); border-radius: 6px; padding: 10px 12px; font-size: .85rem; display: grid; gap: 6px }
+.hint ol { margin: 0; padding-left: 18px }
 .import textarea { width: 100%; min-height: 140px; font: .82rem/1.45 var(--f-mono); background: var(--sunken); color: var(--fg); border: 1px solid var(--line); border-radius: 6px; padding: 10px; resize: vertical }
 .import .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center }
-.drop { border: 1.5px dashed var(--line); border-radius: 6px; padding: 10px 14px; color: var(--muted) }
+.drop { position: relative; border: 1.5px dashed var(--line); border-radius: 6px }
 .drop.over { border-color: var(--accent); color: var(--accent) }
 .msg { font-size: .85rem }
 .msg.err { color: var(--crit) } .msg.ok { color: var(--ok) }
@@ -163,17 +173,32 @@ details > summary { cursor: pointer; font-weight: 600 }
     <span id="source" class="source">Données d'exemple</span>
   </header>
 
-  <details class="import" id="importBox">
-    <summary>Importer le flux JSON des tags et URLs</summary>
-    <p class="muted" style="margin:0">Collez le JSON ou déposez le fichier. Formats acceptés : un tableau d'objets <span class="mono">{name, url, count, parent}</span>, un objet <span class="mono">{tags:[…], categories:[…]}</span>, un dictionnaire <span class="mono">{"libellé": "url"}</span> ou une simple liste d'URLs. Le type est déduit de l'URL : <span class="mono">/tags/…</span> → tag, <span class="mono">/rubrique/…</span> ou chemin de rubrique → catégorie. Les articles avec un champ <span class="mono">tags</span> sont agrégés.</p>
-    <textarea id="jsonIn" spellcheck="false" placeholder='[{"name":"prêt immobilier","url":"https://edito.seloger.com/tags/pret-immobilier","count":120}]'></textarea>
-    <div class="row">
-      <button class="primary" id="btnLoad">Charger le JSON</button>
-      <label class="drop" id="drop">Déposer un fichier .json ou <input type="file" id="file" accept=".json,application/json"></label>
-      <button id="btnReset">Revenir aux données d'exemple</button>
-      <span class="msg" id="msg" role="status"></span>
+  <section class="import" id="importBox" aria-labelledby="impTitle">
+    <div class="ch"><h2 id="impTitle">Importer le flux</h2><span class="muted">Fichier JSON, lien vers un flux, ou JSON collé</span></div>
+    <div class="imodes" role="tablist">
+      <button class="imode" role="tab" data-m="file" aria-selected="true">Fichier JSON</button>
+      <button class="imode" role="tab" data-m="url" aria-selected="false">Lien (URL)</button>
+      <button class="imode" role="tab" data-m="paste" aria-selected="false">Coller le JSON</button>
     </div>
-  </details>
+    <div class="ipane" data-p="file">
+      <label class="drop" id="drop" for="file"><b>Déposez votre fichier .json ici</b><span class="muted">ou cliquez pour le choisir</span><input type="file" id="file" accept=".json,application/json,text/plain"></label>
+    </div>
+    <div class="ipane" data-p="url" hidden>
+      <div class="row"><input type="url" id="urlIn" value="https://editobasecamp.vercel.app/flux-taxonomies" placeholder="https://…/flux.json"><button class="primary" id="btnUrl">Charger le lien</button></div>
+      <div class="hint" id="urlHint" hidden></div>
+    </div>
+    <div class="ipane" data-p="paste" hidden>
+      <textarea id="jsonIn" spellcheck="false" placeholder='[{"name":"prêt immobilier","url":"https://edito.seloger.com/tags/pret-immobilier","count":120}]'></textarea>
+      <div class="row"><button class="primary" id="btnLoad">Charger le JSON</button></div>
+    </div>
+    <div class="row">
+      <span class="msg" id="msg" role="status"></span>
+      <span style="flex:1"></span>
+      <button id="btnShare" hidden>Enregistrer pour tous les lecteurs</button>
+      <button id="btnReset">Revenir aux données d'exemple</button>
+    </div>
+    <details><summary class="muted">Formats acceptés</summary><p class="muted" style="margin:6px 0 0">Un tableau d'objets <span class="mono">{name, url, count, parent}</span>, un objet <span class="mono">{tags:[…], categories:[…]}</span>, un dictionnaire <span class="mono">{"libellé": "url"}</span> ou une simple liste d'URLs. Le type est déduit de l'URL : <span class="mono">/tags/…</span> → tag, <span class="mono">/rubrique/…</span> ou chemin de rubrique → catégorie. Les articles avec un champ <span class="mono">tags</span> sont agrégés.</p></details>
+  </section>
 
   <section class="kpis" id="kpis"></section>
 
@@ -438,10 +463,11 @@ const ui = { tab: "tags", letter: null, sortTags: { k: "name", d: "asc" }, sortC
 try { const t = store.get("edito.tab"); if (t) ui.tab = t; } catch {}
 const hashTab = location.hash.replace("#", ""); if (["tags","cats","sim"].includes(hashTab)) ui.tab = hashTab;
 
-function load(raw, real) {
+function load(raw, real, from) {
   D = normalize(raw); isReal = real;
   const src = $("#source");
-  src.textContent = real ? "Flux JSON importé" : "Données d'exemple (collecte partielle)";
+  src.textContent = real ? `Flux importé${from ? " · " + from : ""}` : "Données d'exemple (collecte partielle)";
+  src.title = src.textContent;
   src.classList.toggle("real", real);
   recompute(); renderAll();
 }
@@ -659,7 +685,7 @@ const csv = rows => rows.map(r => r.map(v => { v = String(v ?? ""); return /[",;
 async function copy(text, btn) {
   const old = btn.textContent;
   try { await navigator.clipboard.writeText(text); btn.textContent = "Copié"; }
-  catch { const ta = $("#jsonIn"); $("#importBox").open = true; ta.value = text; ta.select(); btn.textContent = "Sélectionné dans la zone d'import"; }
+  catch { const ta = $("#jsonIn"); document.querySelector('.imode[data-m="paste"]').click(); ta.value = text; ta.select(); btn.textContent = "Sélectionné dans la zone d'import"; }
   setTimeout(() => btn.textContent = old, 1800);
 }
 $("#copyTags").onclick = e => copy(csv([["tag","slug","url","articles","categories","similaires"], ...sortRows(filteredTags(), ui.sortTags).map(t => [t.name, t.slug, t.url, t.count, t.cats.join(" | "), t.simN])]), e.target);
@@ -676,26 +702,85 @@ const sorter = (sel, key, fn) => $(sel + " thead").onclick = e => { const th = e
 sorter("#tTags", "sortTags", renderTags); sorter("#tCats", "sortCats", renderCats);
 
 const msg = (t, ok) => { const m = $("#msg"); m.textContent = t; m.className = "msg " + (ok ? "ok" : "err"); };
-function importText(text) {
-  let raw; try { raw = JSON.parse(text); } catch (e) { return msg("JSON invalide : " + e.message + ". Vérifiez les virgules et les guillemets.", false); }
+let lastText = null;
+function importText(text, from) {
+  let raw; try { raw = JSON.parse(String(text).replace(/^﻿/, "")); } catch (e) { msg("JSON invalide : " + e.message + ". Vérifiez les virgules et les guillemets.", false); return false; }
   const n = normalize(raw);
-  if (!n.tags.length && !n.cats.length) return msg("Aucun tag ni catégorie reconnu. Il faut au moins un champ url (ou name) par élément.", false);
-  load(raw, true); store.set("edito.json", text);
+  if (!n.tags.length && !n.cats.length) { msg("Aucun tag ni catégorie reconnu. Il faut au moins un champ url (ou name) par élément.", false); return false; }
+  load(raw, true, from); store.set("edito.json", text); store.set("edito.from", from || ""); lastText = text;
   msg(`${n.tags.length} tags et ${n.cats.length} catégories chargés${n.articles ? ` depuis ${n.articles} articles` : ""}.`, true);
+  showShare(); return true;
 }
-$("#btnLoad").onclick = () => importText($("#jsonIn").value);
-$("#file").onchange = e => { const f = e.target.files[0]; if (f) f.text().then(importText); };
+document.querySelectorAll(".imode").forEach(b => b.onclick = () => {
+  document.querySelectorAll(".imode").forEach(x => x.setAttribute("aria-selected", x === b));
+  document.querySelectorAll(".ipane").forEach(p => p.hidden = p.dataset.p !== b.dataset.m);
+  store.set("edito.imode", b.dataset.m);
+});
+try { const m = store.get("edito.imode"); if (m) document.querySelector(`.imode[data-m="${m}"]`)?.click(); } catch {}
+$("#btnLoad").onclick = () => importText($("#jsonIn").value, "JSON collé");
+$("#file").onchange = e => { const f = e.target.files[0]; if (f) f.text().then(t => importText(t, f.name)); e.target.value = ""; };
 const drop = $("#drop");
 ["dragenter","dragover"].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.add("over"); }));
 ["dragleave","drop"].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.remove("over"); }));
-drop.addEventListener("drop", e => { const f = e.dataTransfer.files[0]; if (f) f.text().then(importText); });
-$("#btnReset").onclick = () => { store.set("edito.json", null); load(SEED, false); msg("Données d'exemple rechargées.", true); };
+drop.addEventListener("drop", e => { const f = e.dataTransfer.files[0]; if (f) f.text().then(t => importText(t, f.name)); });
+document.addEventListener("paste", e => {
+  if (e.target.closest?.("input, textarea")) return;
+  const t = e.clipboardData?.getData("text") || ""; if (/^\s*[\[{]/.test(t)) importText(t, "JSON collé");
+});
+$("#btnUrl").onclick = async () => {
+  const url = $("#urlIn").value.trim(); const hint = $("#urlHint"); hint.hidden = true;
+  if (!/^https?:\/\//.test(url)) return msg("Saisissez un lien complet, commençant par https://", false);
+  const btn = $("#btnUrl"); btn.disabled = true; btn.textContent = "Chargement…";
+  try {
+    const r = await fetch(url, { headers: { Accept: "application/json" } });
+    if (!r.ok) throw new Error("HTTP " + r.status);
+    importText(await r.text(), url);
+  } catch (e) {
+    msg("Le lien n'a pas pu être lu directement depuis cette page.", false);
+    hint.innerHTML = `<b>La page n'a pas l'autorisation d'appeler ${esc(new URL(url).host)}.</b>
+      <ol><li><a href="${esc(url)}" target="_blank" rel="noopener">Ouvrez le flux dans un nouvel onglet</a>.</li>
+      <li>Enregistrez-le (Ctrl+S / Cmd+S) puis déposez le fichier dans l'onglet « Fichier JSON », ou copiez tout le contenu (Ctrl+A puis Ctrl+C) et collez-le n'importe où sur cette page.</li></ol>
+      <span class="muted">En ouvrant le fichier index.html du dépôt directement dans votre navigateur, le chargement par lien fonctionne si le serveur du flux l'autorise.</span>`;
+    hint.hidden = false;
+  } finally { btn.disabled = false; btn.textContent = "Charger le lien"; }
+};
+$("#btnReset").onclick = () => { store.set("edito.json", null); store.set("edito.from", null); lastText = null; $("#btnShare").hidden = true; load(BASEDATA, BASEREAL, BASEFROM); msg(BASEREAL ? "Flux enregistré rechargé." : "Données d'exemple rechargées.", true); };
+
+/* Enregistrer le flux dans l'artefact, pour tous les lecteurs */
+let artifactApi = null;
+function showShare() { $("#btnShare").hidden = !(artifactApi && lastText); }
+window.claude?.use?.("artifact").then(a => { artifactApi = a; showShare(); }).catch(() => {});
+$("#btnShare").onclick = async () => {
+  const b = $("#btnShare"); b.disabled = true; b.textContent = "Enregistrement…";
+  let data; try { data = JSON.parse(lastText); } catch { return; }
+  const payload = JSON.stringify({ source: store.get("edito.from") || "import", savedAt: new Date().toISOString(), data });
+  try {
+    await artifactApi.publish({ "data/flux.json": { content: payload, contentType: "application/json" } });
+    msg("Flux enregistré : tous les lecteurs du lien le verront.", true); b.hidden = true;
+  } catch (e) {
+    const c = e?.code;
+    if (c === "not_writer" || c === "not_granted" || c === "consent_required") { msg("Vous consultez ce dashboard en lecture seule : le flux reste visible pour vous uniquement.", false); b.hidden = true; artifactApi = null; }
+    else if (c === "capability_disabled" || c === "capability_removed" || c === "not_declared") { msg("L'enregistrement partagé n'est pas disponible ici. Le flux reste chargé dans votre navigateur.", false); b.hidden = true; artifactApi = null; }
+    else if (c === "conflict") msg("Une version plus récente vient d'être publiée ; la page se recharge.", false);
+    else if (c === "too_large") msg("Le flux est trop volumineux pour être enregistré dans la page.", false);
+    else msg("L'enregistrement a échoué. Réessayez dans un instant.", false);
+  } finally { b.disabled = false; b.textContent = "Enregistrer pour tous les lecteurs"; }
+};
 
 /* ---------- Démarrage ---------- */
 let SEED = {}; try { SEED = JSON.parse($("#seed").textContent); } catch {}
-const saved = store.get("edito.json");
-let started = false;
-if (saved) { try { load(JSON.parse(saved), true); started = true; } catch {} }
-if (!started) load(SEED, !!SEED.__real);
+let BASEDATA = SEED, BASEREAL = !!SEED.__real, BASEFROM = SEED.__real ? "flux intégré" : "";
+function boot() {
+  const saved = store.get("edito.json");
+  if (saved) { try { lastText = saved; load(JSON.parse(saved), true, store.get("edito.from")); showShare(); return; } catch {} }
+  load(BASEDATA, BASEREAL, BASEFROM);
+}
+boot();
+fetch("data/flux.json", { cache: "no-store" }).then(r => r.ok ? r.json() : null).then(j => {
+  if (!j || !j.data) return;
+  BASEDATA = j.data; BASEREAL = true;
+  BASEFROM = `${j.source || "flux"} · enregistré le ${new Date(j.savedAt).toLocaleDateString("fr-FR")}`;
+  if (!store.get("edito.json")) load(BASEDATA, true, BASEFROM);
+}).catch(() => {});
 })();
 </script>
