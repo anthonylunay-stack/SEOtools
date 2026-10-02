@@ -1,0 +1,550 @@
+<title>Taxonomie SeLoger Edito</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: barre d'outils en haut, bandeau de chiffres clés, puis trois onglets (Tags · Catégories · Similaires) en pleine largeur */
+:root {
+  --bg: #f5f6f8;
+  --surface: #ffffff;
+  --sunken: #eceef3;
+  --fg: #161a24;
+  --muted: #5d6475;
+  --line: #d9dce5;
+  --accent: #2443c9;
+  --accent-soft: #e3e8fb;
+  --crit: #b4232c; --crit-soft: #fbe5e6;
+  --warn: #9a5b00; --warn-soft: #fbefd9;
+  --ok: #1d7a4c;   --ok-soft: #dff3e8;
+  --f-display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --f-body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --f-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  --r: 8px;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0f121a; --surface: #171b26; --sunken: #1f2432; --fg: #e8eaf0; --muted: #9aa1b3; --line: #2c3243;
+  --accent: #8ea4ff; --accent-soft: #232c4d;
+  --crit: #ff8a8f; --crit-soft: #3a1d22; --warn: #f2b45a; --warn-soft: #36291a; --ok: #6fd3a0; --ok-soft: #173326;
+  color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #0f121a; --surface: #171b26; --sunken: #1f2432; --fg: #e8eaf0; --muted: #9aa1b3; --line: #2c3243;
+  --accent: #8ea4ff; --accent-soft: #232c4d;
+  --crit: #ff8a8f; --crit-soft: #3a1d22; --warn: #f2b45a; --warn-soft: #36291a; --ok: #6fd3a0; --ok-soft: #173326;
+  color-scheme: dark }
+
+* { box-sizing: border-box }
+body { background: var(--bg); color: var(--fg); font: 14px/1.5 var(--f-body); }
+.wrap { max-width: 1240px; margin: 0 auto; padding-inline: 20px; padding-block: 24px 64px; display: grid; gap: 20px }
+h1, h2, h3 { font-family: var(--f-display); text-wrap: balance; margin: 0; line-height: 1.15 }
+h1 { font-size: 1.9rem; font-weight: 700; letter-spacing: -.01em }
+h2 { font-size: 1.25rem; font-weight: 700 }
+h3 { font-size: 1rem; font-weight: 500 }
+a { color: var(--accent) }
+.mono { font-family: var(--f-mono); font-size: .86em }
+.muted { color: var(--muted) }
+.label { font-size: .72rem; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); font-weight: 600 }
+
+header.top { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 12px 24px }
+header.top .sub { color: var(--muted); max-width: 62ch; margin-top: 4px }
+.source { display: inline-flex; align-items: center; gap: 8px; padding: 4px 10px; border-radius: 999px; font-size: .8rem; font-weight: 500; background: var(--warn-soft); color: var(--warn) }
+.source.real { background: var(--ok-soft); color: var(--ok) }
+.source::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor }
+
+button, .btn { font: 500 .88rem var(--f-body); border: 1px solid var(--line); background: var(--surface); color: var(--fg); padding: 7px 12px; border-radius: 6px; cursor: pointer }
+button:hover { border-color: var(--accent) }
+button.primary { background: var(--accent); border-color: var(--accent); color: var(--surface) }
+button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible, summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px }
+
+.import { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 16px; display: grid; gap: 10px }
+.import textarea { width: 100%; min-height: 140px; font: .82rem/1.45 var(--f-mono); background: var(--sunken); color: var(--fg); border: 1px solid var(--line); border-radius: 6px; padding: 10px; resize: vertical }
+.import .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center }
+.drop { border: 1.5px dashed var(--line); border-radius: 6px; padding: 10px 14px; color: var(--muted) }
+.drop.over { border-color: var(--accent); color: var(--accent) }
+.msg { font-size: .85rem }
+.msg.err { color: var(--crit) } .msg.ok { color: var(--ok) }
+
+.kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: var(--r); overflow: hidden }
+.kpi { background: var(--surface); padding: 14px 16px; display: grid; gap: 2px }
+.kpi b { font: 700 1.7rem/1.1 var(--f-display); font-variant-numeric: tabular-nums }
+.kpi small { color: var(--muted) }
+
+.tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--line); overflow-x: auto }
+.tab { border: 0; border-bottom: 2px solid transparent; border-radius: 0; background: none; padding: 10px 14px; color: var(--muted); font-weight: 600; white-space: nowrap }
+.tab[aria-selected="true"] { color: var(--fg); border-bottom-color: var(--accent) }
+.tab .n { font: 500 .75rem var(--f-mono); background: var(--sunken); color: var(--muted); padding: 1px 6px; border-radius: 999px; margin-left: 6px }
+
+.panel { display: grid; gap: 14px }
+.toolbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center }
+.toolbar input[type=search], .toolbar select { font: inherit; padding: 7px 10px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); color: var(--fg) }
+.toolbar input[type=search] { flex: 1 1 240px; min-width: 0 }
+.letters { display: flex; flex-wrap: wrap; gap: 2px }
+.letters button { padding: 3px 7px; font: 500 .75rem var(--f-mono); border-color: transparent; background: none; color: var(--muted) }
+.letters button[aria-pressed="true"] { background: var(--accent-soft); color: var(--accent) }
+.letters button:disabled { opacity: .3; cursor: default }
+
+.tablebox { overflow-x: auto; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r) }
+table { border-collapse: collapse; width: 100%; font-size: .88rem }
+th, td { text-align: left; padding: 8px 12px; border-bottom: 1px solid var(--line); vertical-align: top }
+th { font-size: .72rem; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); font-weight: 600; background: var(--sunken); position: sticky; top: 0; cursor: pointer; white-space: nowrap; user-select: none }
+th[data-dir="asc"]::after { content: " ↑" } th[data-dir="desc"]::after { content: " ↓" }
+tbody tr:hover { background: var(--sunken) }
+td.num { text-align: right; font-variant-numeric: tabular-nums; font-family: var(--f-mono) }
+td a { word-break: break-all }
+.chip { display: inline-block; font-size: .75rem; padding: 1px 8px; border-radius: 999px; background: var(--sunken); color: var(--muted); margin: 1px 2px 1px 0; white-space: nowrap }
+.chip.tag { background: var(--accent-soft); color: var(--accent) }
+.chip.cat { background: var(--ok-soft); color: var(--ok) }
+.chip.crit { background: var(--crit-soft); color: var(--crit) }
+.chip.warn { background: var(--warn-soft); color: var(--warn) }
+.flag { color: var(--crit); font-weight: 600 }
+.more { color: var(--muted); font-size: .82rem }
+
+.tree { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 12px; align-items: start }
+.node { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 14px; display: grid; gap: 8px; min-width: 0 }
+.node header { display: flex; justify-content: space-between; gap: 8px; align-items: baseline }
+.node ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px }
+.node li { display: flex; justify-content: space-between; gap: 8px; padding: 3px 0; border-top: 1px dashed var(--line) }
+.node li a { min-width: 0; overflow-wrap: anywhere }
+.bar { height: 4px; border-radius: 2px; background: var(--sunken); overflow: hidden }
+.bar i { display: block; height: 100%; background: var(--accent) }
+
+.groups { display: grid; gap: 10px }
+.group { background: var(--surface); border: 1px solid var(--line); border-left: 3px solid var(--warn); border-radius: var(--r); padding: 12px 14px; display: grid; gap: 8px }
+.group.crit { border-left-color: var(--crit) }
+.group.mixed { border-left-color: var(--accent) }
+.group .head { display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: baseline; justify-content: space-between }
+.group .members { display: flex; flex-wrap: wrap; gap: 6px }
+.member { display: inline-flex; gap: 6px; align-items: baseline; padding: 4px 10px; border: 1px solid var(--line); border-radius: 6px; background: var(--sunken); min-width: 0; max-width: 100% }
+.member a { overflow-wrap: anywhere }
+.pairs { font-size: .82rem; color: var(--muted) }
+.legend { display: flex; flex-wrap: wrap; gap: 8px 16px; font-size: .82rem; color: var(--muted) }
+.empty { padding: 28px; text-align: center; color: var(--muted); background: var(--surface); border: 1px dashed var(--line); border-radius: var(--r) }
+input[type=range] { accent-color: var(--accent) }
+details > summary { cursor: pointer; font-weight: 600 }
+@media (prefers-reduced-motion: no-preference) { .tab, button { transition: color .15s, border-color .15s, background .15s } }
+@media (max-width: 560px) { h1 { font-size: 1.5rem } .wrap { padding-inline: 16px } }
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div>
+      <div class="label">edito.seloger.com · audit SEO</div>
+      <h1>Taxonomie SeLoger Edito</h1>
+      <p class="sub">Mapping des tags et des catégories du site éditorial, avec détection des doublons et des libellés proches qui se font concurrence.</p>
+    </div>
+    <span id="source" class="source">Données d'exemple</span>
+  </header>
+
+  <details class="import" id="importBox">
+    <summary>Importer le flux JSON des tags et URLs</summary>
+    <p class="muted" style="margin:0">Collez le JSON ou déposez le fichier. Formats acceptés : un tableau d'objets <span class="mono">{name, url, count, parent}</span>, un objet <span class="mono">{tags:[…], categories:[…]}</span>, un dictionnaire <span class="mono">{"libellé": "url"}</span> ou une simple liste d'URLs. Le type est déduit de l'URL : <span class="mono">/tags/…</span> → tag, <span class="mono">/rubrique/…</span> ou chemin de rubrique → catégorie. Les articles avec un champ <span class="mono">tags</span> sont agrégés.</p>
+    <textarea id="jsonIn" spellcheck="false" placeholder='[{"name":"prêt immobilier","url":"https://edito.seloger.com/tags/pret-immobilier","count":120}]'></textarea>
+    <div class="row">
+      <button class="primary" id="btnLoad">Charger le JSON</button>
+      <label class="drop" id="drop">Déposer un fichier .json ou <input type="file" id="file" accept=".json,application/json"></label>
+      <button id="btnReset">Revenir aux données d'exemple</button>
+      <span class="msg" id="msg" role="status"></span>
+    </div>
+  </details>
+
+  <section class="kpis" id="kpis"></section>
+
+  <nav class="tabs" role="tablist">
+    <button class="tab" role="tab" id="tab-tags" data-tab="tags">Mapping des tags <span class="n" id="n-tags"></span></button>
+    <button class="tab" role="tab" id="tab-cats" data-tab="cats">Mapping des catégories <span class="n" id="n-cats"></span></button>
+    <button class="tab" role="tab" id="tab-sim" data-tab="sim">Tags et catégories similaires <span class="n" id="n-sim"></span></button>
+  </nav>
+
+  <section class="panel" id="p-tags">
+    <div class="toolbar">
+      <input type="search" id="qTags" placeholder="Rechercher un tag, un slug, une URL…">
+      <button id="copyTags">Copier en CSV</button>
+    </div>
+    <div class="letters" id="letters"></div>
+    <div class="tablebox"><table id="tTags"><thead><tr>
+      <th data-k="name">Tag</th><th data-k="slug">Slug</th><th data-k="url">URL</th><th data-k="count">Articles</th><th data-k="cats">Catégories liées</th><th data-k="simN">Similaires</th>
+    </tr></thead><tbody></tbody></table></div>
+  </section>
+
+  <section class="panel" id="p-cats" hidden>
+    <div class="toolbar">
+      <input type="search" id="qCats" placeholder="Rechercher une catégorie…">
+      <select id="catView"><option value="tree">Vue arborescence</option><option value="table">Vue tableau</option></select>
+      <button id="copyCats">Copier en CSV</button>
+    </div>
+    <div id="catTree" class="tree"></div>
+    <div class="tablebox" id="catTableBox" hidden><table id="tCats"><thead><tr>
+      <th data-k="name">Catégorie</th><th data-k="path">Chemin</th><th data-k="parentName">Rubrique parente</th><th data-k="depth">Niveau</th><th data-k="count">Articles</th><th data-k="url">URL</th>
+    </tr></thead><tbody></tbody></table></div>
+  </section>
+
+  <section class="panel" id="p-sim" hidden>
+    <div class="toolbar">
+      <input type="search" id="qSim" placeholder="Filtrer les groupes…">
+      <select id="simScope">
+        <option value="all">Tags et catégories</option>
+        <option value="tag">Tags entre eux</option>
+        <option value="cat">Catégories entre elles</option>
+        <option value="mixed">Tag ↔ catégorie</option>
+      </select>
+      <label class="muted" for="thr">Seuil de similarité <b id="thrV" class="mono"></b></label>
+      <input type="range" id="thr" min="50" max="95" step="5" value="70">
+      <button id="copySim">Copier en CSV</button>
+    </div>
+    <div class="legend">
+      <span><span class="chip crit">Doublon</span> même libellé une fois normalisé (accents, pluriel, mots vides)</span>
+      <span><span class="chip warn">Variante</span> mêmes mots dans un autre ordre, ou un libellé inclus dans l'autre</span>
+      <span><span class="chip">Proche</span> similarité des trigrammes au-dessus du seuil</span>
+      <span><span class="chip tag">tag</span> <span class="chip cat">catégorie</span></span>
+    </div>
+    <div class="groups" id="groups"></div>
+  </section>
+</div>
+
+<script id="seed" type="application/json">/*__SEED__*/</script>
+<script>
+(() => {
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const BASE = "https://edito.seloger.com";
+const store = { get(k){ try { return localStorage.getItem(k) } catch { return null } }, set(k,v){ try { v == null ? localStorage.removeItem(k) : localStorage.setItem(k,v) } catch {} } };
+
+/* ---------- Normalisation du flux ---------- */
+const pick = (o, keys) => { for (const k of keys) if (o[k] != null && o[k] !== "") return o[k]; };
+const NAME = ["name","label","title","tag","nom","libelle","libellé","titre","category","categorie","catégorie"];
+const URLK = ["url","link","href","loc","permalink","uri","path"];
+const CNT  = ["count","nb","total","articles","nb_articles","nbArticles","article_count","posts","value"];
+const deslug = s => decodeURIComponent(s || "").replace(/[-_]+/g, " ").replace(/\s+/g, " ").trim();
+const cap = s => s ? s.charAt(0).toUpperCase() + s.slice(1) : s;
+
+function toPath(u) {
+  if (!u) return "";
+  try { return new URL(u, BASE).pathname.replace(/\/+$/,"") } catch { return String(u) }
+}
+function classify(path, hint) {
+  const segs = path.split("/").filter(Boolean);
+  if (segs[0] === "tags" || segs[0] === "tag") return { type: "tag", slug: segs.slice(1).join("/") };
+  if (segs[0] === "rubrique") return { type: "cat", path: segs.slice(1).join("/") };
+  if (hint === "tag") return { type: "tag", slug: segs[segs.length-1] || "" };
+  return { type: "cat", path: segs.join("/") };
+}
+function typeHint(v) {
+  v = String(v || "").toLowerCase();
+  if (/tag|etiquette|étiquette|keyword/.test(v)) return "tag";
+  if (/cat|rubri|section|theme|thème/.test(v)) return "cat";
+  if (/article|post|page/.test(v)) return "article";
+  return null;
+}
+
+function normalize(raw) {
+  const tags = new Map(), cats = new Map(), articles = [];
+  const addTag = t => {
+    const key = (t.slug || t.name || "").toLowerCase(); if (!key) return;
+    const prev = tags.get(key) || { name: "", slug: "", url: "", count: null, cats: new Set(), extra: {} };
+    prev.name = prev.name || t.name || deslug(t.slug); prev.slug = prev.slug || t.slug || "";
+    prev.url = prev.url || t.url || (t.slug ? `${BASE}/tags/${t.slug}` : "");
+    if (t.count != null && !isNaN(+t.count)) prev.count = (prev.count ?? 0) + +t.count;
+    (t.cats || []).forEach(c => c && prev.cats.add(c));
+    tags.set(key, prev);
+  };
+  const addCat = c => {
+    let path = (c.path || "").replace(/^\/+|\/+$/g, "");
+    if (!path && c.parent && c.name) path = `${slugify(c.parent)}/${slugify(c.name)}`;
+    if (!path && c.name) path = slugify(c.name);
+    if (!path) return;
+    const prev = cats.get(path) || { name: "", path, url: "", count: null };
+    prev.name = prev.name || c.name || cap(deslug(path.split("/").pop()));
+    prev.url = prev.url || c.url || "";
+    if (c.count != null && !isNaN(+c.count)) prev.count = (prev.count ?? 0) + +c.count;
+    if (c.parent && !path.includes("/")) prev.parentHint = c.parent;
+    cats.set(path, prev);
+  };
+  const addArticle = (a) => {
+    const p = toPath(a.url || ""); const segs = p.split("/").filter(Boolean);
+    const catPath = a.category_path || (a.category ? null : segs.slice(0, Math.min(2, Math.max(0, segs.length-1))).join("/"));
+    const catName = a.category && typeof a.category === "string" ? a.category : null;
+    const cp = catPath || (catName ? slugify(catName) : "");
+    if (cp) { addCat({ path: cp, name: catName && !catPath ? catName : null }); const c = cats.get(cp); c.count = (c.count ?? 0) + 1;
+      if (cp.includes("/")) addCat({ path: cp.split("/")[0] }); }
+    const tl = a.tags || a.tag || a.keywords || [];
+    (Array.isArray(tl) ? tl : String(tl).split(/[,;|]/)).forEach(t => {
+      const o = typeof t === "string" ? (t.includes("/") ? { url: t } : { name: t.trim() }) : t;
+      const url = pick(o, URLK); const nm = pick(o, NAME);
+      const slug = o.slug || (url ? classify(toPath(url), "tag").slug : slugify(nm));
+      addTag({ name: nm, slug, url, cats: cp ? [cp] : [] });
+      const k = (slug || nm || "").toLowerCase(); const tg = tags.get(k); if (tg) tg.count = (tg.count ?? 0) + 1;
+    });
+    articles.push(a);
+  };
+  const handle = (item, hint) => {
+    if (item == null) return;
+    if (typeof item === "string") { const c = classify(toPath(item), hint); c.type === "tag" ? addTag({ slug: c.slug, url: item.startsWith("http") ? item : BASE + toPath(item) }) : addCat({ path: c.path, url: item.startsWith("http") ? item : BASE + toPath(item) }); return; }
+    if (typeof item !== "object") return;
+    const h = typeHint(item.type || item.kind || item.taxonomy) || hint;
+    if (h === "article" || (Array.isArray(item.tags) && (item.url || item.title))) return addArticle(item);
+    const url = pick(item, URLK); const name = pick(item, NAME); const count = pick(item, CNT);
+    const parent = item.parent_name || item.parentName || item.parent || item.rubrique || item.section;
+    if (url) {
+      const c = classify(toPath(url), h);
+      if (h === "tag" || (c.type === "tag" && h !== "cat")) addTag({ name, slug: item.slug || c.slug, url, count });
+      else addCat({ name, path: c.path, url, count, parent: typeof parent === "string" ? parent : null });
+    } else if (name || item.slug) {
+      if (h === "cat") addCat({ name, path: item.path, count, parent: typeof parent === "string" ? parent : null });
+      else addTag({ name, slug: item.slug || slugify(name), count });
+    }
+    const kids = item.children || item.subcategories || item.sous_categories;
+    if (Array.isArray(kids)) kids.forEach(k => handle(typeof k === "object" ? { ...k, parent: k.parent || name } : k, "cat"));
+  };
+  const walk = (node, hint) => {
+    if (Array.isArray(node)) return node.forEach(n => handle(n, hint));
+    if (node && typeof node === "object") {
+      const keys = Object.keys(node);
+      const arrKeys = keys.filter(k => Array.isArray(node[k]) || (node[k] && typeof node[k] === "object"));
+      if (!arrKeys.length) { keys.forEach(k => { const v = node[k]; typeof v === "string" ? handle({ name: k, url: v }, hint) : (typeof v === "number" ? handle({ name: k, count: v }, hint) : 0) }); return; }
+      keys.forEach(k => {
+        const h = typeHint(k) || hint; const v = node[k];
+        if (Array.isArray(v)) walk(v, h);
+        else if (v && typeof v === "object") {
+          const vals = Object.values(v);
+          if (vals.length && vals.every(x => typeof x === "string" || typeof x === "number")) Object.entries(v).forEach(([n, x]) => handle(typeof x === "string" ? { name: n, url: x } : { name: n, count: x }, h));
+          else walk(v, h);
+        }
+      });
+    }
+  };
+  walk(raw, null);
+
+  // compléter les rubriques parentes
+  [...cats.keys()].forEach(p => { const s = p.split("/"); for (let i = 1; i < s.length; i++) { const pp = s.slice(0, i).join("/"); if (!cats.has(pp)) addCat({ path: pp }); } });
+  const catList = [...cats.values()].map(c => {
+    const segs = c.path.split("/"); const pp = segs.slice(0, -1).join("/");
+    if (!c.url) c.url = segs.length === 1 ? `${BASE}/rubrique/${c.path}` : `${BASE}/${c.path}`;
+    return { ...c, depth: segs.length, parent: pp, parentName: pp ? (cats.get(pp)?.name || pp) : (c.parentHint || "—") };
+  });
+  const tagList = [...tags.values()].map(t => ({ ...t, cats: [...t.cats] }));
+  return { tags: tagList, cats: catList, articles: articles.length };
+}
+function slugify(s) { return String(s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") }
+
+/* ---------- Similarité ---------- */
+const STOP = new Set("de du des la le les l d un une en et a au aux pour par sur dans avec sans ou vs".split(" "));
+const IRREG = { travaux: "travail", baux: "bail", journaux: "journal", locaux: "local", taux: "taux", prix: "prix", impots: "impot", frais: "frais", fois: "fois", pays: "pays", gens: "gens", jus: "jus", bois: "bois", paris: "paris", repas: "repas", dos: "dos", mois: "mois", cas: "cas", poids: "poids", choix: "choix", corps: "corps", voix: "voix", nuisances: "nuisance" };
+function stem(w) {
+  if (IRREG[w]) return IRREG[w];
+  if (w.length > 4 && w.endsWith("aux")) return w.slice(0, -3) + "al";
+  if (w.length > 3 && /[sx]$/.test(w)) w = w.slice(0, -1);
+  if (w.length > 5 && /(ere|ier)$/.test(w)) w = w.replace(/ere$/, "er"); // locataire, propriétaire restent tels quels
+  if (w.length > 4 && w.endsWith("e") && !w.endsWith("ee")) w = w.slice(0, -1); // féminin simple
+  return w;
+}
+function tokens(label) {
+  return slugify(label).split("-").filter(w => w && !STOP.has(w)).map(stem);
+}
+function trigrams(s) { const g = new Set(); s = `  ${s} `; for (let i = 0; i < s.length - 2; i++) g.add(s.slice(i, i + 3)); return g; }
+function dice(a, b) { let n = 0; a.forEach(x => b.has(x) && n++); return (2 * n) / (a.size + b.size || 1); }
+
+function computeSimilar(D, thr, scope) {
+  const items = [
+    ...D.tags.map((t, i) => ({ kind: "tag", i, label: t.name || t.slug, url: t.url })),
+    ...D.cats.map((c, i) => ({ kind: "cat", i, label: c.name, url: c.url, path: c.path })),
+  ].filter(x => x.label);
+  items.forEach(x => { x.tok = tokens(x.label); x.key = x.tok.join(" "); x.sorted = [...x.tok].sort().join(" "); x.tg = trigrams(x.key); });
+  const pairs = [];
+  const okScope = (a, b) => scope === "all" || (scope === "mixed" ? a.kind !== b.kind : a.kind === scope && b.kind === scope);
+  // index par trigramme pour éviter le O(n²) complet
+  const idx = new Map();
+  items.forEach((x, n) => x.tg.forEach(g => { if (!idx.has(g)) idx.set(g, []); idx.get(g).push(n); }));
+  for (let a = 0; a < items.length; a++) {
+    const A = items[a]; if (!A.key) continue;
+    const cand = new Map();
+    A.tg.forEach(g => (idx.get(g) || []).forEach(b => { if (b > a) cand.set(b, (cand.get(b) || 0) + 1); }));
+    cand.forEach((_, b) => {
+      const B = items[b]; if (!B.key || !okScope(A, B)) return;
+      // une catégorie et sa propre rubrique parente ne sont pas des doublons
+      if (A.kind === "cat" && B.kind === "cat" && (A.path.startsWith(B.path + "/") || B.path.startsWith(A.path + "/")) && A.key !== B.key) return;
+      let type = null, score = dice(A.tg, B.tg);
+      if (A.key === B.key) { type = "Doublon"; score = 1; }
+      else if (A.sorted === B.sorted) { type = "Variante"; score = Math.max(score, .95); }
+      else {
+        const sa = new Set(A.tok), sb = new Set(B.tok);
+        const [small, big] = sa.size <= sb.size ? [sa, sb] : [sb, sa];
+        const inc = [...small].every(w => big.has(w));
+        if (inc && small.size >= 1 && (small.size >= 2 || [...small][0].length >= 5) && big.size - small.size <= 1) { type = "Variante"; score = Math.max(score, .8); }
+        else if (score * 100 >= thr) type = "Proche";
+      }
+      if (type) pairs.push({ a, b, type, score });
+    });
+  }
+  // regroupement (union-find)
+  const par = items.map((_, i) => i); const find = i => par[i] === i ? i : (par[i] = find(par[i]));
+  pairs.forEach(p => { par[find(p.a)] = find(p.b); });
+  const groups = new Map();
+  pairs.forEach(p => { const r = find(p.a); if (!groups.has(r)) groups.set(r, { members: new Set(), pairs: [] }); const g = groups.get(r); g.members.add(p.a); g.members.add(p.b); g.pairs.push(p); });
+  const rank = { Doublon: 3, Variante: 2, Proche: 1 };
+  const out = [...groups.values()].map(g => {
+    const mem = [...g.members].map(i => items[i]);
+    const worst = g.pairs.reduce((m, p) => rank[p.type] > rank[m] ? p.type : m, "Proche");
+    const kinds = new Set(mem.map(m => m.kind));
+    return { members: mem, pairs: g.pairs, type: worst, mixed: kinds.size > 1, max: Math.max(...g.pairs.map(p => p.score)) };
+  }).sort((x, y) => rank[y.type] - rank[x.type] || y.members.length - x.members.length || y.max - x.max);
+  const simCount = new Map();
+  out.forEach(g => g.members.forEach(m => m.kind === "tag" && simCount.set(m.i, g.members.length - 1)));
+  return { groups: out, items, simCount };
+}
+
+/* ---------- État & rendu ---------- */
+let D, SIM, isReal = false;
+const ui = { tab: "tags", letter: null, sortTags: { k: "name", d: "asc" }, sortCats: { k: "path", d: "asc" } };
+try { const t = store.get("edito.tab"); if (t) ui.tab = t; } catch {}
+const hashTab = location.hash.replace("#", ""); if (["tags","cats","sim"].includes(hashTab)) ui.tab = hashTab;
+
+function load(raw, real) {
+  D = normalize(raw); isReal = real;
+  const src = $("#source");
+  src.textContent = real ? "Flux JSON importé" : "Données d'exemple (collecte partielle)";
+  src.classList.toggle("real", real);
+  recompute(); renderAll();
+}
+function recompute() { SIM = computeSimilar(D, +$("#thr").value, $("#simScope").value); D.tags.forEach((t, i) => t.simN = SIM.simCount.get(i) || 0); }
+
+function renderKpis() {
+  const rub = D.cats.filter(c => c.depth === 1).length;
+  const sub = D.cats.length - rub;
+  const dup = SIM.groups.filter(g => g.type === "Doublon").length;
+  const mixed = SIM.groups.filter(g => g.mixed).length;
+  const noCount = D.tags.filter(t => t.count == null).length;
+  $("#kpis").innerHTML = [
+    [D.tags.length, "tags", noCount && noCount < D.tags.length ? `${noCount} sans volume d'articles` : (D.tags.some(t => t.count != null) ? "avec volume d'articles" : "volume non fourni")],
+    [rub, "rubriques", `${sub} sous-catégories`],
+    [SIM.groups.length, "groupes similaires", `${SIM.groups.reduce((s, g) => s + g.members.length, 0)} libellés concernés`],
+    [dup, "doublons stricts", "à fusionner ou rediriger"],
+    [mixed, "conflits tag ↔ catégorie", "même sujet, deux URLs"],
+  ].map(([v, l, s]) => `<div class="kpi"><span class="label">${l}</span><b>${v.toLocaleString("fr-FR")}</b><small>${s}</small></div>`).join("");
+  $("#n-tags").textContent = D.tags.length; $("#n-cats").textContent = D.cats.length; $("#n-sim").textContent = SIM.groups.length;
+}
+
+function sortRows(rows, s) {
+  const dir = s.d === "asc" ? 1 : -1;
+  return rows.sort((a, b) => {
+    let x = a[s.k], y = b[s.k];
+    if (Array.isArray(x)) { x = x.length; y = y.length; }
+    if (typeof x === "number" || typeof y === "number" || x == null || y == null) return ((x ?? -1) - (y ?? -1)) * dir;
+    return String(x).localeCompare(String(y), "fr", { sensitivity: "base" }) * dir;
+  });
+}
+function markSort(table, s) { table.querySelectorAll("th").forEach(th => th.dataset.dir = th.dataset.k === s.k ? s.d : ""); }
+const first = t => slugify(t.name || t.slug).charAt(0).toUpperCase() || "#";
+const catName = p => D.cats.find(c => c.path === p)?.name || p;
+
+function filteredTags() {
+  const q = slugify($("#qTags").value).replace(/-/g, " ");
+  return D.tags.filter(t => (!ui.letter || (/[A-Z]/.test(first(t)) ? first(t) : "#") === ui.letter) &&
+    (!q || slugify(`${t.name} ${t.slug} ${t.url} ${t.cats.join(" ")}`).replace(/-/g, " ").includes(q)));
+}
+function renderTags() {
+  const present = new Set(D.tags.map(t => /[A-Z]/.test(first(t)) ? first(t) : "#"));
+  $("#letters").innerHTML = [`<button data-l="" aria-pressed="${!ui.letter}">Tous</button>`, ..."#ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("").map(l => `<button data-l="${l}" aria-pressed="${ui.letter === l}" ${present.has(l) ? "" : "disabled"}>${l}</button>`)].join("");
+  const rows = sortRows(filteredTags(), ui.sortTags);
+  markSort($("#tTags"), ui.sortTags);
+  $("#tTags tbody").innerHTML = rows.length ? rows.map(t => `<tr>
+    <td><b>${esc(t.name)}</b></td>
+    <td class="mono">${esc(t.slug)}</td>
+    <td>${t.url ? `<a href="${esc(t.url)}" target="_blank" rel="noopener">${esc(toPath(t.url))}</a>` : "—"}</td>
+    <td class="num">${t.count == null ? "—" : t.count.toLocaleString("fr-FR")}</td>
+    <td>${t.cats.length ? t.cats.slice(0, 4).map(c => `<span class="chip cat">${esc(catName(c))}</span>`).join("") + (t.cats.length > 4 ? `<span class="more">+${t.cats.length - 4}</span>` : "") : '<span class="muted">—</span>'}</td>
+    <td class="num">${t.simN ? `<span class="flag">${t.simN}</span>` : "—"}</td></tr>`).join("")
+    : `<tr><td colspan="6" class="muted">Aucun tag ne correspond à ce filtre.</td></tr>`;
+}
+
+function filteredCats() {
+  const q = slugify($("#qCats").value).replace(/-/g, " ");
+  return D.cats.filter(c => !q || slugify(`${c.name} ${c.path}`).replace(/-/g, " ").includes(q));
+}
+function renderCats() {
+  const view = $("#catView").value; const rows = filteredCats();
+  $("#catTree").hidden = view !== "tree"; $("#catTableBox").hidden = view !== "table";
+  if (view === "table") {
+    markSort($("#tCats"), ui.sortCats);
+    $("#tCats tbody").innerHTML = sortRows(rows, ui.sortCats).map(c => `<tr><td><b>${esc(c.name)}</b></td><td class="mono">${esc(c.path)}</td><td>${esc(c.parentName)}</td><td class="num">${c.depth}</td><td class="num">${c.count == null ? "—" : c.count.toLocaleString("fr-FR")}</td><td><a href="${esc(c.url)}" target="_blank" rel="noopener">${esc(toPath(c.url))}</a></td></tr>`).join("") || `<tr><td colspan="6" class="muted">Aucune catégorie ne correspond.</td></tr>`;
+    return;
+  }
+  const show = new Set(rows.map(c => c.path)); rows.forEach(c => c.parent && show.add(c.path.split("/")[0]));
+  const roots = D.cats.filter(c => c.depth === 1 && show.has(c.path)).sort((a, b) => a.name.localeCompare(b.name, "fr"));
+  const childrenOf = p => D.cats.filter(c => c.parent === p && (show.has(c.path) || !$("#qCats").value)).sort((a, b) => (b.count ?? 0) - (a.count ?? 0) || a.name.localeCompare(b.name, "fr"));
+  const maxC = Math.max(1, ...D.cats.filter(c => c.depth > 1).map(c => c.count || 0));
+  $("#catTree").innerHTML = roots.length ? roots.map(r => {
+    const kids = childrenOf(r.path); const total = kids.reduce((s, k) => s + (k.count || 0), 0) || r.count;
+    const sub = p => childrenOf(p).map(g => `<li style="padding-left:14px"><a href="${esc(g.url)}" target="_blank" rel="noopener">↳ ${esc(g.name)}</a><span class="mono muted">${g.count ?? ""}</span></li>`).join("");
+    return `<article class="node"><header><h3><a href="${esc(r.url)}" target="_blank" rel="noopener">${esc(r.name)}</a></h3><span class="mono muted">${total ? total.toLocaleString("fr-FR") + " art." : ""}</span></header>
+      <div class="mono muted">/${esc(r.path)} · ${kids.length} sous-catégorie${kids.length > 1 ? "s" : ""}</div>
+      ${kids.length ? `<ul>${kids.map(k => `<li><span style="min-width:0;flex:1"><a href="${esc(k.url)}" target="_blank" rel="noopener">${esc(k.name)}</a>${k.count ? `<span class="bar"><i style="width:${(100 * k.count / maxC).toFixed(1)}%"></i></span>` : ""}</span><span class="mono muted">${k.count ?? ""}</span></li>${sub(k.path)}`).join("")}</ul>` : `<span class="muted">Aucune sous-catégorie connue.</span>`}
+    </article>`;
+  }).join("") : `<div class="empty">Aucune catégorie ne correspond.</div>`;
+}
+
+function renderSim() {
+  $("#thrV").textContent = $("#thr").value + " %";
+  const q = slugify($("#qSim").value).replace(/-/g, " ");
+  const gs = SIM.groups.filter(g => !q || g.members.some(m => slugify(m.label).replace(/-/g, " ").includes(q)));
+  const cls = { Doublon: "crit", Variante: "warn", Proche: "" };
+  $("#groups").innerHTML = gs.length ? gs.slice(0, 400).map(g => {
+    const advice = g.type === "Doublon" ? "Fusionner : garder une URL, rediriger (301) les autres." : g.mixed ? "Un tag et une catégorie couvrent le même sujet : choisir la page qui doit se positionner." : g.type === "Variante" ? "Vérifier l'intention ; fusionner si les articles se recoupent." : "Libellés proches : à contrôler.";
+    return `<article class="group ${g.type === "Doublon" ? "crit" : g.mixed ? "mixed" : ""}">
+      <div class="head"><span><span class="chip ${cls[g.type]}">${g.type}</span>${g.mixed ? ' <span class="chip tag">tag ↔ catégorie</span>' : ""} <b>${g.members.length} libellés</b></span><span class="muted">${advice}</span></div>
+      <div class="members">${g.members.map(m => `<span class="member"><span class="chip ${m.kind}">${m.kind === "tag" ? "tag" : "catégorie"}</span><a href="${esc(m.url)}" target="_blank" rel="noopener">${esc(m.label)}</a>${m.kind === "tag" && D.tags[m.i].count != null ? `<span class="mono muted">${D.tags[m.i].count}</span>` : ""}</span>`).join("")}</div>
+      <div class="pairs">${g.pairs.slice(0, 6).map(p => `${esc(SIM.items[p.a].label)} ↔ ${esc(SIM.items[p.b].label)} <span class="mono">${Math.round(p.score * 100)} %</span>`).join(" · ")}${g.pairs.length > 6 ? ` · +${g.pairs.length - 6} paires` : ""}</div>
+    </article>`;
+  }).join("") + (gs.length > 400 ? `<div class="empty">400 premiers groupes affichés sur ${gs.length}. Affinez avec le filtre ou montez le seuil.</div>` : "")
+  : `<div class="empty">Aucun groupe de libellés similaires à ce seuil. Baissez le seuil ou élargissez le périmètre.</div>`;
+}
+
+function setTab(t) {
+  ui.tab = t; store.set("edito.tab", t);
+  document.querySelectorAll(".tab").forEach(b => b.setAttribute("aria-selected", b.dataset.tab === t));
+  $("#p-tags").hidden = t !== "tags"; $("#p-cats").hidden = t !== "cats"; $("#p-sim").hidden = t !== "sim";
+}
+function renderAll() { renderKpis(); renderTags(); renderCats(); renderSim(); setTab(ui.tab); }
+
+/* ---------- Copier en CSV ---------- */
+const csv = rows => rows.map(r => r.map(v => { v = String(v ?? ""); return /[",;\n]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v; }).join(";")).join("\n");
+async function copy(text, btn) {
+  const old = btn.textContent;
+  try { await navigator.clipboard.writeText(text); btn.textContent = "Copié"; }
+  catch { const ta = $("#jsonIn"); $("#importBox").open = true; ta.value = text; ta.select(); btn.textContent = "Sélectionné dans la zone d'import"; }
+  setTimeout(() => btn.textContent = old, 1800);
+}
+$("#copyTags").onclick = e => copy(csv([["tag","slug","url","articles","categories","similaires"], ...sortRows(filteredTags(), ui.sortTags).map(t => [t.name, t.slug, t.url, t.count, t.cats.join(" | "), t.simN])]), e.target);
+$("#copyCats").onclick = e => copy(csv([["categorie","chemin","parent","niveau","articles","url"], ...sortRows(filteredCats(), ui.sortCats).map(c => [c.name, c.path, c.parentName, c.depth, c.count, c.url])]), e.target);
+$("#copySim").onclick = e => copy(csv([["groupe","type","tag_categorie","type_libelle","libelle","url"], ...SIM.groups.flatMap((g, n) => g.members.map(m => [n + 1, g.type, g.mixed ? "oui" : "non", m.kind === "tag" ? "tag" : "categorie", m.label, m.url]))]), e.target);
+
+/* ---------- Événements ---------- */
+document.querySelectorAll(".tab").forEach(b => b.onclick = () => setTab(b.dataset.tab));
+$("#letters").onclick = e => { const b = e.target.closest("button"); if (!b || b.disabled) return; ui.letter = b.dataset.l || null; renderTags(); };
+$("#qTags").oninput = renderTags; $("#qCats").oninput = renderCats; $("#catView").onchange = renderCats; $("#qSim").oninput = renderSim;
+$("#thr").oninput = () => { recompute(); renderKpis(); renderTags(); renderSim(); };
+$("#simScope").onchange = $("#thr").oninput;
+const sorter = (sel, key, fn) => $(sel + " thead").onclick = e => { const th = e.target.closest("th"); if (!th) return; const s = ui[key]; s.d = s.k === th.dataset.k && s.d === "asc" ? "desc" : "asc"; s.k = th.dataset.k; fn(); };
+sorter("#tTags", "sortTags", renderTags); sorter("#tCats", "sortCats", renderCats);
+
+const msg = (t, ok) => { const m = $("#msg"); m.textContent = t; m.className = "msg " + (ok ? "ok" : "err"); };
+function importText(text) {
+  let raw; try { raw = JSON.parse(text); } catch (e) { return msg("JSON invalide : " + e.message + ". Vérifiez les virgules et les guillemets.", false); }
+  const n = normalize(raw);
+  if (!n.tags.length && !n.cats.length) return msg("Aucun tag ni catégorie reconnu. Il faut au moins un champ url (ou name) par élément.", false);
+  load(raw, true); store.set("edito.json", text);
+  msg(`${n.tags.length} tags et ${n.cats.length} catégories chargés${n.articles ? ` depuis ${n.articles} articles` : ""}.`, true);
+}
+$("#btnLoad").onclick = () => importText($("#jsonIn").value);
+$("#file").onchange = e => { const f = e.target.files[0]; if (f) f.text().then(importText); };
+const drop = $("#drop");
+["dragenter","dragover"].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.add("over"); }));
+["dragleave","drop"].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.remove("over"); }));
+drop.addEventListener("drop", e => { const f = e.dataTransfer.files[0]; if (f) f.text().then(importText); });
+$("#btnReset").onclick = () => { store.set("edito.json", null); load(SEED, false); msg("Données d'exemple rechargées.", true); };
+
+/* ---------- Démarrage ---------- */
+let SEED = {}; try { SEED = JSON.parse($("#seed").textContent); } catch {}
+const saved = store.get("edito.json");
+let started = false;
+if (saved) { try { load(JSON.parse(saved), true); started = true; } catch {} }
+if (!started) load(SEED, !!SEED.__real);
+})();
+</script>
