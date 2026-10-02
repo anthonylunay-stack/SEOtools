@@ -57,6 +57,13 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
 
 .import { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 16px; display: grid; gap: 10px }
 .import .ch { display: flex; justify-content: space-between; gap: 8px; align-items: center }
+.sites { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px }
+.site { display: grid; gap: 0; text-align: left; padding: 6px 12px; border-radius: 8px; line-height: 1.25 }
+.site .sn { font-weight: 600; font-size: .86rem }
+.site .sc { font: .72rem var(--f-mono); color: var(--muted) }
+.site[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--surface) }
+.site[aria-pressed="true"] .sc { color: var(--surface); opacity: .85 }
+header.top > div:first-child { min-width: 0 }
 .hright { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: flex-end; min-width: 0; max-width: 100% }
 .import.pop { position: absolute; z-index: 30; top: calc(100% + 8px); right: 0; width: min(400px, 100%); padding: 12px; gap: 8px; box-shadow: 0 10px 30px rgb(0 0 0 / .16) }
 .import.pop h2 { font-size: 1rem }
@@ -175,6 +182,7 @@ details > summary { cursor: pointer; font-weight: 600 }
 <div class="wrap">
   <header class="top">
     <div>
+      <nav class="sites" id="sites" aria-label="Sites du flux"></nav>
       <h1>TAGs et Rubriques EDITO</h1>
     </div>
     <div class="hright">
@@ -204,7 +212,7 @@ details > summary { cursor: pointer; font-weight: 600 }
           <button id="btnShare" hidden>Enregistrer pour tous les lecteurs</button>
           <button id="btnReset" class="link">Revenir aux données d'exemple</button>
         </div>
-        <details><summary class="muted">Formats acceptés</summary><p class="muted" style="margin:6px 0 0">Un tableau d'objets <span class="mono">{name, url, count, parent}</span>, un objet <span class="mono">{tags:[…], categories:[…]}</span>, un dictionnaire <span class="mono">{"libellé": "url"}</span> ou une simple liste d'URLs. Le type est déduit de l'URL : <span class="mono">/tags/…</span> → tag, <span class="mono">/rubrique/…</span> ou chemin de rubrique → catégorie. Les articles avec un champ <span class="mono">tags</span> sont agrégés.</p></details>
+        <details><summary class="muted">Formats acceptés</summary><p class="muted" style="margin:6px 0 0">Un tableau d'objets <span class="mono">{name, url, count, parent}</span>, un objet <span class="mono">{tags:[…], categories:[…]}</span>, un dictionnaire <span class="mono">{"libellé": "url"}</span> ou une simple liste d'URLs. Le type est déduit de l'URL : <span class="mono">/tags/…</span> → tag, <span class="mono">/rubrique/…</span> ou chemin de rubrique → catégorie. Les articles avec un champ <span class="mono">tags</span> sont agrégés. Les sites sont repérés par le domaine des URLs, un champ <span class="mono">site</span> ou une clé de domaine (<span class="mono">{"edito.seloger.com": {…}}</span>) : un bouton par site apparaît en haut à gauche.</p></details>
       </section>
     </div>
   </header>
@@ -311,18 +319,27 @@ function typeHint(v) {
   return null;
 }
 
+const DEFAULT_HOST = "edito.seloger.com";
+const isHostKey = k => /^(https?:\/\/)?(www\.)?[a-z0-9-]+(\.[a-z0-9-]+)+\/?$/i.test(k) && !/\.(json|csv|xml|html?)$/i.test(k);
+const cleanHost = h => String(h || "").trim().replace(/^https?:\/\//i, "").replace(/^www\./i, "").replace(/\/.*$/, "").toLowerCase();
+const hostOf = u => /^https?:\/\//i.test(u || "") ? (() => { try { return cleanHost(new URL(u).host); } catch { return ""; } })() : "";
+const SITEK = ["site","domain","domaine","host","website","site_url","siteUrl","source_site"];
+
 function normalize(raw) {
-  const tags = new Map(), cats = new Map(), articles = [];
-  const addTag = t => {
+  const stores = new Map();
+  const S = h => { h = h || DEFAULT_HOST; if (!stores.has(h)) stores.set(h, { tags: new Map(), cats: new Map(), articles: 0 }); return stores.get(h); };
+  const addTag = (site, t) => {
+    const { tags } = S(site); const base = "https://" + (site || DEFAULT_HOST);
     const key = (t.slug || t.name || "").toLowerCase(); if (!key) return;
-    const prev = tags.get(key) || { name: "", slug: "", url: "", count: null, cats: new Set(), extra: {} };
+    const prev = tags.get(key) || { name: "", slug: "", url: "", count: null, cats: new Set() };
     prev.name = prev.name || t.name || deslug(t.slug); prev.slug = prev.slug || t.slug || "";
-    prev.url = prev.url || t.url || (t.slug ? `${BASE}/tags/${t.slug}` : "");
+    prev.url = prev.url || t.url || (t.slug ? `${base}/tags/${t.slug}` : "");
     if (t.count != null && !isNaN(+t.count)) prev.count = (prev.count ?? 0) + +t.count;
     (t.cats || []).forEach(c => c && prev.cats.add(c));
-    tags.set(key, prev);
+    tags.set(key, prev); return prev;
   };
-  const addCat = c => {
+  const addCat = (site, c) => {
+    const { cats } = S(site);
     let path = (c.path || "").replace(/^\/+|\/+$/g, "");
     if (!path && c.parent && c.name) path = `${slugify(c.parent)}/${slugify(c.name)}`;
     if (!path && c.name) path = slugify(c.name);
@@ -332,72 +349,84 @@ function normalize(raw) {
     prev.url = prev.url || c.url || "";
     if (c.count != null && !isNaN(+c.count)) prev.count = (prev.count ?? 0) + +c.count;
     if (c.parent && !path.includes("/")) prev.parentHint = c.parent;
-    cats.set(path, prev);
+    cats.set(path, prev); return prev;
   };
-  const addArticle = (a) => {
+  const addArticle = (a, site) => {
+    site = hostOf(a.url) || site;
     const p = toPath(a.url || ""); const segs = p.split("/").filter(Boolean);
     const catPath = a.category_path || (a.category ? null : segs.slice(0, Math.min(2, Math.max(0, segs.length-1))).join("/"));
     const catName = a.category && typeof a.category === "string" ? a.category : null;
     const cp = catPath || (catName ? slugify(catName) : "");
-    if (cp) { addCat({ path: cp, name: catName && !catPath ? catName : null }); const c = cats.get(cp); c.count = (c.count ?? 0) + 1;
-      if (cp.includes("/")) addCat({ path: cp.split("/")[0] }); }
+    if (cp) { const c = addCat(site, { path: cp, name: catName && !catPath ? catName : null }); c.count = (c.count ?? 0) + 1;
+      if (cp.includes("/")) addCat(site, { path: cp.split("/")[0] }); }
     const tl = a.tags || a.tag || a.keywords || [];
     (Array.isArray(tl) ? tl : String(tl).split(/[,;|]/)).forEach(t => {
       const o = typeof t === "string" ? (t.includes("/") ? { url: t } : { name: t.trim() }) : t;
       const url = pick(o, URLK); const nm = pick(o, NAME);
       const slug = o.slug || (url ? classify(toPath(url), "tag").slug : slugify(nm));
-      addTag({ name: nm, slug, url, cats: cp ? [cp] : [] });
-      const k = (slug || nm || "").toLowerCase(); const tg = tags.get(k); if (tg) tg.count = (tg.count ?? 0) + 1;
+      const tg = addTag(hostOf(url) || site, { name: nm, slug, url, cats: cp ? [cp] : [] }); if (tg) tg.count = (tg.count ?? 0) + 1;
     });
-    articles.push(a);
+    S(site).articles++;
   };
-  const handle = (item, hint) => {
+  const handle = (item, hint, site) => {
     if (item == null) return;
-    if (typeof item === "string") { const c = classify(toPath(item), hint); c.type === "tag" ? addTag({ slug: c.slug, url: item.startsWith("http") ? item : BASE + toPath(item) }) : addCat({ path: c.path, url: item.startsWith("http") ? item : BASE + toPath(item) }); return; }
+    if (typeof item === "string") {
+      const abs = /^https?:\/\//i.test(item); const st = hostOf(item) || site; const url = abs ? item : `https://${st || DEFAULT_HOST}${toPath(item)}`;
+      const c = classify(toPath(item), hint); c.type === "tag" ? addTag(st, { slug: c.slug, url }) : addCat(st, { path: c.path, url }); return;
+    }
     if (typeof item !== "object") return;
+    const sv = pick(item, SITEK); if (typeof sv === "string" && sv) site = cleanHost(sv);
     const h = typeHint(item.type || item.kind || item.taxonomy) || hint;
-    if (h === "article" || (Array.isArray(item.tags) && (item.url || item.title))) return addArticle(item);
+    if (h === "article" || (Array.isArray(item.tags) && (item.url || item.title))) return addArticle(item, site);
     const url = pick(item, URLK); const name = pick(item, NAME); const count = pick(item, CNT);
+    const st = hostOf(url) || site;
     const parent = item.parent_name || item.parentName || item.parent || item.rubrique || item.section;
     if (url) {
       const c = classify(toPath(url), h);
-      if (h === "tag" || (c.type === "tag" && h !== "cat")) addTag({ name, slug: item.slug || c.slug, url, count });
-      else addCat({ name, path: c.path, url, count, parent: typeof parent === "string" ? parent : null });
-    } else if (name || item.slug) {
-      if (h === "cat") addCat({ name, path: item.path, count, parent: typeof parent === "string" ? parent : null });
-      else addTag({ name, slug: item.slug || slugify(name), count });
+      if (h === "tag" || (c.type === "tag" && h !== "cat")) addTag(st, { name, slug: item.slug || c.slug, url, count });
+      else addCat(st, { name, path: c.path, url, count, parent: typeof parent === "string" ? parent : null });
+    } else if (typeof name === "string" || item.slug) {
+      if (h === "cat") addCat(st, { name, path: item.path, count, parent: typeof parent === "string" ? parent : null });
+      else addTag(st, { name, slug: item.slug || slugify(name), count });
+    } else {
+      // conteneur : { site, tags: [...], categories: [...] }
+      return walk(item, h, site);
     }
     const kids = item.children || item.subcategories || item.sous_categories;
-    if (Array.isArray(kids)) kids.forEach(k => handle(typeof k === "object" ? { ...k, parent: k.parent || name } : k, "cat"));
+    if (Array.isArray(kids)) kids.forEach(k => handle(typeof k === "object" ? { ...k, parent: k.parent || name } : k, "cat", st));
   };
-  const walk = (node, hint) => {
-    if (Array.isArray(node)) return node.forEach(n => handle(n, hint));
+  const walk = (node, hint, site) => {
+    if (Array.isArray(node)) return node.forEach(n => handle(n, hint, site));
     if (node && typeof node === "object") {
-      const keys = Object.keys(node);
+      const sv = pick(node, SITEK); if (typeof sv === "string" && sv) site = cleanHost(sv);
+      const keys = Object.keys(node).filter(k => !SITEK.includes(k) && !k.startsWith("__"));
       const arrKeys = keys.filter(k => Array.isArray(node[k]) || (node[k] && typeof node[k] === "object"));
-      if (!arrKeys.length) { keys.forEach(k => { const v = node[k]; typeof v === "string" ? handle({ name: k, url: v }, hint) : (typeof v === "number" ? handle({ name: k, count: v }, hint) : 0) }); return; }
+      if (!arrKeys.length) { keys.forEach(k => { const v = node[k]; typeof v === "string" ? handle({ name: k, url: v }, hint, site) : (typeof v === "number" ? handle({ name: k, count: v }, hint, site) : 0) }); return; }
       keys.forEach(k => {
-        const h = typeHint(k) || hint; const v = node[k];
-        if (Array.isArray(v)) walk(v, h);
+        const v = node[k]; const st = isHostKey(k) ? cleanHost(k) : site; const h = isHostKey(k) ? hint : (typeHint(k) || hint);
+        if (Array.isArray(v)) walk(v, h, st);
         else if (v && typeof v === "object") {
           const vals = Object.values(v);
-          if (vals.length && vals.every(x => typeof x === "string" || typeof x === "number")) Object.entries(v).forEach(([n, x]) => handle(typeof x === "string" ? { name: n, url: x } : { name: n, count: x }, h));
-          else walk(v, h);
+          if (vals.length && vals.every(x => typeof x === "string" || typeof x === "number")) Object.entries(v).forEach(([n, x]) => handle(typeof x === "string" ? { name: n, url: x } : { name: n, count: x }, h, st));
+          else walk(v, h, st);
         }
       });
     }
   };
-  walk(raw, null);
+  walk(raw, null, null);
 
-  // compléter les rubriques parentes
-  [...cats.keys()].forEach(p => { const s = p.split("/"); for (let i = 1; i < s.length; i++) { const pp = s.slice(0, i).join("/"); if (!cats.has(pp)) addCat({ path: pp }); } });
-  const catList = [...cats.values()].map(c => {
-    const segs = c.path.split("/"); const pp = segs.slice(0, -1).join("/");
-    if (!c.url) c.url = segs.length === 1 ? `${BASE}/rubrique/${c.path}` : `${BASE}/${c.path}`;
-    return { ...c, depth: segs.length, parent: pp, parentName: pp ? (cats.get(pp)?.name || pp) : (c.parentHint || "—") };
-  });
-  const tagList = [...tags.values()].map(t => ({ ...t, cats: [...t.cats] }));
-  return { tags: tagList, cats: catList, articles: articles.length };
+  const sites = [...stores.entries()].map(([host, { tags, cats, articles }]) => {
+    const base = "https://" + host;
+    [...cats.keys()].forEach(p => { const s = p.split("/"); for (let i = 1; i < s.length; i++) { const pp = s.slice(0, i).join("/"); if (!cats.has(pp)) addCat(host, { path: pp }); } });
+    const catList = [...cats.values()].map(c => {
+      const segs = c.path.split("/"); const pp = segs.slice(0, -1).join("/");
+      if (!c.url) c.url = segs.length === 1 ? `${base}/rubrique/${c.path}` : `${base}/${c.path}`;
+      return { ...c, depth: segs.length, parent: pp, parentName: pp ? (cats.get(pp)?.name || pp) : (c.parentHint || "—") };
+    });
+    return { host, tags: [...tags.values()].map(t => ({ ...t, cats: [...t.cats] })), cats: catList, articles };
+  }).filter(x => x.tags.length || x.cats.length)
+    .sort((a, b) => (b.tags.length + b.cats.length) - (a.tags.length + a.cats.length));
+  return { sites, tags: sites.reduce((n, x) => n + x.tags.length, 0), cats: sites.reduce((n, x) => n + x.cats.length, 0), articles: sites.reduce((n, x) => n + x.articles, 0) };
 }
 function slugify(s) { return String(s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") }
 
@@ -468,19 +497,31 @@ function computeSimilar(D, thr, scope) {
 }
 
 /* ---------- État & rendu ---------- */
-let D, SIM, isReal = false;
-const ui = { tab: "tags", letter: null, sortTags: { k: "name", d: "asc" }, sortCats: { k: "path", d: "asc" } };
+let ALL, D, SIM, isReal = false;
+const ui = { site: null, tab: "tags", letter: null, sortTags: { k: "name", d: "asc" }, sortCats: { k: "path", d: "asc" } };
 try { const t = store.get("edito.tab"); if (t) ui.tab = t; } catch {}
 const hashTab = location.hash.replace("#", ""); if (["tags","cats","sim"].includes(hashTab)) ui.tab = hashTab;
 
 function load(raw, real, from) {
-  D = normalize(raw); isReal = real;
+  ALL = normalize(raw); isReal = real;
   const src = $("#source");
   src.textContent = real ? `Flux importé${from ? " · " + from : ""}` : "Données d'exemple (collecte partielle)";
-  src.title = src.textContent;
-  src.classList.toggle("real", real);
-  recompute(); renderAll();
+  src.title = src.textContent; src.classList.toggle("real", real);
+  const saved = store.get("edito.site");
+  ui.site = ALL.sites.find(x => x.host === ui.site)?.host || ALL.sites.find(x => x.host === saved)?.host || ALL.sites[0]?.host || DEFAULT_HOST;
+  renderSites(); selectSite(ui.site);
 }
+function selectSite(host) {
+  ui.site = host; store.set("edito.site", host);
+  D = ALL.sites.find(x => x.host === host) || { host, tags: [], cats: [], articles: 0 };
+  document.querySelectorAll(".site").forEach(b => b.setAttribute("aria-pressed", b.dataset.h === host));
+  ui.letter = null; recompute(); renderAll();
+}
+function renderSites() {
+  $("#sites").innerHTML = ALL.sites.map(x => `<button class="site" data-h="${esc(x.host)}" aria-pressed="false" title="${esc(x.host)}">
+    <span class="sn">${esc(x.host)}</span><span class="sc">${x.tags.length} tag${x.tags.length > 1 ? "s" : ""} · ${x.cats.length} cat.</span></button>`).join("");
+}
+$("#sites").onclick = e => { const b = e.target.closest(".site"); if (b) selectSite(b.dataset.h); };
 function recompute() { SIM = computeSimilar(D, +$("#thr").value, $("#simScope").value); D.tags.forEach((t, i) => t.simN = SIM.simCount.get(i) || 0); }
 
 function renderKpis() {
@@ -722,9 +763,9 @@ document.addEventListener("keydown", e => { if (e.key === "Escape") openPop(fals
 function importText(text, from) {
   let raw; try { raw = JSON.parse(String(text).replace(/^﻿/, "")); } catch (e) { msg("JSON invalide : " + e.message + ". Vérifiez les virgules et les guillemets.", false); return false; }
   const n = normalize(raw);
-  if (!n.tags.length && !n.cats.length) { msg("Aucun tag ni catégorie reconnu. Il faut au moins un champ url (ou name) par élément.", false); return false; }
+  if (!n.tags && !n.cats) { msg("Aucun tag ni catégorie reconnu. Il faut au moins un champ url (ou name) par élément.", false); return false; }
   load(raw, true, from); store.set("edito.json", text); store.set("edito.from", from || ""); lastText = text;
-  msg(`${n.tags.length} tags et ${n.cats.length} catégories chargés${n.articles ? ` depuis ${n.articles} articles` : ""}.`, true);
+  msg(`${n.tags} tags et ${n.cats} catégories chargés${n.articles ? ` depuis ${n.articles} articles` : ""}${n.sites.length > 1 ? `, sur ${n.sites.length} sites` : ""}.`, true);
   showShare(); return true;
 }
 document.querySelectorAll(".imode").forEach(b => b.onclick = () => {
