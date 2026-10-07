@@ -160,6 +160,7 @@
     .chart-area canvas { display: block; width: 100%; height: 100%; }
     .h-260 { height: 260px; }
     .h-300 { height: 300px; }
+    .h-420 { height: 420px; }
 
     /* ── Placeholder state ── */
     .chart-placeholder { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; gap: 10px; color: var(--muted); font-size: 13px; }
@@ -296,7 +297,7 @@
         </div>
         <button class="card-refresh" id="refresh-ranking_global_war" onclick="refreshCard('ranking_global_war')" title="Rafraîchir">↺</button>
       </div>
-      <div class="chart-area h-300" id="wrap-ranking_global_war">
+      <div class="chart-area h-420" id="wrap-ranking_global_war">
         <div class="chart-placeholder loading"><span class="icon">⟳</span><span>Waiting for N8N…</span></div>
       </div>
     </div>
@@ -488,25 +489,40 @@ const PLACEHOLDER = {
       chartConfig: {
         type: 'line',
         data: {
-          labels: ['Jul 24','Aug 24','Sep 24','Oct 24','Nov 24','Dec 24','Jan 25','Feb 25','Mar 25','Apr 25','May 25','Jun 25'],
+          labels: ['2026-09-14'],
           datasets: [
-            { label: 'selogerneuf.com', data: [3,3,2,2,2,2,1,1,2,1,1,1], borderColor: '#4285F4', borderWidth: 4, pointRadius: 6, pointBackgroundColor: '#4285F4', tension: 0.3, spanGaps: true, fill: false, order: 0 },
-            { label: 'neuf.fr',         data: [2,2,3,3,3,3,3,2,3,3,2,2], borderColor: '#EA4335', borderWidth: 2, pointRadius: 3, tension: 0.3, spanGaps: true, fill: false },
-            { label: 'bienici.com',     data: [1,1,1,1,1,1,2,3,1,2,3,3], borderColor: '#FBBC05', borderWidth: 2, pointRadius: 3, tension: 0.3, spanGaps: true, fill: false },
-            { label: 'pap.fr',          data: [4,4,4,4,4,4,4,4,4,4,4,4], borderColor: '#34A853', borderWidth: 2, pointRadius: 3, tension: 0.3, spanGaps: true, fill: false },
-            { label: 'leboncoin.fr',    data: [5,5,5,5,5,5,5,5,5,5,5,5], borderColor: '#9C27B0', borderWidth: 2, pointRadius: 3, tension: 0.3, spanGaps: true, fill: false }
+            { label: 'www.seloger.com',          data: [3.60],   borderColor: '#4285F4', borderWidth: 4, pointRadius: 6, tension: 0.3, spanGaps: true, fill: false },
+            { label: 'www.leboncoin.fr',          data: [14.05],  borderColor: '#EA4335', borderWidth: 2, pointRadius: 4, tension: 0.3, spanGaps: true, fill: false },
+            { label: 'immobilier.lefigaro.fr',    data: [16.44],  borderColor: '#FBBC05', borderWidth: 2, pointRadius: 4, tension: 0.3, spanGaps: true, fill: false },
+            { label: 'www.bienici.com',           data: [17.32],  borderColor: '#34A853', borderWidth: 2, pointRadius: 4, tension: 0.3, spanGaps: true, fill: false },
+            { label: 'www.logic-immo.com',        data: [19.06],  borderColor: '#9C27B0', borderWidth: 2, pointRadius: 4, tension: 0.3, spanGaps: true, fill: false },
+            { label: 'www.pap.fr',                data: [33.57],  borderColor: '#FF6D00', borderWidth: 2, pointRadius: 4, tension: 0.3, spanGaps: true, fill: false },
+            { label: 'www.ouestfrance-immo.com',  data: [41.39],  borderColor: '#00BCD4', borderWidth: 2, pointRadius: 4, tension: 0.3, spanGaps: true, fill: false },
+            { label: 'www.entreparticuliers.com', data: [41.84],  borderColor: '#795548', borderWidth: 2, pointRadius: 4, tension: 0.3, spanGaps: true, fill: false },
+            { label: 'www.zimo.fr',               data: [49.65],  borderColor: '#E91E63', borderWidth: 2, pointRadius: 4, tension: 0.3, spanGaps: true, fill: false },
+            { label: 'www.paruvendu.fr',          data: [54.19],  borderColor: '#607D8B', borderWidth: 2, pointRadius: 4, tension: 0.3, spanGaps: true, fill: false },
+            { label: 'www.iadfrance.fr',          data: [59.68],  borderColor: '#8BC34A', borderWidth: 2, pointRadius: 4, tension: 0.3, spanGaps: true, fill: false },
+            { label: 'fr.foncia.com',             data: [67.63],  borderColor: '#FF5722', borderWidth: 2, pointRadius: 4, tension: 0.3, spanGaps: true, fill: false },
+            { label: 'www.vizzit.fr',             data: [71.17],  borderColor: '#3F51B5', borderWidth: 2, pointRadius: 4, tension: 0.3, spanGaps: true, fill: false },
+            { label: 'www.bellesdemeures.com',    data: [75.69],  borderColor: '#009688', borderWidth: 2, pointRadius: 4, tension: 0.3, spanGaps: true, fill: false },
+            { label: 'www.123loger.com',          data: [80.18],  borderColor: '#FFC107', borderWidth: 2, pointRadius: 4, tension: 0.3, spanGaps: true, fill: false },
+            { label: 'www.meilleursagents.com',   data: [90.60],  borderColor: '#673AB7', borderWidth: 2, pointRadius: 4, tension: 0.3, spanGaps: true, fill: false },
+            { label: 'www.lux-residence.com',     data: [98.20],  borderColor: '#03A9F4', borderWidth: 2, pointRadius: 4, tension: 0.3, spanGaps: true, fill: false },
+            { label: 'www.idealista.fr',          data: [100.77], borderColor: '#F44336', borderWidth: 2, pointRadius: 4, tension: 0.3, spanGaps: true, fill: false },
+            { label: 'www.bureauxlocaux.com',     data: [100.70], borderColor: '#4CAF50', borderWidth: 2, pointRadius: 4, tension: 0.3, spanGaps: true, fill: false },
+            { label: 'www.avendrealouer.fr',      data: [101.00], borderColor: '#FF9800', borderWidth: 2, pointRadius: 4, tension: 0.3, spanGaps: true, fill: false }
           ]
         },
         options: {
           responsive: true, maintainAspectRatio: false,
           plugins: {
-            title: { display: true, text: 'SEO WAR Ranking — SeLoger Neuf: #1 | ↑ Improving', font: { size: 14, weight: 'bold' }, padding: { bottom: 10 } },
-            legend: { display: true, position: 'bottom', labels: { padding: 16, font: { size: 12 } } },
+            title: { display: true, text: 'SEO WAR Ranking — All competitors (rank lower = better)', font: { size: 14, weight: 'bold' }, padding: { bottom: 10 } },
+            legend: { display: true, position: 'bottom', labels: { padding: 12, font: { size: 11 }, boxWidth: 20 } },
             datalabels: { display: false },
             annotation: { annotations: { top: { type: 'line', yMin: 1, yMax: 1, borderColor: 'rgba(52,168,83,0.4)', borderWidth: 1, borderDash: [4,4], label: { display: true, content: 'Rank #1', position: 'start', backgroundColor: 'rgba(52,168,83,0.1)', color: '#34A853', font: { size: 10 } } } } }
           },
           layout: { padding: { top: 10, right: 24, bottom: 10, left: 10 } },
-          scales: { x: { grid: { display: false }, ticks: { font: { size: 11 } } }, y: { reverse: true, ticks: { font: { size: 11 }, stepSize: 1 }, title: { display: true, text: 'WAR Rank (lower = better)' } } }
+          scales: { x: { grid: { display: false }, ticks: { font: { size: 11 } } }, y: { reverse: true, ticks: { font: { size: 11 } }, title: { display: true, text: 'WAR Rank (lower = better)' } } }
         }
       }
     },
@@ -702,7 +718,7 @@ function parseOutput(text) {
    EXPAND MINIMAL CHART FORMAT → Chart.js config
 ───────────────────────────────────────── */
 function expandMinimalChart(item) {
-  const colors6 = ['#4285F4','#EA4335','#FBBC05','#34A853','#FF6D00','#7B1FA2'];
+  const colors6 = ['#4285F4','#EA4335','#FBBC05','#34A853','#9C27B0','#FF6D00','#00BCD4','#795548','#E91E63','#607D8B','#8BC34A','#FF5722','#3F51B5','#009688','#FFC107','#673AB7','#03A9F4','#F44336','#4CAF50','#FF9800'];
   const baseOpts = {
     responsive: true,
     maintainAspectRatio: false,
@@ -717,8 +733,8 @@ function expandMinimalChart(item) {
     const datasets = (item.d || []).map((ds, i) => ({
       label: ds.n,
       data: ds.v,
-      borderColor: ds.c || colors6[i],
-      backgroundColor: (ds.c || colors6[i]) + '22',
+      borderColor: ds.c || colors6[i % colors6.length],
+      backgroundColor: (ds.c || colors6[i % colors6.length]) + '22',
       borderWidth: ds.bw || 2,
       borderDash: ds.dash ? [6,3] : [],
       pointRadius: 3,
@@ -739,7 +755,7 @@ function expandMinimalChart(item) {
     const datasets = (item.d || []).map((ds, i) => ({
       label: ds.n,
       data: ds.v,
-      backgroundColor: ds.c || colors6[i]
+      backgroundColor: ds.c || colors6[i % colors6.length]
     }));
     return { type: 'bar', data: { labels: item.l, datasets }, options: { ...baseOpts, scales: { x: { grid: { display: false } }, y: { beginAtZero: true } } } };
   }
@@ -748,7 +764,7 @@ function expandMinimalChart(item) {
     const datasets = (item.d || []).map((ds, i) => ({
       label: ds.n,
       data: ds.v,
-      backgroundColor: ds.c || colors6[i],
+      backgroundColor: ds.c || colors6[i % colors6.length],
       stack: 'stack0'
     }));
     return { type: 'bar', data: { labels: item.l, datasets }, options: { ...baseOpts, scales: { x: { grid: { display: false }, stacked: true }, y: { stacked: true, beginAtZero: true } } } };
